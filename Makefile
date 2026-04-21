@@ -7,9 +7,15 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -g
 # Target executable
 TARGET = webserv
 
+
+
+SOURCE_DIR = ./src
+
+
+VPATH = $(SOURCE_DIR)
 # Source files
 SRCS =	main.cpp \
-		socket.cpp
+		client.cpp
 		
 
 # Object files

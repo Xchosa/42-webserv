@@ -4,6 +4,7 @@
 int main()
 {
 	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	// get fd for Server 
 
 //AF_INET : IPv4 protocol
 //SOCK_STREAM: TCP socket
@@ -18,6 +19,8 @@ int main()
 	bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 	// Bind soccet to address
 	listen(serverSocket, 5);
+
+	// fcntl(serverSocket, flag ) // non blocking umstellen 
 
 	int clientSocket = accept(serverSocket, nullptr, nullptr);
 
