@@ -1,4 +1,4 @@
-#include "socket.hpp"
+#include "client.hpp"
 
 
 int main()
@@ -26,4 +26,6 @@ int main()
 	std::cout << "Message from client: " << buffer << std::endl;
 	
 	close(serverSocket);
+
+	return 0;
 }
