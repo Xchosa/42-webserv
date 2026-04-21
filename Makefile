@@ -14,7 +14,7 @@ SOURCE_DIR = ./src
 
 VPATH = $(SOURCE_DIR)
 # Source files
-SRCS =	main.cpp \
+SRCS =	server.cpp \
 		client.cpp
 		
 
