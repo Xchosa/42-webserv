@@ -30,12 +30,11 @@ int main(void)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(8081);
 	sin.sin_addr.s_addr = htonl(INADDR_ANY); // define interface, 0.0.0.0 -> os can choose whatever it wants
-	if (bind(server_fd, (sockaddr *)&sin, sizeof(sin)) == -1)
+	if (bind(server_fd, reinterpret_cast<sockaddr *>(&sin), sizeof(sin)) == -1)
 	{
 		perror("Error bind");
 		return (1);
 	}
-
 
 	// wait for incoming connection
 	if (listen(server_fd, 1000) == -1)
@@ -70,7 +69,7 @@ int main(void)
 				// original socket is only used for accepting connections, not for exchanging data
 				sockaddr_storage client;
 				socklen_t client_len = sizeof(client);
-				int client_fd = accept(server_fd, (sockaddr *)&client, &client_len);
+				int client_fd = accept(server_fd, reinterpret_cast<sockaddr *>(&client), &client_len);
 				if (client_fd == -1)
 				{
 					std::cerr << "Error accept\n";
