@@ -9,5 +9,14 @@
 
 #include <netinet/in.h> 
 #include <sys/socket.h> 
+
+#include <stdio.h>
+#include <sys/socket.h>
 #include <unistd.h>
-#include <cstring>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+
+
+// inet_pton
+#include <arpa/inet.h>
