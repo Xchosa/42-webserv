@@ -1,14 +1,8 @@
-#include "client.hpp"
+#include "inc/webserv.hpp"
 
-#include <stdio.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
+
 
 #define PORT 8081
-
 int main()
 {
 	int server_fd, new_socket;
@@ -42,28 +36,12 @@ int main()
 		perror("In listen");
 		exit(EXIT_FAILURE);
 	}
-	while (1)
+
+	while(1)
 	{
-		printf("\n+++++++ Waiting for new connection ++++++++\n\n");
-		if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
-		{
-			perror("In accept");
-			exit(EXIT_FAILURE);
-		}
-
-		char buffer[30000] = {0};
-		valread = read(new_socket, buffer, 30000);
-		printf("%s\n", buffer);
-		write(new_socket, MessageServer, strlen(MessageServer));
-		printf("------------------Hello message sent-------------------\n");
-		close(new_socket);
+		
 	}
-	return 0;
 }
-// curl -v http://localhost:8081 
-
-
-
-
-//telnet localhost 8081
-//GET / HTTP/1.1
+//  keep list of all fds -> ask os which fd is ready 
+// react only to the ready fds 
+// go back and wait again

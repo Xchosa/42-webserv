@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "inc/webserv.hpp"
 
 // g++ -std=c++17 server.cpp -o server
 
@@ -79,7 +79,16 @@ int main()
 		}
 
 		char buffer[30000] = {0};
-		valread = read(new_socket, buffer, 30000);
+		valread = read(new_socket, buffer, 30000); // returing nbr of bytes played into buffer
+		 if (valread < 0) {
+            perror("Read error");
+            close(new_socket);
+            continue;
+        } else if (valread == 0) {
+            printf("Client disconnected\n");
+            close(new_socket);
+            continue;
+        }
 		printf("%s\n", buffer);
 		write(new_socket, MessageServer, strlen(MessageServer));
 		printf("------------------Hello message sent-------------------\n");
@@ -87,3 +96,16 @@ int main()
 	}
 	return 0;
 }
+// waits for accept -> accepts one client -> blocks in read -> send responds -> close client connect
+// waits for next accept 
+
+// handle one connection accept -> read -> write -> close
+
+
+// curl -v http://localhost:8081 
+
+
+
+
+//telnet localhost 8081
+//GET / HTTP/1.1
