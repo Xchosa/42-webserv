@@ -4,6 +4,7 @@
 
 #define PORT 8081
 #define MAXCLIENT 10
+#define BUFFER_SIZE 5
 
 int main()
 {
@@ -44,7 +45,9 @@ int main()
 	int nfds = 1; // only care about one fd -> listening socket 
 	fds[0].fd = server_fd; // array of servers 
 	fds[0].events = POLLIN; // new connection waiting in accept queue  // array of events/ client connections 
-
+	char** buffer[3000];
+	
+	
 	while(1)
 	{
 		//int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
@@ -75,16 +78,38 @@ int main()
 					printf("new client connected: fd = %d\n", client_fd);
 				}
 				else 
-					perror("to many client: nfds= %d\n, nfds")
-			
+					perror("to many client: nfds= %d\n, nfds");
+			}
 			else
-			{
-				
-			}
-			}
-		}
-		
-	}
+            {
+                int client_fd = fds[i].fd;
+                ssize_t bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
+
+                if (bytes_read <= 0)
+                {
+                    // client closed connection or error
+                    close(client_fd);
+                    fds[i] = fds[nfds - 1]; // compact array
+                    nfds--;
+                    i--; // re-check the moved entry
+                    continue;
+                }
+
+                buffer[bytes_read] = '\0';
+
+                printf("Request received from fd=%d:\n%s\n", client_fd, buffer);
+
+                write(client_fd, MessageServer, strlen(MessageServer));
+                close(client_fd);
+
+                // remove client from poll array
+                fds[i] = fds[nfds - 1];
+                nfds--;
+                i--;
+            }
+        }
+    }
+
 }
 //  keep list of all fds -> ask os which fd is ready 
 // react only to the ready fds 
