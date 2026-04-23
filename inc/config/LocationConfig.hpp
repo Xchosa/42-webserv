@@ -9,7 +9,7 @@ struct LocationConfig
 	std::string 						root;
 	std::string							index;
 	std::vector<std::string> 			methods;
-	bool								autoindex; // standard auf false
+	bool								autoindex		= false;
 	std::optional<int>					redirect_code;
 	std::optional<std::string>			redirect_url;
 	std::optional<std::string>			upload_store;
