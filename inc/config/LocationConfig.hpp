@@ -5,16 +5,16 @@
 
 struct LocationConfig
 {
-	std::string							path;
-	std::string 						root;
-	std::string							index;
-	std::vector<std::string> 			methods;
-	bool								autoindex		= false;
-	std::optional<int>					redirect_code;
-	std::optional<std::string>			redirect_url;
-	std::optional<std::string>			upload_store;
-	std::optional<size_t>				max_body_size;
-	std::map<std::string, std::string> 	cgi_map;
+	std::string							_path;
+	std::string 						_root;
+	std::string							_index;
+	std::vector<std::string> 			_methods;
+	bool								_autoindex		= false;
+	std::optional<int>					_redirect_code;
+	std::optional<std::string>			_redirect_url;
+	std::optional<std::string>			_upload_store;
+	std::optional<size_t>				_max_body_size;
+	std::map<std::string, std::string> 	_cgi_map;
 
 	// helper methods
 	bool allows_method(const std::string& method) const;

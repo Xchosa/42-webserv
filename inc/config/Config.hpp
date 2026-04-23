@@ -2,5 +2,5 @@
 
 struct Config
 {
-	std::vector<ServerConfig>	servers;
+	std::vector<ServerConfig>	_servers;
 };
