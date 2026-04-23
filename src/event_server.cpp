@@ -10,8 +10,7 @@ int main()
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
 
-	const char *MessageServer = "Hello from server";
-
+	const char *MessageServer = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\r\n\r\nhello Server";
 	// Creating socket file descriptor
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	{
@@ -39,7 +38,8 @@ int main()
 
 	while(1)
 	{
-		
+		int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
 	}
 }
 //  keep list of all fds -> ask os which fd is ready 

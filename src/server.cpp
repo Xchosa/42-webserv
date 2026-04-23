@@ -1,4 +1,4 @@
-#include "inc/webserv.hpp"
+#include "../inc/webserv.hpp"
 
 // g++ -std=c++17 server.cpp -o server
 
@@ -43,7 +43,7 @@ int main()
 	struct sockaddr_in address;
 	int addrlen = sizeof(address);
 
-	const char *MessageServer = "Hello from server";
+	const char *MessageServer =  "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\r\n\r\nhello Server";
 
 	// Creating socket file descriptor
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)

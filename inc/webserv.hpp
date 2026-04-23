@@ -18,5 +18,8 @@
 #include <string.h>
 
 
+#include <sys/epoll.h>
+
+
 // inet_pton
 #include <arpa/inet.h>
