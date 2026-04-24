@@ -1,54 +1,52 @@
+# compiling stuff
 CXX = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++17
+FLAG_OPTIMIZING = -O2
+FLAG_DEBUG = -g -O0
 
-# Compiler flags
-CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -g
-#CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer -O1
+# header files
+INCLUDE = ./inc
+CXXFLAGS += -I$(INCLUDE)
 
-# Target executable
-TARGET = webserv
+# program name
+NAME = webserv
 
+# source files
+VPATH =	src
+SRCS =	main.cpp
 
+# obejct files
+OBJ_DIR = obj
+OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.cpp=.o))
 
-SOURCE_DIR = ./src
+all: CXXFLAGS += $(FLAG_OPTIMIZING)
+all: $(NAME)
 
+$(NAME): $(OBJS)
+	$(CXX) $(OBJS) -o $(NAME)
 
-VPATH = $(SOURCE_DIR)
-# Source files
-#SRCS =	server.cpp \
-#		client.cpp
-SRCS =	server.cpp
-		
-
-# Object files
-
-OBJS_Dir = objects
-OBJS = $(addprefix $(OBJS_Dir)/, $(notdir $(SRCS:.cpp=.o)))
-
-
-# Default target
-all: $(TARGET)
-
-# Link the object files to create the executable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
-
-$(OBJS_Dir):
-	@echo "Creating $(OBJS_Dir) directory"
-	@mkdir -p $(OBJS_Dir)
-
-# Compile source files into object files
-$(OBJS_Dir)/%.o: %.cpp | $(OBJS_Dir)
+# .cpp zu .o
+$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
 clean:
-	rm -f $(OBJS) 
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(TARGET)
-	rm -f *.txt
-	rm -r -f objects
+	rm -f $(NAME)
 
 re: fclean all
 
-# do not search for this files
-.PHONY: all clean fclean re
+debug: CXXFLAGS += $(FLAG_DEBUG)
+debug: $(NAME)
+
+run: $(NAME)
+	./$(NAME)
+
+valgrind: fclean debug
+	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME)
+
+.PHONY: all clean fclean re run debug valgrind
