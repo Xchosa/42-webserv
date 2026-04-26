@@ -41,7 +41,7 @@ int main(void)
 	std::vector<pollfd> fds;
 	pollfd server_pollfd;
 	server_pollfd.fd = server_fd;
-	server_pollfd.events = POLLIN;
+	server_pollfd.events = POLLIN; 
 	fds.push_back(server_pollfd);
 
 	while (true)

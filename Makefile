@@ -13,7 +13,8 @@ NAME = webserv
 
 # source files
 VPATH =	src
-SRCS =	main.cpp
+#SRCS =	main.cpp
+SRCS =	event_server.cpp
 
 # obejct files
 OBJ_DIR = obj

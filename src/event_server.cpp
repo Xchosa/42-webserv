@@ -3,17 +3,23 @@
 
 
 #define PORT 8081
-#define MAXCLIENT 10
-#define BUFFER_SIZE 5
 
 int main()
 {
-	int server_fd, new_socket;
-	long valread;
+	int server_fd;
 	struct sockaddr_in address;
-	int addrlen = sizeof(address);
 
-	const char *MessageServer = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nhello Server";
+
+	//const char *MessageServer = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nhello Server";
+	std::string MessageServer =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/html\r\n"
+					"Content-Length: 13\r\n"
+					"\r\n"
+					"Hello, World!";
+                
+
+
 	// Creating socket file descriptor
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	{
@@ -40,12 +46,14 @@ int main()
 	}
 
 
-	struct pollfd fds[MAXCLIENT + 1];
+	//struct pollfd fds[MAXCLIENT + 1];
 	// poll array 
-	int nfds = 1; // only care about one fd -> listening socket 
-	fds[0].fd = server_fd; // array of servers 
-	fds[0].events = POLLIN; // new connection waiting in accept queue  // array of events/ client connections 
-	char** buffer[3000];
+	std::vector<pollfd> fds;
+	pollfd server_pollfd;		// container of servers 
+	server_pollfd.fd = server_fd; // 
+	server_pollfd.events = POLLIN; // flag there is data to read 
+	fds.push_back(server_pollfd);
+
 	
 	
 	while(1)
@@ -54,59 +62,61 @@ int main()
 		//event_server_fd =  poll(struct pollfd *fds, nfds_t nfds, int timeout);
 		
 		// 
-		int ready = poll(fds, nfds, -1); // block until listening socket becomes ready 
+		int ready = poll(fds.data(), fds.size(), -1); // block until listening socket becomes ready 
 		if (ready < 0 )
 		{
             perror("poll");
             break;
         }
-		for (int i = 0 ; i < nfds ; i++)
+		for (size_t i = 0 ; i < fds.size() ; i++)
 		{
-			if(fds[i].fd == ready) // retruns connecting fd
+			if(fds[i].fd == server_fd && fds[i].revents & POLLIN) 
+			// connection is established ++ pollin flag happend 
+			// retruns connecting fd
 			{
-				int client_fd = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+				sockaddr_storage client; // // hold clients ip adress + Port ifno
+				socklen_t client_len = sizeof(client); // store byte size 
+				
+				// client ownwership 
+				int client_fd = accept(server_fd, reinterpret_cast<sockaddr *>(&client), &client_len); // 
+				// which client =  which socket is recieving infos , cast to sockaddr pointer 
 				if (client_fd < 0 )
 				{
 					perror("accept");
 					continue;
 				}
-				if (nfds < MAXCLIENT + 1)
-				{
-					fds[nfds].fd = client_fd;
-					fds[nfds].events = POLLIN;
-					nfds++;
-					printf("new client connected: fd = %d\n", client_fd);
-				}
-				else 
-					perror("to many client: nfds= %d\n, nfds");
+				pollfd client_pollfd;
+				client_pollfd.fd = client_fd;
+				client_pollfd.events = POLLIN;
+				fds.push_back(client_pollfd);
 			}
-			else
+			else if(fds[i].revents & POLLIN)
+			// correct client id with pollin Flag
             {
-                int client_fd = fds[i].fd;
-                ssize_t bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
+				std::vector<char> buffer(5000);
+				int valread = recv(fds[i].fd, buffer.data(), buffer.size(), 0);
 
-                if (bytes_read <= 0)
+                if (valread <= 0)
                 {
                     // client closed connection or error
-                    close(client_fd);
-                    fds[i] = fds[nfds - 1]; // compact array
-                    nfds--;
+					std::cout << "Error recv\n";
+                    close(fds[i].fd);
+                    fds.erase(fds.begin()+i);
                     i--; // re-check the moved entry
                     continue;
                 }
-
-                buffer[bytes_read] = '\0';
-
-                printf("Request received from fd=%d:\n%s\n", client_fd, buffer);
-
-                write(client_fd, MessageServer, strlen(MessageServer));
-                close(client_fd);
-
-                // remove client from poll array
-                fds[i] = fds[nfds - 1];
-                nfds--;
-                i--;
-            }
+				send(fds[i].fd, MessageServer.c_str(), MessageServer.length(), 0);
+				//send(fds[i].fd, buffer.data(), buffer.size(),0 );
+				close(fds[i].fd);
+				fds.erase(fds.begin()+ i);
+				i--;
+			}
+			else if (fds[i].revents & (POLLERR | POLLHUP))
+			{
+				close(fds[i].fd);
+				fds.erase(fds.begin()+ i);
+				i--;
+			}
         }
     }
 
