@@ -1,7 +1,12 @@
 #include "webserv.hpp"
+#include "Lexer.hpp"
 
 int main(void)
 {
+	std::string conf = "conf/example_1.conf";
+	Lexer l(conf);
+	return (1);
+
 	// creating TCP socket
 	int server_fd = socket(PF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1)
