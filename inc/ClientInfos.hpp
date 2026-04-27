@@ -1,13 +1,13 @@
 #include "HttpParser.hpp"
 #include "ServerConfig.hpp"
-#include "config/ListenContex.hpp"
+#include "ListenContex.hpp"
 
-// struct ClientInfos
-//{
-//	HttpParser		_parser;		// geparster http request unter _parser._request
-//	ServerConfig*	_server_config;
-//	std::string		_response;		// spaeter eigenes struct/ class hier?
-// };
+struct ClientInfos
+{
+	HttpParser		_parser;		// geparster http request unter _parser._request
+	ServerConfig*	_server_config;
+	std::string		_response;		// spaeter eigenes struct/ class hier?
+};
 
 // instead tore
 // which listening socket accepted the client
