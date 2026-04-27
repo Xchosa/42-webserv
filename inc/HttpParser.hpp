@@ -18,7 +18,7 @@ enum ParseStatus
 //		// getter fuer request + status
 //		void parse(int fd); // recv(), buffern in _raw_buffer, parsen in _request und _status setzen, vielleicht ParseStatus zurueckgeben?
 //		// parser should not do networking only parse bytes 
-//		// not let httpPaser call secv 
+//		// not let httpPaser call recv 
 
 //};
 
