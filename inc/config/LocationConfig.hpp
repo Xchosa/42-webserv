@@ -24,3 +24,7 @@ struct LocationConfig
 	// helper methods
 	bool allows_method(const std::string& method) const;
 };
+// welche Pfad variablen sind absolut oder relative oder 
+// / = absolut zum pfad der executable 
+// alle anderen pfade sind alle relative zu dieser root
+// ausser cgi die ruft exectuable cgi auf...
