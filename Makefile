@@ -5,16 +5,15 @@ FLAG_OPTIMIZING = -O2
 FLAG_DEBUG = -g -O0
 
 # header files
-INCLUDE = ./inc
-CXXFLAGS += -I$(INCLUDE)
+INCLUDE = ./inc ./inc/config ./inc/config_parser
+CXXFLAGS += $(addprefix -I,$(INCLUDE))
 
 # program name
 NAME = webserv
 
 # source files
 VPATH =	src
-#SRCS =	main.cpp
-SRCS =	event_server.cpp
+SRCS =	main.cpp
 
 # obejct files
 OBJ_DIR = obj

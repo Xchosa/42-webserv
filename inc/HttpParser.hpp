@@ -1,3 +1,5 @@
+#pragma once
+
 #include "HttpRequest.hpp"
 
 enum ParseStatus
@@ -7,23 +9,6 @@ enum ParseStatus
 	ERROR
 };
 
-//class HttpParser
-//{
-//	private:
-//		std::string		_raw_buffer;
-//		HttpRequest		_request;
-//		ParseStatus		_status;
-
-//	public:
-//		// getter fuer request + status
-//		void parse(int fd); // recv(), buffern in _raw_buffer, parsen in _request und _status setzen, vielleicht ParseStatus zurueckgeben?
-//		// parser should not do networking only parse bytes 
-//		// not let httpPaser call secv 
-
-//};
-
-
-
 class HttpParser
 {
 	private:
@@ -32,9 +17,14 @@ class HttpParser
 		ParseStatus		_status;
 
 	public:
-		ParseResult feed(const char* data, size_t n);
-		bool isComplete() const;
-		const HttpRequest& getRequest() const;
-		void reset();
+		// OCF
+		HttpParser() = default;
+		HttpParser(const HttpParser& other) = default;
+		HttpParser& operator=(const HttpParser& other) = default;
+		~HttpParser() = default;
 
-}
+		// member functions
+		ParseStatus feed(const char* data, size_t n);	// feed nach jedem recv() callen und dann status returnen (INCOMPLETE, COMPLETE, ...)
+		const HttpRequest& getRequest() const;			// damit client auf request struct zugreifen kann, vorher auch pruefen ob status = COMPLETE!
+		void reset();									// _raw_buffer, _request, _status leeren, damit parser bereit fuer naechsten request auf derselben verbindung
+};

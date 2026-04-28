@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ServerConfig.hpp"
 
 struct Config
