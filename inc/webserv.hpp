@@ -7,11 +7,11 @@
 #include <cstdio>
 #include <vector>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string>
 #include <exception>
 #include <algorithm>
 #include <sys/epoll.h>
-#include <sys/poll.h>
 
 // Project-Header
 #include "Config.hpp"
