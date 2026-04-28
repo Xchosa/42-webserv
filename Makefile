@@ -12,8 +12,12 @@ CXXFLAGS += $(addprefix -I,$(INCLUDE))
 NAME = webserv
 
 # source files
-VPATH =	src
-SRCS =	main.cpp
+VPATH =	src \
+		src/parser \
+		src/server
+SRCS =	main.cpp \
+		dummyParser.cpp \
+		Server.cpp
 
 # obejct files
 OBJ_DIR = obj

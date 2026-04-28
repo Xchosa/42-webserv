@@ -25,7 +25,7 @@ struct ServerConfig
 	std::vector<std::string>	_server_names;
 	size_t						_client_max_body_size	= 1024 * 1024; // default: 1MB
 	std::map<int, std::string>	_error_pages;
-	std::map< std::string, LocationConfig>	_locations; // location nach string key finen 
+	std::map< std::string, LocationConfig>	_locations; // location nach string key findenen 
 	bool						_is_default_server;
 
 	//helper methods
