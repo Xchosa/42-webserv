@@ -1,120 +1,135 @@
 #include "webserv.hpp"
 #include "Lexer.hpp"
 
-int main(void)
+#define PORT 8081
+#define MAX_EVENTS 10
+
+int main()
 {
-	std::string conf = "conf/example_1.conf";
-	Lexer l(conf);
-	return (1);
+	int server_fd, epoll_fd;
+	struct sockaddr_in address;
+	struct epoll_event event, events[MAX_EVENTS];
 
-	// creating TCP socket
-	int server_fd = socket(PF_INET, SOCK_STREAM, 0);
-	if (server_fd == -1)
+	std::string MessageServer =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/html\r\n"
+		"Content-Length: 13\r\n"
+		"\r\n"
+		"Hello, World!";
+
+	// Creating socket file descriptor
+	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	{
-		perror("Error socket");
-		return (1);
+		perror("In socket");
+		exit(EXIT_FAILURE);
 	}
 
-	// REUSEADDR
-	int opt = 1;
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+	// Set socket to non-blocking
+	int flags = fcntl(server_fd, F_GETFL, 0);
+	if (flags == -1)
 	{
-		perror("Error setsockopt");
-		return (1);
+		perror("fcntl F_GETFL");
+		exit(EXIT_FAILURE);
+	}
+	if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		perror("fcntl F_SETFL O_NONBLOCK");
+		exit(EXIT_FAILURE);
 	}
 
-	// name the socket -> assign a port
-	sockaddr_in sin;
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(8081);
-	sin.sin_addr.s_addr = htonl(INADDR_ANY); // define interface, 0.0.0.0 -> os can choose whatever it wants
-	if (bind(server_fd, reinterpret_cast<sockaddr *>(&sin), sizeof(sin)) == -1)
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(PORT);
+
+	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
 	{
-		perror("Error bind");
-		return (1);
+		perror("In bind");
+		exit(EXIT_FAILURE);
 	}
 
-	// wait for incoming connection
-	if (listen(server_fd, 1000) == -1)
+	if (listen(server_fd, SOMAXCONN) < 0)
 	{
-		std::cerr << "Error listen\n";
-		return (1);
+		perror("In listen");
+		exit(EXIT_FAILURE);
 	}
 
-
-	// init for poll
-	std::vector<pollfd> fds;
-	pollfd server_pollfd;
-	server_pollfd.fd = server_fd;
-	server_pollfd.events = POLLIN; 
-	fds.push_back(server_pollfd);
-
-	while (true)
+	if ((epoll_fd = epoll_create1(0)) < 0)
 	{
-		int ready = poll(fds.data(), fds.size(), -1);
-		if (ready == -1)
+		perror("epoll_create1");
+		exit(EXIT_FAILURE);
+	}
+
+	event.events = EPOLLIN;
+	event.data.fd = server_fd;
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &event) < 0)
+	{
+		perror("epoll_ctl");
+		exit(EXIT_FAILURE);
+	}
+
+	while (1)
+	{
+		int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+		if (n < 0)
 		{
-			perror("Error poll");
-			return (1);
+			perror("epoll_wait");
+			continue;
 		}
 
-		// durch alle fds in pool loopen und schauen wer ready ist
-		for (size_t i = 0; i < fds.size(); i++)
+		for (int i = 0; i < n; i++)
 		{
-			// server_fd ist ready -> neuer client will connecten
-			if (fds[i].fd == server_fd && fds[i].revents & POLLIN)
+			if (events[i].data.fd == server_fd)
 			{
-				// original socket is only used for accepting connections, not for exchanging data
-				sockaddr_storage client;
-				socklen_t client_len = sizeof(client);
-				int client_fd = accept(server_fd, reinterpret_cast<sockaddr *>(&client), &client_len);
-				if (client_fd == -1)
+				// New connection
+				struct sockaddr_in client_addr;
+				socklen_t client_len = sizeof(client_addr);
+				int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+				if (client_fd < 0)
 				{
-					std::cerr << "Error accept\n";
-					return (1);
-				}
-				// add new client to fds
-				pollfd client_pollfd;
-				client_pollfd.fd = client_fd;
-				client_pollfd.events = POLLIN;
-				fds.push_back(client_pollfd);
-			}
-			// client_fd ist ready -> daten lesen
-			else if (fds[i].revents & POLLIN)
-			{
-				char buffer[10000] = {0};
-				int valread = recv(fds[i].fd, buffer, sizeof(buffer), 0);
-				if (valread <= 0)
-				{
-					std::cout << "Error recv\n";
-					close(fds[i].fd);
-					fds.erase(fds.begin() + i);
-					i--;
+					perror("accept");
 					continue;
 				}
-				printf("%s\n", buffer);
-				std::string response =
-					"HTTP/1.1 200 OK\r\n"
-					"Content-Type: text/html\r\n"
-					"Content-Length: 13\r\n"
-					"\r\n"
-					"Hello, World!";
-				
-				send(fds[i].fd, response.c_str(), response.length(), 0);
-				close(fds[i].fd);
-				fds.erase(fds.begin() + i);
-				i--;
+
+				// Set client socket to non-blocking
+				flags = fcntl(client_fd, F_GETFL, 0);
+				fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+
+				event.events = EPOLLIN | EPOLLET; // Edge-triggered for new data
+				event.data.fd = client_fd;
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0)
+				{
+					perror("epoll_ctl add client");
+					close(client_fd);
+				}
 			}
-			// fehler, verbindung getrennt
-			else if (fds[i].revents & (POLLERR | POLLHUP))
+			else
 			{
-				close(fds[i].fd);
-				fds.erase(fds.begin() + i);
-				i--;
+				// Data from a client
+				int client_fd = events[i].data.fd;
+				std::vector<char> buffer(1024);
+				int bytes_read = read(client_fd, buffer.data(), buffer.size());
+
+				if (bytes_read <= 0)
+				{
+					// Connection closed or error
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL); // deletes epoll instance 
+					close(client_fd);
+				}
+				else
+				{
+					// We got a request, send a response
+					send(client_fd, MessageServer.c_str(), MessageServer.length(), 0);
+					// In a real server, you'd parse the request first.
+					// For this simple case, we just close the connection after sending.
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+					close(client_fd);
+				}
 			}
 		}
 	}
+
+	close(server_fd);
+	return 0;
 }
-
-
-
+// telnet localhost 8081
+// GET / HTTP/1.0

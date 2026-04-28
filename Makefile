@@ -5,7 +5,7 @@ FLAG_OPTIMIZING = -O2
 FLAG_DEBUG = -g -O0
 
 # header files
-INCLUDE = ./inc ./inc/config_parser
+INCLUDE = ./inc ./inc/config ./inc/config_parser
 CXXFLAGS += $(addprefix -I,$(INCLUDE))
 
 # program name

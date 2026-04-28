@@ -1,3 +1,5 @@
+#pragma once
+
 #include "LocationConfig.hpp"
 
 struct ServerConfig
