@@ -6,6 +6,10 @@
 
 int main()
 {
+	std::string conf = "conf/example_1.conf";
+	Lexer l(conf);
+	return (1);
+
 	int server_fd, epoll_fd;
 	struct sockaddr_in address;
 	struct epoll_event event, events[MAX_EVENTS];
