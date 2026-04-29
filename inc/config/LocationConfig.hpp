@@ -28,3 +28,10 @@ struct LocationConfig
 // / = absolut zum pfad der executable 
 // alle anderen pfade sind alle relative zu dieser root
 // ausser cgi die ruft exectuable cgi auf...
+
+// html 
+// root ./html/upload_files -> rel. pfad zur root 
+// root ./ => relativ zur executable
+// root /etc => absolut 
+// index index.html		=> relativ zur config 
+// index /index.html 	=>reliv 

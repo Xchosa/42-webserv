@@ -33,11 +33,12 @@ Config hardcodedConfigParser()
         ServerConfig sc;
         sc._listen_port = 8081;
         sc._listen_host = "0.0.0.0";
-		// sc._root = "./html/static"; 
-    	//sc._index = "index.html";
-   		//sc._autoindex = false; 
+
         LocationConfig lc;
         lc._path = "/";
+    	lc._index = "index.html";
+        lc._autoindex = false; 
+        lc._root = "./html/static";
         lc._methods = {"GET", "POST", "DELETE"};
         sc._locations["/"] = lc;
         config._servers.push_back(sc);
@@ -49,10 +50,10 @@ Config hardcodedConfigParser()
         sc._listen_port = 8081;
         sc._listen_host = "0.0.0.0";
         sc._server_names.push_back("example.com");
-        //sc._root = "./html/static";
-        //sc._index = "static_index.html";
-        //sc._autoindex = false;
         LocationConfig lc;
+        lc._root = "./html/static";
+        lc._index = "static_index.html";
+        lc._autoindex = false;
         lc._path = "/";
         lc._methods = {"GET", "POST", "DELETE"};
         sc._locations["/"] = lc;
@@ -63,10 +64,11 @@ Config hardcodedConfigParser()
     {
         ServerConfig sc;
         sc._listen_port = 8082;
-        //sc._autoindex = true;
-        //sc._root = "./html/directory";
 
         LocationConfig lc_root;
+        lc_root._root = "./html/directory";
+        lc_root._autoindex = true;
+
         lc_root._path = "/";
         lc_root._autoindex = true;
         sc._locations["/"] = lc_root;
