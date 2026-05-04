@@ -16,11 +16,12 @@ class Lexer
 		size_t		_pos;		// current pos in source
 		size_t		_line;		// current line in config file
 
-		char current() const;
-		char consume();
-		char peek() const;
+		char 		current() const;
+		char 		consume();
+		std::string consumeWord();
 
 		bool isEof() const;
+		bool isSpecialChar() const;
 
 		void skipComments();
 		void skipWhitespaces();

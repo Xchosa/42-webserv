@@ -19,8 +19,19 @@ bool Lexer::isEof() const
 	return (false);
 }
 
+bool Lexer::isSpecialChar() const
+{
+	char c = current();
+
+	if (c == ';' || c == '{' || c == '}')
+		return (true);
+	return (false);
+}
+
 char Lexer::current() const
 {
+	if (isEof())
+		return ('\0');
 	return (_source.at(_pos));
 }
 
@@ -31,11 +42,6 @@ char Lexer::consume()
 		_line++;
 	_pos++;
 	return (c);
-}
-
-char Lexer::peek() const
-{
-	return (_source.at(_pos + 1));
 }
 
 void Lexer::print(const std::string& x) const
@@ -63,6 +69,17 @@ void Lexer::skipWhitespaces()
 		consume();
 }
 
+std::string Lexer::consumeWord()
+{
+	std::string word;
+
+	while (!isEof() && !isSpecialChar())
+	{
+		word += consume();
+	}
+	return (word);
+}
+
 std::vector<Token> Lexer::buildTokens()
 {
 	std::vector<Token> tokens;
@@ -71,6 +88,9 @@ std::vector<Token> Lexer::buildTokens()
 	{
 		skipComments();
 		skipWhitespaces();
+
+		if (isEof())
+			break ;
 
 		if (current() == ';')
 		{
@@ -87,12 +107,10 @@ std::vector<Token> Lexer::buildTokens()
 			tokens.push_back({RBRACE, "}", _line});
 			consume();
 		}
-		// else
-			// consumeWord();
-
-		consume();
+		else
+			tokens.push_back({WORD, consumeWord(), _line});
 	}
-
+	tokens.push_back({END_OF_FILE, "", _line});
 
 	return (tokens);
 }
