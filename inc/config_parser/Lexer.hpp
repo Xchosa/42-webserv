@@ -23,6 +23,7 @@ class Lexer
 		bool isEof() const;
 		bool isSpecialChar() const;
 
+		void skipCommentsAndWhitespaces();
 		void skipComments();
 		void skipWhitespaces();
 

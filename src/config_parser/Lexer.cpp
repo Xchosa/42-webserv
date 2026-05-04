@@ -30,8 +30,6 @@ bool Lexer::isSpecialChar() const
 
 char Lexer::current() const
 {
-	if (isEof())
-		return ('\0');
 	return (_source.at(_pos));
 }
 
@@ -69,6 +67,15 @@ void Lexer::skipWhitespaces()
 		consume();
 }
 
+void Lexer::skipCommentsAndWhitespaces()
+{
+	while (!isEof() && (current() == '#' || std::isspace(current())))
+	{
+		skipComments();
+		skipWhitespaces();
+	}
+}
+
 std::string Lexer::consumeWord()
 {
 	std::string word;
@@ -86,11 +93,13 @@ std::vector<Token> Lexer::buildTokens()
 
 	while (!isEof())
 	{
-		skipComments();
-		skipWhitespaces();
+		skipCommentsAndWhitespaces();
 
 		if (isEof())
+		{
+			tokens.push_back({END_OF_FILE, "", _line});
 			break ;
+		}
 
 		if (current() == ';')
 		{
@@ -110,7 +119,5 @@ std::vector<Token> Lexer::buildTokens()
 		else
 			tokens.push_back({WORD, consumeWord(), _line});
 	}
-	tokens.push_back({END_OF_FILE, "", _line});
-
 	return (tokens);
 }
