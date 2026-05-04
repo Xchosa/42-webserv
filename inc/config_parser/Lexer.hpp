@@ -12,7 +12,18 @@
 class Lexer
 {
 	private:
-		// ...
+		std::string _source;	// config as a string
+		size_t		_pos;		// current pos in source
+		size_t		_line;		// current line in config file
+
+		char current() const;
+		char consume();
+		char peek() const;
+
+		bool isEof() const;
+
+		void skipComments();
+		void skipWhitespaces();
 
 	public:
 		// OCF
@@ -21,5 +32,12 @@ class Lexer
 		Lexer(const Lexer& other) = delete;
 		Lexer& operator=(const Lexer& other) = delete;
 		~Lexer() = default;
+
+		// methods
+		std::vector<Token> buildTokens();
+
+
+		// for testing
+		void print(const std::string& x) const;
 
 };

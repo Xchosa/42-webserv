@@ -4,11 +4,42 @@
 #define PORT 8081
 #define MAX_EVENTS 10
 
+void printTokens(const std::vector<Token>& tokens)
+{
+    for (const Token& t : tokens)
+    {
+        std::string type;
+        switch (t.type)
+        {
+            case WORD:        type = "WORD       "; break;
+            case SEMICOLIN:   type = "SEMICOLIN  "; break;
+            case LBRACE:      type = "LBRACE     "; break;
+            case RBRACE:      type = "RBRACE     "; break;
+            case END_OF_FILE: type = "EOF        "; break;
+        }
+        std::cout << "[line " << std::setw(3) << t.line << "] "
+                  << type << " | " << t.value << "\n";
+    }
+}
+
 int main()
 {
-	std::string conf = "conf/example_1.conf";
-	Lexer l(conf);
-	return (1);
+	// begin parser
+	try
+	{
+		std::string conf = "conf/example_1.conf";
+		Lexer l(conf);
+
+		std::vector<Token> tokens = l.buildTokens();
+		printTokens(tokens);
+		
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	return (0);
+	// end parser
 
 	int server_fd, epoll_fd;
 	struct sockaddr_in address;
