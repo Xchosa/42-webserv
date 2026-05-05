@@ -45,7 +45,8 @@ int main()
 		Config config;
 		// config = parseConfig("conf/example_1.conf");
 		// config = parseConfig("conf/example_2_big.conf");
-		config = parseConfig("conf/example_3_empty.conf");
+		// config = parseConfig("conf/example_3_empty.conf");
+		config = parseConfig("conf/example_4_all.conf");
 
 
 	}

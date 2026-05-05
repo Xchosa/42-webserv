@@ -23,7 +23,7 @@ bool Lexer::isSpecialChar() const
 {
 	char c = current();
 
-	if (c == ';' || c == '{' || c == '}')
+	if (c == ';' || c == '{' || c == '}' || c == '\n')
 		return (true);
 	return (false);
 }
