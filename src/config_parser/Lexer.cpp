@@ -42,16 +42,6 @@ char Lexer::consume()
 	return (c);
 }
 
-void Lexer::print(const std::string& x) const
-{
-	if (x == "POS")
-		std::cout << _source.substr(_pos);
-	else
-	std::cout << _source.substr(_pos);
-	(void)_pos;
-	(void)_line;
-}
-
 void Lexer::skipComments()
 {
 	if (current() == '#')

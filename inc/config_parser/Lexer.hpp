@@ -37,9 +37,4 @@ class Lexer
 
 		// methods
 		std::vector<Token> buildTokens();
-
-
-		// for testing
-		void print(const std::string& x) const;
-
 };
