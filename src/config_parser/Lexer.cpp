@@ -70,7 +70,7 @@ std::string Lexer::consumeWord()
 {
 	std::string word;
 
-	while (!isEof() && !isSpecialChar())
+	while (!isEof() && !isSpecialChar() && !std::isspace(current()))
 	{
 		word += consume();
 	}
