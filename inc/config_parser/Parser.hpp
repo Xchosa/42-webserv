@@ -26,7 +26,10 @@ class Parser
 		// parse server settings
 		void	parseServerSetting(ServerConfig& sc);
 		void	pssListen(ServerConfig& sc);
-		void	pssServername(ServerConfig &sc);
+		void	pssServername(ServerConfig& sc);
+		void	pssClientMaxBodySize(ServerConfig& sc);
+		void	pssErrorPages(ServerConfig& sc);
+		void	pssIsDefaultServer(ServerConfig& sc);
 		
 		// prase location settings
 		void	parseLocationSetting(LocationConfig& lc);
