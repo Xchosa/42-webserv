@@ -16,7 +16,8 @@ VPATH =	src \
 		src/config_parser
 SRCS =	main.cpp \
 		Lexer.cpp \
-		Parser.cpp
+		Parser.cpp \
+		pss.cpp
 
 # obejct files
 OBJ_DIR = obj

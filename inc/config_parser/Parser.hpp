@@ -3,6 +3,7 @@
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include <arpa/inet.h>
 
 #include "Token.hpp"
 #include "Config.hpp"
@@ -21,7 +22,13 @@ class Parser
 
 		ServerConfig	parseServerBlock();
 		LocationConfig	parseLocationBlock();
-		void			parseServerSetting(ServerConfig& sc);
+		
+		// parse server settings
+		void	parseServerSetting(ServerConfig& sc);
+		void	pssListen(ServerConfig& sc);
+		void	pssServername(ServerConfig &sc);
+		
+		// prase location settings
 		void			parseLocationSetting(LocationConfig& lc);
 
 	public:
