@@ -16,6 +16,13 @@ class Parser
 		Token	current() const;
 		Token	consume();
 		Token	peek() const;
+		Token	expectType(TokenType type, const std::string& expected);
+		Token	expectTypeValue(TokenType type, const std::string& value);
+
+		ServerConfig	parseServerBlock();
+		LocationConfig	parseLocationBlock();
+		void			parseServerSetting(ServerConfig& sc);
+		void			parseLocationSetting(LocationConfig& lc);
 
 	public:
 		// OCF
