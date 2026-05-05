@@ -22,21 +22,36 @@ void printTokens(const std::vector<Token>& tokens)
     }
 }
 
+Config parseConfig(std::string conf_file_path)
+{
+	Lexer l(conf_file_path);
+	std::vector<Token> tokens = l.buildTokens();
+	if (tokens.size() == 0)
+		throw std::runtime_error("Empty config file!");
+
+
+
+	printTokens(tokens);
+
+	Config config;
+	return (config);
+}
+
 int main()
 {
 	// begin parser
 	try
 	{
-		std::string conf = "conf/example_1.conf";
-		Lexer l(conf);
+		Config config;
+		// config = parseConfig("conf/example_1.conf");
+		// config = parseConfig("conf/example_2_big.conf");
+		config = parseConfig("conf/example_3_empty.conf");
 
-		std::vector<Token> tokens = l.buildTokens();
-		printTokens(tokens);
-		
+
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
+		std::cerr << "Error: " << e.what() << '\n';
 	}
 	return (0);
 	// end parser
