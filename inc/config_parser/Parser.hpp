@@ -29,7 +29,7 @@ class Parser
 		void	pssServername(ServerConfig &sc);
 		
 		// prase location settings
-		void			parseLocationSetting(LocationConfig& lc);
+		void	parseLocationSetting(LocationConfig& lc);
 
 	public:
 		// OCF

@@ -32,7 +32,7 @@ Token Parser::expectType(TokenType type, const std::string& expected)
 {
 	Token t = consume();
 	if (t.type != type)
-		throw std::runtime_error("[Exception:expectType] Unexpected value '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: " + expected);
+		throw std::runtime_error("[Exception:expectType] Unexpected value '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: '" + expected + "'");
 	return (t);
 }
 
@@ -53,52 +53,12 @@ LocationConfig Parser::parseLocationBlock()
 
 void Parser::parseServerSetting(ServerConfig& sc)
 {
-	(void)sc;
-
 	Token setting_name = consume();
 
-	// listen
-	// HOST:PORT (host und : sind optional)
 	if (setting_name.value == "listen")
-	{
-		Token t = consume();
-		
-		// get values
-		size_t dp_pos = t.value.find(":");
-		std::string host_str;
-		std::string port_str;
-		if (dp_pos == std::string::npos)
-		{
-			port_str = t.value;
-		}
-		else
-		{
-			host_str = t.value.substr(0, dp_pos);
-			port_str = t.value.substr(dp_pos + 1, t.value.length() - dp_pos);
-
-			// validate ip
-			struct in_addr addr;
-			if (inet_pton(AF_INET, host_str.c_str(), &addr) != 1)
-				throw std::runtime_error("[Exception:parseServerSetting] Invalid ip '" + host_str + "' in line " + std::to_string(t.line));
-			sc._listen_host = host_str;
-		}
-
-		// validate port
-		try
-		{
-			size_t idx;
-			size_t port = std::stoull(port_str, &idx);
-			if (idx != port_str.length() || port < 1 || port > 65535)
-				throw std::runtime_error("[Exception:parseServerSetting] Invalid port '" + port_str + "' in line " + std::to_string(t.line));
-		}
-		catch(const std::exception& e)
-		{
-			throw std::runtime_error("[Exception:parseServerSetting] Invalid port '" + port_str + "' in line " + std::to_string(t.line));
-		}
-		sc._listen_port = std::stoull(port_str);
-	}
-
-
+		pssListen(sc);
+	else if (setting_name.value == "server_name")
+		pssServername(sc);
 
 	expectType(SEMICOLIN, ";");
 }
