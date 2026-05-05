@@ -1,5 +1,6 @@
 #include "webserv.hpp"
 #include "Lexer.hpp"
+#include "Parser.hpp"
 
 #define PORT 8081
 #define MAX_EVENTS 10
@@ -24,16 +25,16 @@ void printTokens(const std::vector<Token>& tokens)
 
 Config parseConfig(std::string conf_file_path)
 {
+	Config config;
+
 	Lexer l(conf_file_path);
 	std::vector<Token> tokens = l.buildTokens();
-	if (tokens.size() == 0)
-		throw std::runtime_error("Empty config file!");
-
-
-
 	printTokens(tokens);
 
-	Config config;
+	Parser p(tokens);
+	config = p.parseConfig();
+
+
 	return (config);
 }
 

@@ -86,10 +86,7 @@ std::vector<Token> Lexer::buildTokens()
 		skipCommentsAndWhitespaces();
 
 		if (isEof())
-		{
-			tokens.push_back({END_OF_FILE, "", _line});
 			break ;
-		}
 
 		if (current() == ';')
 		{
@@ -109,5 +106,6 @@ std::vector<Token> Lexer::buildTokens()
 		else
 			tokens.push_back({WORD, consumeWord(), _line});
 	}
+	tokens.push_back({END_OF_FILE, "", _line});
 	return (tokens);
 }

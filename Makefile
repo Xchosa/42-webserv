@@ -15,7 +15,8 @@ NAME = webserv
 VPATH =	src \
 		src/config_parser
 SRCS =	main.cpp \
-		Lexer.cpp
+		Lexer.cpp \
+		Parser.cpp
 
 # obejct files
 OBJ_DIR = obj
