@@ -31,7 +31,7 @@ class Lexer
 	public:
 		// OCF
 		Lexer() = delete;
-		Lexer(std::string& conf_file_path);
+		Lexer(const std::string& conf_file_path);
 		Lexer(const Lexer& other) = delete;
 		Lexer& operator=(const Lexer& other) = delete;
 		~Lexer() = default;

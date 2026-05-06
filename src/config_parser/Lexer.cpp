@@ -1,6 +1,6 @@
 #include "Lexer.hpp"
 
-Lexer::Lexer(std::string& conf_file_path)
+Lexer::Lexer(const std::string& conf_file_path)
 	: _pos(0), _line(1)
 {
 	std::ifstream file(conf_file_path);
