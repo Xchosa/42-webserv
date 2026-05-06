@@ -29,4 +29,9 @@ struct LocationConfig
 
 
 
-
+// RETURN CODES
+// 301 - Moved Permanently      (Browser cached den neuen Ort)
+// 302 - Found / Temporary      (häufigster Redirect)
+// 303 - See Other              (nach POST → GET umleiten)
+// 307 - Temporary Redirect     (wie 302, aber Methode bleibt erhalten)
+// 308 - Permanent Redirect     (wie 301, aber Methode bleibt erhalten)

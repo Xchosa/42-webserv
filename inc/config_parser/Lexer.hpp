@@ -6,6 +6,7 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <iomanip>
 
 #include "Token.hpp"
 
@@ -36,5 +37,6 @@ class Lexer
 		~Lexer() = default;
 
 		// methods
-		std::vector<Token> buildTokens();
+		std::vector<Token>	buildTokens();
+		void				printTokens(const std::vector<Token>& tokens) const;
 };

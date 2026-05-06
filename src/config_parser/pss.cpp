@@ -54,7 +54,11 @@ void Parser::pssListen(ServerConfig& sc)
 // TODO alles
 void Parser::pssServername(ServerConfig& sc)
 {
-	sc._server_names.push_back(consume().value);
+	while (current().type != SEMICOLIN)
+	{
+		sc._server_names.push_back(consume().value);
+	}
+
 }
 
 // TODO alles

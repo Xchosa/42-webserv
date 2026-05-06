@@ -12,6 +12,24 @@ Lexer::Lexer(std::string& conf_file_path)
 	_source = ss.str();
 }
 
+void Lexer::printTokens(const std::vector<Token>& tokens) const
+{
+    for (const Token& t : tokens)
+    {
+        std::string type;
+        switch (t.type)
+        {
+            case WORD:        type = "WORD       "; break;
+            case SEMICOLIN:   type = "SEMICOLIN  "; break;
+            case LBRACE:      type = "LBRACE     "; break;
+            case RBRACE:      type = "RBRACE     "; break;
+            case END_OF_FILE: type = "EOF        "; break;
+        }
+        std::cout << "[line " << std::setw(3) << t.line << "] "
+                  << type << " | " << t.value << "\n";
+    }
+}
+
 bool Lexer::isEof() const
 {
 	if (_pos >= _source.size())

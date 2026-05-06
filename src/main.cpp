@@ -5,23 +5,7 @@
 #define PORT 8081
 #define MAX_EVENTS 10
 
-void printTokens(const std::vector<Token>& tokens)
-{
-    for (const Token& t : tokens)
-    {
-        std::string type;
-        switch (t.type)
-        {
-            case WORD:        type = "WORD       "; break;
-            case SEMICOLIN:   type = "SEMICOLIN  "; break;
-            case LBRACE:      type = "LBRACE     "; break;
-            case RBRACE:      type = "RBRACE     "; break;
-            case END_OF_FILE: type = "EOF        "; break;
-        }
-        std::cout << "[line " << std::setw(3) << t.line << "] "
-                  << type << " | " << t.value << "\n";
-    }
-}
+
 
 Config parseConfig(std::string conf_file_path)
 {
@@ -29,7 +13,7 @@ Config parseConfig(std::string conf_file_path)
 
 	Lexer l(conf_file_path);
 	std::vector<Token> tokens = l.buildTokens();
-	printTokens(tokens);
+	// l.printTokens(tokens);
 
 	Parser p(tokens);
 	config = p.parseConfig();
@@ -44,10 +28,10 @@ int main()
 	try
 	{
 		Config config;
-		config = parseConfig("conf/example_1.conf");
+		// config = parseConfig("conf/example_1.conf");
 		// config = parseConfig("conf/example_2_big.conf");
 		// config = parseConfig("conf/example_3_empty.conf");
-		// config = parseConfig("conf/example_4_all.conf");
+		config = parseConfig("conf/example_4_all.conf");
 
 
 	}

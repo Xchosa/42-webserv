@@ -44,8 +44,14 @@ void Parser::plsAutoindex(LocationConfig& lc)
 // TODO alles
 void Parser::plsReturn(LocationConfig& lc)
 {
-	lc._redirect_code = std::stoi(consume().value);
-	lc._redirect_url = consume().value;
+	Token code = consume();
+	Token to = consume();
+
+	if (code.type != WORD || to.type != WORD) // hier noch pruefung ob url/pfad stimmt
+		throw std::runtime_error("[Exception:plsReturn] Unexpected value for redirect url '" + to.value + "' in line " + std::to_string(to.line) + "! Expected: a path or url");
+
+	lc._redirect_code = std::stoi(code.value);
+	lc._redirect_url = to.value;
 }
 
 // TODO alles

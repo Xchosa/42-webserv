@@ -3,7 +3,7 @@
 Parser::Parser(const std::vector<Token>& tokens)
 	: _tokens(tokens), _pos(0)
 {
-	if (_tokens.size() == 0)
+	if (_tokens[0].type == END_OF_FILE)
 		throw std::runtime_error("Empty config file!");
 }
 
@@ -63,7 +63,7 @@ void Parser::parseServerSetting(ServerConfig& sc)
 	else if (setting_name.value == "is_default_server")
 		pssIsDefaultServer(sc);
 	else
-		throw std::runtime_error("[Exception:parseServerSetting] Unexpected setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
+		throw std::runtime_error("[Exception:parseServerSetting] Unknown setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
 
 	expectType(SEMICOLIN, ";");
 }
@@ -87,7 +87,7 @@ void Parser::parseLocationSetting(LocationConfig& lc)
 	else if (setting_name.value == "cgi_ext")
 		plsCgi(lc);
 	else
-		throw std::runtime_error("[Exception:parseLocationSetting] Unexpected setting key '" + current().value + "' in line " + std::to_string(current().line));
+		throw std::runtime_error("[Exception:parseLocationSetting] Unknown setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
 
 	expectType(SEMICOLIN, ";");
 }
