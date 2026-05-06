@@ -2,6 +2,7 @@
 
 #include "LocationConfig.hpp"
 
+// changed _location vector to map 
 struct ServerConfig
 {
 	std::string								_listen_host;

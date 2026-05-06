@@ -26,12 +26,22 @@ struct LocationConfig
 };
 
 
-
-
-
 // RETURN CODES
 // 301 - Moved Permanently      (Browser cached den neuen Ort)
 // 302 - Found / Temporary      (häufigster Redirect)
 // 303 - See Other              (nach POST → GET umleiten)
 // 307 - Temporary Redirect     (wie 302, aber Methode bleibt erhalten)
 // 308 - Permanent Redirect     (wie 301, aber Methode bleibt erhalten)
+
+
+// welche Pfad variablen sind absolut oder relative oder 
+// / = absolut zum pfad der executable 
+// alle anderen pfade sind alle relative zu dieser root
+// ausser cgi die ruft exectuable cgi auf...
+
+// html 
+// root ./html/upload_files -> rel. pfad zur root 
+// root ./ => relativ zur executable
+// root /etc => absolut 
+// index index.html		=> relativ zur config 
+// index /index.html 	=>reliv 

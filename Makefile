@@ -13,13 +13,16 @@ NAME = webserv
 
 # source files
 VPATH =	src \
-		src/config_parser
+		src/config_parser \
+		src/server
+
 SRCS =	main.cpp \
 		Lexer.cpp \
 		Parser.cpp \
 		ps.cpp \
 		pss.cpp \
-		pls.cpp
+		pls.cpp \
+		Server.cpp
 
 # obejct files
 OBJ_DIR = obj
