@@ -53,7 +53,7 @@ debug: CXXFLAGS += $(FLAG_DEBUG)
 debug: $(NAME)
 
 run: $(NAME)
-	./$(NAME)
+	./$(NAME) conf/example_1.conf
 
 valgrind: fclean debug
 	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME)
