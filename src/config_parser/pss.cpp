@@ -4,14 +4,14 @@
 void Parser::pssRoot(ServerConfig& sc)
 {
 	psRoot(current());
-	sc._root = consume().value;
+	sc._tmp_root = consume().value;
 }
 
 // TODO alles
 void Parser::pssIndex(ServerConfig& sc)
 {
 	psIndex(current());
-	sc._index = consume().value;
+	sc._tmp_index = consume().value;
 }
 
 void Parser::pssListen(ServerConfig& sc)

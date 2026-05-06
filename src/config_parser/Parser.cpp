@@ -116,8 +116,8 @@ void Parser::validateLocationPath(const Token& t)
 
 void Parser::setLocationDefaultSettings(ServerConfig& sc)
 {
-	bool 		has_default_root =	sc._root.has_value();
-	bool 		has_default_index = sc._index.has_value();
+	bool 		has_default_root =	sc._tmp_root.has_value();
+	bool 		has_default_index = sc._tmp_index.has_value();
 
 	if (has_default_root == true || has_default_index == true)
 	{
@@ -128,13 +128,13 @@ void Parser::setLocationDefaultSettings(ServerConfig& sc)
 			if (has_default_root == true)
 			{
 				if (val._root.length() == 0)
-					val._root = sc._root.value();
+					val._root = sc._tmp_root.value();
 			}
 			// set default index
 			if (has_default_index == true)
 			{
 				if (val._index.length() == 0)
-					val._index = sc._index.value();
+					val._index = sc._tmp_index.value();
 			}
 		}
 	}
