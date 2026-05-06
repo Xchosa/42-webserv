@@ -114,6 +114,32 @@ void Parser::validateLocationPath(const Token& t)
 	(void)t;
 }
 
+void Parser::setLocationDefaultSettings(ServerConfig& sc)
+{
+	bool 		has_default_root =	sc._root.has_value();
+	bool 		has_default_index = sc._index.has_value();
+
+	if (has_default_root == true || has_default_index == true)
+	{
+		// go through locations
+		for (auto& [key, val] : sc._locations)
+		{
+			// set default root
+			if (has_default_root == true)
+			{
+				if (val._root.length() == 0)
+					val._root = sc._root.value();
+			}
+			// set default index
+			if (has_default_index == true)
+			{
+				if (val._index.length() == 0)
+					val._index = sc._index.value();
+			}
+		}
+	}
+}
+
 ServerConfig Parser::parseServerBlock()
 {
 	ServerConfig sc;
@@ -129,22 +155,18 @@ ServerConfig Parser::parseServerBlock()
 			Token location_path = expectType(WORD, "<location_path");
 			validateLocationPath(location_path);
 			
-			// wenn location doppelt -> fehler
+			// if location double -> error
 			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock());
 			if (!inserted)
 				throw std::runtime_error("[Exception:parseServerBlock] Doubled location '" + current().value + "' in line " + std::to_string(current().line));
 		}
 		else if (current().type == WORD && peek().type == WORD)
-		{
 			parseServerSetting(sc);
-		}
 		else
-		{
 			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
-		}
 	}
-	// TODO hier noch default values von ServerConfig in die LocationConfig schreiben (falls settings nach locations stehen)
 	expectType(RBRACE, "}");
+	setLocationDefaultSettings(sc);
 	return (sc);
 }
 
