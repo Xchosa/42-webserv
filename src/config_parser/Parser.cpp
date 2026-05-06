@@ -44,13 +44,6 @@ Token Parser::expectTypeValue(TokenType type, const std::string& value)
 	return (t);
 }
 
-LocationConfig Parser::parseLocationBlock()
-{
-	LocationConfig lc;
-
-	return (lc);
-}
-
 void Parser::parseServerSetting(ServerConfig& sc)
 {
 	Token setting_name = consume();
@@ -75,6 +68,34 @@ void Parser::parseServerSetting(ServerConfig& sc)
 	expectType(SEMICOLIN, ";");
 }
 
+void Parser::parseLocationSetting(LocationConfig& lc)
+{
+	 Token setting_name = consume();
+	 
+}
+
+LocationConfig Parser::parseLocationBlock()
+{
+	LocationConfig lc;
+
+	expectType(LBRACE, "{");
+	while (current().type != RBRACE)
+	{
+		if (current().type == WORD && peek().type == WORD)
+			parseLocationSetting(lc);
+		else
+			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
+	}
+	expectType(RBRACE, "}");
+	return (lc);
+}
+
+// TODO all
+void Parser::validateLocationPath(const Token& t)
+{
+	(void)t;
+}
+
 ServerConfig Parser::parseServerBlock()
 {
 	ServerConfig sc;
@@ -86,9 +107,14 @@ ServerConfig Parser::parseServerBlock()
 	{
 		if (current().value == "location" && peek().type == WORD)
 		{
-			// sc._locations.push_back(parseLocationBlock());
-			// noch vervollstaendigen solange consume damit ich unten testen kann
-			consume();
+			expectTypeValue(WORD, "location");
+			Token location_path = expectType(WORD, "<location_path");
+			validateLocationPath(location_path);
+			
+			// wenn location doppelt -> fehler
+			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock());
+			if (!inserted)
+				throw std::runtime_error("[Exception:parseServerBlock] Doubled location '" + current().value + "' in line " + std::to_string(current().line));
 		}
 		else if (current().type == WORD && peek().type == WORD)
 		{
@@ -98,21 +124,11 @@ ServerConfig Parser::parseServerBlock()
 		{
 			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
 		}
-
-
-
 	}
+	// TODO hier noch default values von ServerConfig in die LocationConfig schreiben (falls settings nach locations stehen)
 	expectType(RBRACE, "}");
-
 	return (sc);
 }
-
-
-
-
-
-
-
 
 Config Parser::parseConfig()
 {

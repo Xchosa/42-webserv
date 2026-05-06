@@ -22,6 +22,7 @@ class Parser
 
 		ServerConfig	parseServerBlock();
 		LocationConfig	parseLocationBlock();
+		void			validateLocationPath(const Token& t);
 		
 		// parse server settings
 		void	parseServerSetting(ServerConfig& sc);
@@ -35,6 +36,7 @@ class Parser
 		
 		// prase location settings
 		void	parseLocationSetting(LocationConfig& lc);
+		
 
 	public:
 		// OCF
