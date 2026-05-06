@@ -63,15 +63,33 @@ void Parser::parseServerSetting(ServerConfig& sc)
 	else if (setting_name.value == "is_default_server")
 		pssIsDefaultServer(sc);
 	else
-		throw std::runtime_error("[Exception:parseServerSetting] Unexpected setting key '" + current().value + "' in line " + std::to_string(current().line));
+		throw std::runtime_error("[Exception:parseServerSetting] Unexpected setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
 
 	expectType(SEMICOLIN, ";");
 }
 
 void Parser::parseLocationSetting(LocationConfig& lc)
 {
-	 Token setting_name = consume();
-	 
+	Token setting_name = consume();
+	(void)lc;
+	if (setting_name.value == "root")
+		plsRoot(lc);
+	else if (setting_name.value == "index")
+		plsIndex(lc);
+	else if (setting_name.value == "methods")
+		plsMethods(lc);
+	else if (setting_name.value == "autoindex")
+		plsAutoindex(lc);
+	else if (setting_name.value == "return")
+		plsReturn(lc);
+	else if (setting_name.value == "upload_store")
+		plsUploadStore(lc);
+	else if (setting_name.value == "cgi_ext")
+		plsCgi(lc);
+	else
+		throw std::runtime_error("[Exception:parseLocationSetting] Unexpected setting key '" + current().value + "' in line " + std::to_string(current().line));
+
+	expectType(SEMICOLIN, ";");
 }
 
 LocationConfig Parser::parseLocationBlock()

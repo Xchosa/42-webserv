@@ -1,5 +1,19 @@
 #include "Parser.hpp"
 
+// TODO alles
+void Parser::pssRoot(ServerConfig& sc)
+{
+	psRoot(current());
+	sc._root = consume().value;
+}
+
+// TODO alles
+void Parser::pssIndex(ServerConfig& sc)
+{
+	psIndex(current());
+	sc._index = consume().value;
+}
+
 void Parser::pssListen(ServerConfig& sc)
 {
 	Token t = consume();
@@ -41,18 +55,6 @@ void Parser::pssListen(ServerConfig& sc)
 void Parser::pssServername(ServerConfig& sc)
 {
 	sc._server_names.push_back(consume().value);
-}
-
-// TODO alles
-void Parser::pssRoot(ServerConfig& sc)
-{
-	sc._root = consume().value;
-}
-
-// TODO alles
-void Parser::pssIndex(ServerConfig& sc)
-{
-	sc._index = consume().value;
 }
 
 // TODO alles

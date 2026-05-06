@@ -18,7 +18,7 @@ struct LocationConfig
 	std::optional<std::string>			_redirect_url;
 	
 	std::optional<std::string>			_upload_store;
-	std::optional<size_t>				_max_body_size;		// nur auf server ebene
+	// std::optional<size_t>				_max_body_size;		// nur auf server ebene
 	std::map<std::string, std::string> 	_cgi_map;
 
 	// helper methods

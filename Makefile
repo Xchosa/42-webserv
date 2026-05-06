@@ -17,7 +17,9 @@ VPATH =	src \
 SRCS =	main.cpp \
 		Lexer.cpp \
 		Parser.cpp \
-		pss.cpp
+		ps.cpp \
+		pss.cpp \
+		pls.cpp
 
 # obejct files
 OBJ_DIR = obj

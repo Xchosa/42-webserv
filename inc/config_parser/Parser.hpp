@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <arpa/inet.h>
+#include <set>
 
 #include "Token.hpp"
 #include "Config.hpp"
@@ -24,19 +25,29 @@ class Parser
 		LocationConfig	parseLocationBlock();
 		void			validateLocationPath(const Token& t);
 		
+		// parse doubled settings (server and location)
+		void	psRoot(const Token &t);
+		void	psIndex(const Token &t);
+
 		// parse server settings
 		void	parseServerSetting(ServerConfig& sc);
-		void	pssListen(ServerConfig& sc);
-		void	pssServername(ServerConfig& sc);
 		void	pssRoot(ServerConfig& sc);
 		void	pssIndex(ServerConfig& sc);
+		void	pssListen(ServerConfig& sc);
+		void	pssServername(ServerConfig& sc);
 		void	pssClientMaxBodySize(ServerConfig& sc);
 		void	pssErrorPage(ServerConfig& sc);
 		void	pssIsDefaultServer(ServerConfig& sc);
 		
 		// prase location settings
 		void	parseLocationSetting(LocationConfig& lc);
-		
+		void	plsRoot(LocationConfig& lc);
+		void	plsIndex(LocationConfig& lc);
+		void	plsMethods(LocationConfig& lc);
+		void	plsAutoindex(LocationConfig& lc);
+		void	plsReturn(LocationConfig& lc);
+		void	plsUploadStore(LocationConfig& lc);
+		void	plsCgi(LocationConfig& lc);
 
 	public:
 		// OCF
