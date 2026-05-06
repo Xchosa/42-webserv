@@ -59,6 +59,18 @@ void Parser::parseServerSetting(ServerConfig& sc)
 		pssListen(sc);
 	else if (setting_name.value == "server_name")
 		pssServername(sc);
+	else if (setting_name.value == "root")
+		pssRoot(sc);
+	else if (setting_name.value == "index")
+		pssIndex(sc);
+	else if (setting_name.value == "client_max_body_size")
+		pssClientMaxBodySize(sc);
+	else if (setting_name.value == "error_page")
+		pssErrorPage(sc);
+	else if (setting_name.value == "is_default_server")
+		pssIsDefaultServer(sc);
+	else
+		throw std::runtime_error("[Exception:parseServerSetting] Unexpected setting key '" + current().value + "' in line " + std::to_string(current().line));
 
 	expectType(SEMICOLIN, ";");
 }
@@ -75,6 +87,7 @@ ServerConfig Parser::parseServerBlock()
 		if (current().value == "location" && peek().type == WORD)
 		{
 			// sc._locations.push_back(parseLocationBlock());
+			// noch vervollstaendigen solange consume damit ich unten testen kann
 			consume();
 		}
 		else if (current().type == WORD && peek().type == WORD)
@@ -85,8 +98,6 @@ ServerConfig Parser::parseServerBlock()
 		{
 			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
 		}
-
-
 
 
 

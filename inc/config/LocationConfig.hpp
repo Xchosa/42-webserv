@@ -22,5 +22,5 @@ struct LocationConfig
 	std::map<std::string, std::string> 	_cgi_map;
 
 	// helper methods
-	bool allows_method(const std::string& method) const;
+	// bool allows_method(const std::string& method) const;
 };
