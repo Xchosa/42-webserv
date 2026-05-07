@@ -66,11 +66,46 @@ void Parser::pssServername(ServerConfig& sc)
 	}
 }
 
-// TODO alles
 void Parser::pssClientMaxBodySize(ServerConfig& sc)
 {
-	sc._client_max_body_size = 1024 * 1024;
-	consume();
+	Token t = consume();
+
+	if (t.value == "0") // unlimited
+	{
+		sc._client_max_body_size = 0;
+		return ;
+	}
+	if (t.value.length() <= 1)
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line));
+
+	// get number
+	std::string	nbr_str = t.value.substr(0, t.value.length() - 1);
+	size_t		idx;
+	size_t		nbr;
+	try
+	{
+		nbr = std::stoull(nbr_str, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Overflow when converting data size in bytes '" + nbr_str + "' in line " + std::to_string(t.line));
+	}
+	if (idx != nbr_str.length())
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + nbr_str + "' in line " + std::to_string(t.line));
+
+	// get suffix (kb, mb, gb, etc)
+	char	suffix = t.value.back();
+	size_t	multiplier;
+	if (suffix == 'k')
+		multiplier = 1024ULL;
+	else if (suffix == 'm')
+		multiplier = 1024ULL * 1024;
+	else if (suffix == 'g')
+		multiplier = 1024ULL * 1024 * 1024;
+	else
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line) + "! Expected: 'k', 'm' or 'g'");
+
+	sc._client_max_body_size = nbr * multiplier;
 }
 
 // TODO alles

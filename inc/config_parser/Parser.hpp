@@ -5,6 +5,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <set>
+#include <string>
 
 #include "Token.hpp"
 #include "Config.hpp"
