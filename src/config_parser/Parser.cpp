@@ -71,7 +71,7 @@ void Parser::parseServerSetting(ServerConfig& sc)
 void Parser::parseLocationSetting(LocationConfig& lc)
 {
 	Token setting_name = consume();
-	(void)lc;
+
 	if (setting_name.value == "root")
 		plsRoot(lc);
 	else if (setting_name.value == "index")
