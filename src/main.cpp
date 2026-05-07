@@ -17,7 +17,7 @@ int main()
 		config._servers.push_back(dummyParser());
 		
 		Server server(config);
-		//server.run();
+		server.run();
 	}
 	catch( const std::exception &e){
 		std::cerr << "Error" << e.what() <<std::endl;

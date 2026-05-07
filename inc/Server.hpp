@@ -3,6 +3,9 @@
 #include "ClientInfos.hpp"
 #include "Config.hpp"
 
+
+#define MaxEvents 64
+
 class Server
 {
 	private:
@@ -10,6 +13,14 @@ class Server
 		int 							_epoll_fd;		// fd von epoll
 		std::map<int, ListenContext*>	_socket_fds;	// alle socket_fds (unique ports = fuer jeden port 1 socket)
 		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+	
+		void addFdEpoll(int fd, uint32_t events);
+		void setNonBlocking(int server_fd);
+		void modifyFdEpoll(int fd, uint32_t events);
+		void removeFdEpoll(int fd);
+		int	createListeningSocket(const ServerConfig& server_config);
+		void setupListeningSockets();
+	
 	public:
 		// OCF
 		Server() = delete;
@@ -18,7 +29,7 @@ class Server
 		Server& operator=(const Server& other) = delete;
 		~Server();										// destructor muss epoll und alle client_fds closen
 
-		//run()
+		void run();
 		// member functions
 		// methoden wie: run(), accept_client(), handlRecv(), handleSend(), usw...
 };

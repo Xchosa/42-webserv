@@ -17,7 +17,8 @@ VPATH =	src \
 		src/server
 SRCS =	main.cpp \
 		dummyParser.cpp \
-		Server.cpp
+		Server.cpp \
+		Sockets.cpp
 
 # obejct files
 OBJ_DIR = obj
