@@ -2,10 +2,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 
-
-
-
-#define MAX_EVENTS 10
+#define MAX_EVENTS 10 // @PAUL; was ist das hier?
 
 Config startParseConfig(const std::string& conf_file_path)
 {
@@ -37,11 +34,10 @@ int main(int argc, char **argv)
 		Server server(config);
 		//server.run();
 	}
-	catch( const std::exception &e){
+	catch(const std::exception &e)
+	{
 		std::cerr << "Error" << e.what() <<std::endl;
 		return 1;
 	}
-	return 0;
+	return 0;	
 }
-
-// check with debugger what is filled and what is not
