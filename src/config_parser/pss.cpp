@@ -49,14 +49,21 @@ void Parser::pssListen(ServerConfig& sc)
 	sc._listen_port = std::stoull(port_str);
 }
 
-// TODO alles
 void Parser::pssServername(ServerConfig& sc)
 {
+	const std::string forbidden_chars = "*?[]{};\n#\"' \\/";
+
 	while (current().type != SEMICOLIN)
 	{
-		sc._server_names.push_back(consume().value);
+		Token t = consume();
+		auto pos = t.value.find_first_of(forbidden_chars);
+		if (pos != std::string::npos)
+		{
+			char invalid_char = t.value[pos];
+			throw std::runtime_error("[Exception:pssServername] Invalid server_name '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+		}
+		sc._server_names.push_back(t.value);
 	}
-
 }
 
 // TODO alles
