@@ -158,7 +158,7 @@ ServerConfig Parser::parseServerBlock()
 			// if location double -> error
 			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock());
 			if (!inserted)
-				throw std::runtime_error("[Exception:parseServerBlock] Doubled location '" + current().value + "' in line " + std::to_string(current().line));
+				throw std::runtime_error("[Exception:parseServerBlock] Doubled location '" + location_path.value + "' in line " + std::to_string(location_path.line));
 		}
 		else if (current().type == WORD && peek().type == WORD)
 			parseServerSetting(sc);
