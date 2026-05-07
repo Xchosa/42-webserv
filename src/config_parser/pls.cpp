@@ -1,13 +1,11 @@
 #include "Parser.hpp"
 
-// TODO alles
 void Parser::plsRoot(LocationConfig& lc)
 {
 	psRoot(current());
 	lc._root = consume().value;
 }
 
-// TODO alles
 void Parser::plsIndex(LocationConfig& lc)
 {
 	psIndex(current());

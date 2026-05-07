@@ -1,13 +1,11 @@
 #include "Parser.hpp"
 
-// TODO alles
 void Parser::pssRoot(ServerConfig& sc)
 {
 	psRoot(current());
 	sc._tmp_root = consume().value;
 }
 
-// TODO alles
 void Parser::pssIndex(ServerConfig& sc)
 {
 	psIndex(current());
