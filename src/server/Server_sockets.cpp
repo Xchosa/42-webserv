@@ -1,6 +1,18 @@
 #include "webserv.hpp"
 
-
+void Server::setNonBlocking(int server_fd)
+{
+	int flags = fcntl(server_fd, F_GETFL, 0);
+	if (flags == -1)
+	{
+		throw std::runtime_error("failed to set server_fd to non_blocking");
+	}
+	int flags = fcntl(server_fd, F_SETFL, 0);
+	if (flags == -1)
+	{
+		throw std::runtime_error("failed to set server_fd to non_blocking");
+	}
+}
 
 int Server::createListeningSocket(const ServerConfig& server_config)
 {
@@ -40,15 +52,13 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 
 void Server::setupListeningSockets()
 {
-	for(size_t i = 0; i <= _config._servers.size(); i++)
+	for(size_t i = 0; i < _config._servers.size(); ++i)
 	{
 		int server_fd = createListeningSocket(_config._servers[i]);
 		this->_socket_fds[server_fd] = NULL;
 		addFdEpoll(server_fd, EPOLLIN);
 
 		std::cout<< "Listening on port: " <<  _config._servers[i]._listen_port << "| fd: " << server_fd << std::endl;
-
-
 
 	}
 }

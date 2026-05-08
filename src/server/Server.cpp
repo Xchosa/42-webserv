@@ -34,46 +34,6 @@ Server::~Server()
 
 }
 
-void Server::setNonBlocking(int server_fd)
-{
-	int flags = fcntl(server_fd, F_GETFL, 0);
-	if (flags == -1)
-	{
-		throw std::runtime_error("failed to set server_fd to non_blocking");
-	}
-}
-
-
-void Server::addFdEpoll(int fd, uint32_t events)
-{
-	epoll_event _epollEv{};
-
-	_epollEv.events = events; // epollin, epollout setting mask
-	_epollEv.data.fd = fd; 
-
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &_epollEv) == -1)
-		throw std::runtime_error("epoll_ctl ADD failed");
-}
-
-void Server::modifyFdEpoll(int fd, uint32_t events)
-{
-	epoll_event _epollEv{};
-
-	_epollEv.events = events;
-	_epollEv.data.fd = fd;
-
-	if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &_epollEv) == -1)
-		throw std::runtime_error("epoll_ctl MOD failed");
-
-}
-void Server::removeFdEpoll(int fd)
-{
-    if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("epoll_ctl DEL failed (fd invalid,notRegistered,closed)")
-}
-
-
-
 
 
 
@@ -98,12 +58,29 @@ void Server::run()
 				continue;
 			throw std::runtime_error("epoll_wait failed");
 		}
-		for(int i = 0; i <= readyEvents; i++)
+		for(size_t i = 0; i < readyEvents; ++i)
 		{
+			int fd = triggeredEvents[i].data.fd;
+			uint32_t event_flag = triggeredEvents[i].events;
+
+			if(event_flag & EPOLLERR | EPOLLHUP | EPOLLRDHUP)
+			{
+				close(fd);// find error client
+				continue;
+			}
+			if (this->_socket_fds.find(fd) != _socket_fds.end())
+				acceptFd(fd); // fd = serverfd add new client // new cliend_fd lifes
+		
+			else if(event_flag & EPOLLIN)
+				readFd(fd); // 
 			
-			// listining, 
+			//else if (event_flag & EPOLLOUT)
+			//	writeFD(client_fd);
+
+			// send
+			
+
 		}
-	// epoll created in constructor
 	}
 
 

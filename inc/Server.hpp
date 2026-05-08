@@ -20,6 +20,9 @@ class Server
 		void removeFdEpoll(int fd);
 		int	createListeningSocket(const ServerConfig& server_config);
 		void setupListeningSockets();
+		void acceptFd(int client_fd);
+		void readFd(int client_fd);
+		void writeFD(int client_fd);
 	
 	public:
 		// OCF
