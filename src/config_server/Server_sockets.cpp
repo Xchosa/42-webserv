@@ -7,8 +7,8 @@ void Server::setNonBlocking(int server_fd)
 	{
 		throw std::runtime_error("failed to set server_fd to non_blocking");
 	}
-	int flags = fcntl(server_fd, F_SETFL, 0);
-	if (flags == -1)
+	int flags2 = fcntl(server_fd, F_SETFL, 0);
+	if (flags2 == -1)
 	{
 		throw std::runtime_error("failed to set server_fd to non_blocking");
 	}

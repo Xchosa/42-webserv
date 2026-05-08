@@ -58,12 +58,12 @@ void Server::run()
 				continue;
 			throw std::runtime_error("epoll_wait failed");
 		}
-		for(size_t i = 0; i < readyEvents; ++i)
+		for(int i = 0; i < readyEvents; ++i)
 		{
 			int fd = triggeredEvents[i].data.fd;
 			uint32_t event_flag = triggeredEvents[i].events;
 
-			if(event_flag & EPOLLERR | EPOLLHUP | EPOLLRDHUP)
+			if(event_flag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 			{
 				close(fd);// find error client
 				continue;

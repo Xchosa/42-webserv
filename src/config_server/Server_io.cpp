@@ -38,20 +38,54 @@ void Server::readFd(int client_fd)
 {
 	// recv()
 	// read()
-	std::string buffer;
-	buffer.resize(4096);
+	//std::string buffer;
+	//buffer.resize(4096);
+	char buffer[4096];
 	while(true)
 	{
 		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer),0  );
 
 		if(bytes >0)
 		{
-			//ParseStatus tmp_status = _clients[client_fd]._parser.feed()
+			ParseStatus tmp_status = _clients[client_fd]._parser.feed(buffer, bytes);
+
+
+			if(tmp_status == COMPLETE)
+			{
+				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				break;
+			}
+			if(tmp_status == ERROR)
+			{
+				removeFdEpoll(client_fd);
+				close(client_fd);
+				_clients.erase(client_fd);
+				break;
+			}
 		}
+		else if (bytes == 0)
+  		{
+  			removeFdEpoll(client_fd);
+  			close(client_fd);
+  			_clients.erase(client_fd);
+  			break;
+  		}
+		else
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)// no data available right now
+  				break;
+			removeFdEpoll(client_fd);
+  			close(client_fd);
+  			_clients.erase(client_fd);
+  			break;
+
+		}
+
 	}
 }
 
 void Server::writeFD(int client_fd)
 {
-	void();
+	
+	(void)client_fd;
 }
