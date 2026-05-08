@@ -13,12 +13,16 @@ NAME = webserv
 
 # source files
 VPATH =	src \
-		src/parser \
+		src/config_parser \
 		src/server
+
 SRCS =	main.cpp \
-		dummyParser.cpp \
-		Server.cpp \
-		Sockets.cpp
+		Lexer.cpp \
+		Parser.cpp \
+		ps.cpp \
+		pss.cpp \
+		pls.cpp \
+		Server.cpp
 
 # obejct files
 OBJ_DIR = obj
@@ -49,7 +53,7 @@ debug: CXXFLAGS += $(FLAG_DEBUG)
 debug: $(NAME)
 
 run: $(NAME)
-	./$(NAME)
+	./$(NAME) conf/example_1.conf
 
 valgrind: fclean debug
 	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME)
