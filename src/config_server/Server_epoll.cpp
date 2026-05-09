@@ -17,7 +17,7 @@ void Server::modifyFdEpoll(int fd, uint32_t events)
 {
 	epoll_event _epollEv{};
 
-	_epollEv.events = events;
+	_epollEv.events = events; 
 	_epollEv.data.fd = fd;
 
 	if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &_epollEv) == -1)

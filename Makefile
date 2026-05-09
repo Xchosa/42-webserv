@@ -22,6 +22,7 @@ SRCS =	main.cpp \
 		ps.cpp \
 		pss.cpp \
 		pls.cpp \
+		memberfkParser.cpp \
 		Server.cpp \
 		Server_epoll.cpp \
 		Server_io.cpp \

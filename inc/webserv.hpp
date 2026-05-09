@@ -18,3 +18,4 @@
 #include "Config.hpp"
 #include "Server.hpp"
 #include "ServerConfig.hpp"
+#include "HttpResponse.hpp"

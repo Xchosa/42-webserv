@@ -36,6 +36,13 @@ Server::~Server()
 
 
 
+//browser connects
+//server accepts
+//server receives raw HTTP request
+//server prints request
+//server sends fixed dummy HTTP response
+//browser displays page
+
 
 
 ////int _epoll_fd = epoll_create1(_socket_fds.size());								// fd von epoll
@@ -74,8 +81,8 @@ void Server::run()
 			else if(event_flag & EPOLLIN)
 				readFd(fd); // 
 			
-			//else if (event_flag & EPOLLOUT)
-			//	writeFD(client_fd);
+			else if (event_flag & EPOLLOUT)
+				writeFD(fd);
 
 			// send
 			

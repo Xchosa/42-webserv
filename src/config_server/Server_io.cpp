@@ -34,6 +34,9 @@ void Server::acceptFd(int server_fd)
 }
 
 
+
+
+
 void Server::readFd(int client_fd)
 {
 	// recv()
@@ -53,6 +56,8 @@ void Server::readFd(int client_fd)
 			if(tmp_status == COMPLETE)
 			{
 				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
+				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
 			if(tmp_status == ERROR)
@@ -86,6 +91,21 @@ void Server::readFd(int client_fd)
 
 void Server::writeFD(int client_fd)
 {
-	
-	(void)client_fd;
+	std::string response = _clients[client_fd]._response_buffer;
+
+	ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
+	if (bytes < 0)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+  			return;
+		removeFdEpoll(client_fd),
+		close(client_fd);
+		_clients.erase(client_fd);
+		return;
+
+	}
+	else if (bytes > 0)
+	{
+		
+	}
 }
