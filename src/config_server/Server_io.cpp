@@ -104,8 +104,13 @@ void Server::writeFD(int client_fd)
 		return;
 
 	}
-	else if (bytes > 0)
-	{
-		
-	}
+	response.erase(0, bytes);
+
+  	if (response.empty())
+  	{
+  		removeFdEpoll(client_fd);
+  		close(client_fd);
+  		_clients.erase(client_fd);
+  	}
+
 }
