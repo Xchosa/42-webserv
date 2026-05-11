@@ -1,5 +1,15 @@
 #pragma once
 
+#include <sys/epoll.h>
+#include <exception>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <fcntl.h>
+
 #include "ClientInfos.hpp"
 #include "Config.hpp"
 

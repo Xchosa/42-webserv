@@ -14,7 +14,7 @@ NAME = webserv
 # source files
 VPATH =	src \
 		src/config_parser \
-		src/config_server
+		src/server
 
 SRCS =	main.cpp \
 		Lexer.cpp \
@@ -22,7 +22,7 @@ SRCS =	main.cpp \
 		ps.cpp \
 		pss.cpp \
 		pls.cpp \
-		memberfkParser.cpp \
+		HttpParser.cpp \
 		Server.cpp \
 		Server_epoll.cpp \
 		Server_io.cpp \

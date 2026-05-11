@@ -1,6 +1,6 @@
-#include "webserv.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
+#include "Server.hpp"
 
 
 Config startParseConfig(const std::string& conf_file_path)
