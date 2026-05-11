@@ -6,7 +6,6 @@
 
 void Server::acceptFd(int server_fd)
 {
-	// accept server_socket with client fd 
 	while(true)
 	{
 		sockaddr_in client_addr;
@@ -27,8 +26,6 @@ void Server::acceptFd(int server_fd)
 		_clients[client_fd] = client;
 
 		addFdEpoll(client_fd, EPOLLIN | EPOLLRDHUP); 
-
-	// add client_fd to epoll
 	}
 
 }
@@ -39,8 +36,6 @@ void Server::acceptFd(int server_fd)
 
 void Server::readFd(int client_fd)
 {
-	// recv()
-	// read()
 	//std::string buffer;
 	//buffer.resize(4096);
 	char buffer[4096];
