@@ -110,6 +110,10 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 
 void Parser::pssErrorPage(ServerConfig& sc)
 {
+	// error if not enough params
+	if (current().type != WORD || peek().type != WORD)
+		throw std::runtime_error("[Exception:pssErrorPage] Excpected 'error_page <code> </page>' in line " + std::to_string(peek().line));
+
 	// validate error code
 	Token	t = consume();
 	size_t	idx;
