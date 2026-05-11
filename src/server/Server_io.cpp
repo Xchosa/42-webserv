@@ -3,7 +3,7 @@
 
 
 
-void Server::acceptFd(int server_fd)
+void Server::acceptClient(int server_fd)
 {
 	while(true)
 	{
@@ -43,7 +43,7 @@ std::string buildHelloWorldResponse()
 }
 
 
-void Server::readFd(int client_fd)
+void Server::recvClientData(int client_fd)
 {
 	//std::string buffer;
 	//buffer.resize(4096);
@@ -94,7 +94,7 @@ void Server::readFd(int client_fd)
 	}
 }
 
-void Server::writeFD(int client_fd)
+void Server::sendToClient(int client_fd)
 {
 	std::string response = _clients[client_fd]._response_buffer;
 

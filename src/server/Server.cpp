@@ -42,15 +42,13 @@ Server::~Server()
 //server sends fixed dummy HTTP response
 //browser displays page
 
+bool Server::isServerFd(int fd) const
+{
+	return (this->_socket_fds.find(fd) != _socket_fds.end());
+}
 
-
-////int _epoll_fd = epoll_create1(_socket_fds.size());								// fd von epoll
-	//std::map<int, ListenContext *> _socket_fds; // alle socket_fds (unique ports = fuer jeden port 1 socket)
-	//std::map<int, ClientInfos> _clients;
 void Server::run()
 {
-	//configserver_fd;
-	// set up listining socetcs 
 	setupListeningSockets();
 
 	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
@@ -71,24 +69,15 @@ void Server::run()
 
 			if(event_flag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 			{
-				close(fd);// find error client
+				close(fd);// find error client TODO PAUL
 				continue;
 			}
-			if (this->_socket_fds.find(fd) != _socket_fds.end())
-				acceptFd(fd); // fd = serverfd add new client // new cliend_fd lifes
-		
-			else if(event_flag & EPOLLIN)
-				readFd(fd); // 
-			
+			if (isServerFd(fd))
+				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
+			else if (event_flag & EPOLLIN)
+				recvClientData(fd);
 			else if (event_flag & EPOLLOUT)
-				writeFD(fd);
-
-			// send
-			
-
+				sendToClient(fd);
 		}
 	}
-
-
-
 }
