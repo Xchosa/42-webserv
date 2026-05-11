@@ -15,7 +15,7 @@ ParseStatus HttpParser::feed(const char *data, size_t n)
 	return _status;
 }
 
-//std::string HttpParser::TMP_getRawBuffer() const
-//{
-//	return _raw_buffer;
-//}
+std::string HttpParser::TMP_getRawBuffer() const
+{
+	return _raw_buffer;
+}

@@ -51,6 +51,7 @@ void Server::readFd(int client_fd)
 			if(tmp_status == COMPLETE)
 			{
 				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				std::cout << _clients[client_fd]._parser.TMP_getRawBuffer() << std::endl;
 				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
