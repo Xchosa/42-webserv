@@ -108,14 +108,26 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 	sc._client_max_body_size = nbr * multiplier;
 }
 
-// TODO alles
 void Parser::pssErrorPage(ServerConfig& sc)
 {
-	int key = std::stoi(consume().value);
-	std::string val = consume().value;
+	// validate error code
+	Token	t = consume();
+	size_t	idx;
+	size_t	errcode = std::stoi(t.value, &idx);
+	if (idx != t.value.length())
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
+	if (errcode < 300 || errcode >= 600)
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code out of range");
 
-	sc._error_pages.emplace(key, val);
-	// TODO klaeren: was soll bei doppelten error pages passieren? -> rueckgabewert emplace klaert auf
+	// validate error file
+	t = consume();
+	if (t.value.length() < 3)
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Too short to be the correct file");
+	if (t.value.at(0) != '/')
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with a '/'");
+
+	// write in map
+	sc._error_pages[errcode] = t.value;
 }
 
 void Parser::pssIsDefaultServer(ServerConfig& sc)
