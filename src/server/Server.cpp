@@ -1,5 +1,4 @@
-
-#include "webserv.hpp"
+#include "Server.hpp"
 
 
 
@@ -33,10 +32,52 @@ Server::~Server()
 	}
 
 }
-////int _epoll_fd = epoll_create1(_socket_fds.size());								// fd von epoll
-	//std::map<int, ListenContext *> _socket_fds; // alle socket_fds (unique ports = fuer jeden port 1 socket)
-	//std::map<int, ClientInfos> _clients;
-//void Server::run()
-//{
 
-//}
+
+
+//browser connects
+//server accepts
+//server receives raw HTTP request
+//server prints request
+//server sends fixed dummy HTTP response
+//browser displays page
+
+bool Server::isServerFd(int fd) const
+{
+	return (this->_socket_fds.find(fd) != _socket_fds.end());
+}
+
+void Server::run()
+{
+	setupListeningSockets();
+
+	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
+	
+	while(true)
+	{
+		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, TIMEOUT ); // nbr of events(for each client) retured , cut of by max events
+		if (readyEvents == -1)
+		{
+			if (errno == EINTR)
+				continue;
+			throw std::runtime_error("epoll_wait failed");
+		}
+		for(int i = 0; i < readyEvents; ++i)
+		{
+			int fd = triggeredEvents[i].data.fd;
+			uint32_t event_flag = triggeredEvents[i].events;
+
+			if(event_flag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+			{
+				close(fd);// find error client TODO PAUL
+				continue;
+			}
+			if (isServerFd(fd))
+				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
+			else if (event_flag & EPOLLIN)
+				recvClientData(fd);
+			else if (event_flag & EPOLLOUT)
+				sendToClient(fd);
+		}
+	}
+}

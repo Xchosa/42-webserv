@@ -1,8 +1,7 @@
-#include "webserv.hpp"
 #include "Lexer.hpp"
 #include "Parser.hpp"
+#include "Server.hpp"
 
-#define MAX_EVENTS 10 // @PAUL; was ist das hier?
 
 Config startParseConfig(const std::string& conf_file_path)
 {
@@ -32,7 +31,7 @@ int main(int argc, char **argv)
 		config = startParseConfig(config_file);
 
 		Server server(config);
-		//server.run();
+		server.run();
 	}
 	catch(const std::exception &e)
 	{

@@ -1,7 +1,21 @@
 #pragma once
 
+#include <sys/epoll.h>
+#include <exception>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <fcntl.h>
+
 #include "ClientInfos.hpp"
 #include "Config.hpp"
+
+
+inline constexpr size_t MAXEVENTS = 64;
+inline constexpr int TIMEOUT = 10;
 
 class Server
 {
@@ -10,6 +24,18 @@ class Server
 		int 							_epoll_fd;		// fd von epoll
 		std::map<int, ListenContext*>	_socket_fds;	// alle socket_fds (unique ports = fuer jeden port 1 socket)
 		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+	
+		void	addFdEpoll(int fd, uint32_t events);
+		void	setNonBlocking(int server_fd);
+		void	modifyFdEpoll(int fd, uint32_t events);
+		void	removeFdEpoll(int fd);
+		int		createListeningSocket(const ServerConfig& server_config);
+		void	setupListeningSockets();
+		bool	isServerFd(int fd) const;
+		void	acceptClient(int server_fd);
+		void 	recvClientData(int client_fd);
+		void 	sendToClient(int client_fd);
+	
 	public:
 		// OCF
 		Server() = delete;
@@ -18,7 +44,7 @@ class Server
 		Server& operator=(const Server& other) = delete;
 		~Server();										// destructor muss epoll und alle client_fds closen
 
-		//run()
+		void run();
 		// member functions
 		// methoden wie: run(), accept_client(), handlRecv(), handleSend(), usw...
 };

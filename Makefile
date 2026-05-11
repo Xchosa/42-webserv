@@ -5,7 +5,7 @@ FLAG_OPTIMIZING = -O2
 FLAG_DEBUG = -g -O0
 
 # header files
-INCLUDE = ./inc ./inc/config ./inc/config_parser
+INCLUDE = ./inc ./inc/config ./inc/config_parser ./inc/config_server
 CXXFLAGS += $(addprefix -I,$(INCLUDE))
 
 # program name
@@ -22,7 +22,12 @@ SRCS =	main.cpp \
 		ps.cpp \
 		pss.cpp \
 		pls.cpp \
-		Server.cpp
+		HttpParser.cpp \
+		Server.cpp \
+		Server_epoll.cpp \
+		Server_io.cpp \
+		Server_sockets.cpp
+
 
 # obejct files
 OBJ_DIR = obj
