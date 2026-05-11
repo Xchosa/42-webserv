@@ -4,7 +4,8 @@
 #include "Config.hpp"
 
 
-#define MaxEvents 64
+inline constexpr size_t MAXEVENTS = 64;
+inline constexpr int TIMEOUT = 10;
 
 class Server
 {
@@ -14,15 +15,15 @@ class Server
 		std::map<int, ListenContext*>	_socket_fds;	// alle socket_fds (unique ports = fuer jeden port 1 socket)
 		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
 	
-		void addFdEpoll(int fd, uint32_t events);
-		void setNonBlocking(int server_fd);
-		void modifyFdEpoll(int fd, uint32_t events);
-		void removeFdEpoll(int fd);
-		int	createListeningSocket(const ServerConfig& server_config);
-		void setupListeningSockets();
-		void acceptFd(int client_fd);
-		void readFd(int client_fd);
-		void writeFD(int client_fd);
+		void	addFdEpoll(int fd, uint32_t events);
+		void	setNonBlocking(int server_fd);
+		void	modifyFdEpoll(int fd, uint32_t events);
+		void	removeFdEpoll(int fd);
+		int		createListeningSocket(const ServerConfig& server_config);
+		void	setupListeningSockets();
+		void	acceptFd(int client_fd);
+		void 	readFd(int client_fd);
+		void 	writeFD(int client_fd);
 	
 	public:
 		// OCF

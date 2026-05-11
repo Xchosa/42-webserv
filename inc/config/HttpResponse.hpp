@@ -3,9 +3,9 @@
   #include <string>
 
 
-  std::string buildHelloWorldResponse()
+  inline std::string buildHelloWorldResponse()
   {
-  	std::string body = "Hello World\n";
+  	std::string body = "Hello Gabriel on the 11th of May\n";
 
   	return "HTTP/1.1 200 OK\r\n"
   		   "Content-Type: text/plain\r\n"

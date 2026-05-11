@@ -2,7 +2,6 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 
-#define MAX_EVENTS 10 // @PAUL; was ist das hier?
 
 Config startParseConfig(const std::string& conf_file_path)
 {

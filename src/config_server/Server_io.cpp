@@ -89,6 +89,7 @@ void Server::writeFD(int client_fd)
 	std::string response = _clients[client_fd]._response_buffer;
 
 	ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
+	std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
 	if (bytes < 0)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)

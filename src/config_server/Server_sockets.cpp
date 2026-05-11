@@ -55,6 +55,7 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 
 void Server::setupListeningSockets()
 {
+	// set for each port only not configs // virtual servers
 	for(size_t i = 0; i < _config._servers.size(); ++i)
 	{
 		int server_fd = createListeningSocket(_config._servers[i]);

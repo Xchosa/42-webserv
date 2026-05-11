@@ -54,11 +54,11 @@ void Server::run()
 	// set up listining socetcs 
 	setupListeningSockets();
 
-	epoll_event triggeredEvents[MaxEvents]; // size of events 
+	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
 	
 	while(true)
 	{
-		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents ,MaxEvents,10); // nbr of events(for each client) retured , cut of by max events
+		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, TIMEOUT ); // nbr of events(for each client) retured , cut of by max events
 		if (readyEvents == -1)
 		{
 			if (errno == EINTR)
