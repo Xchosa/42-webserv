@@ -1,4 +1,17 @@
 #include "Server.hpp"
+#include <arpa/inet.h>
+
+std::string Server::normalizeListenHost(const std::string& host)
+{
+	if (host.empty())
+		return ("0.0.0.0");
+	return (host);
+}
+
+std::string Server::makeListenKey(const ServerConfig& server_config)
+{
+	return (normalizeListenHost(server_config._listen_host) + ":" + std::to_string(server_config._listen_port));
+}
 
 void Server::setNonBlocking(int server_fd)
 {
@@ -7,11 +20,6 @@ void Server::setNonBlocking(int server_fd)
 	{
 		throw std::runtime_error("failed to set server_fd to non_blocking");
 	}
-	//int flags2 = fcntl(server_fd, F_SETFL, 0);
-	//if (flags2 == -1)
-	//{
-	//	throw std::runtime_error("failed to set server_fd to non_blocking");
-	//}
 	if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1)
   		throw std::runtime_error("failed to set fd non_blocking");
 
@@ -33,7 +41,13 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 	sockaddr_in addr{}; 
 
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY; // listen to all local interfaces -> late to _listen_host
+	if (normalizeListenHost(server_config._listen_host) == "0.0.0.0")
+		addr.sin_addr.s_addr = INADDR_ANY;
+	else if (inet_pton(AF_INET, server_config._listen_host.c_str(), &addr.sin_addr) != 1)
+	{
+		close(server_fd);
+		throw std::runtime_error("invalid listen host");
+	}
 	addr.sin_port = htons(server_config._listen_port);
 
 	if (bind(server_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1)
@@ -53,16 +67,65 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 	return server_fd;
 }
 
+
+ListenContext* Server::getOrCreateListenContext(
+  	std::map<std::string, ListenContext*>& contexts_by_listen,
+  	ServerConfig* server_config
+  )
+{
+	//_listen_host +:+_listen_port = 0.0.0.0:8081
+	std::string listen_key = makeListenKey(*server_config);
+
+  	if (contexts_by_listen.find(listen_key) == contexts_by_listen.end())
+  	{
+  		ListenContext* context = new ListenContext();
+  		context->_fd = -1;
+  		context->_port = server_config->_listen_port;
+  		context->_host = normalizeListenHost(server_config->_listen_host);
+  		context->_default_server = server_config;
+
+  		contexts_by_listen[listen_key] = context;
+  	}
+
+  	return contexts_by_listen[listen_key];
+}
+
+
 void Server::setupListeningSockets()
 {
-	// set for each port only not configs // virtual servers
-	for(size_t i = 0; i < _config._servers.size(); ++i)
+		// 0.0.0.0:9091 => key
+	  std::map<std::string, ListenContext*> contexts_by_listen;
+
+	  for (size_t i = 0; i < _config._servers.size(); ++i)
+	  {
+		  ServerConfig* server_config = &_config._servers[i];
+		  ListenContext* context = getOrCreateListenContext(contexts_by_listen, server_config);
+
+		  context->_candidates.push_back(server_config);
+
+		  if (server_config->_is_default_server)
+			  context->_default_server = server_config;
+	  }
+	for(auto& [key, serverName]: contexts_by_listen)
 	{
-		int server_fd = createListeningSocket(_config._servers[i]);
-		this->_socket_fds[server_fd] = NULL;
+		int server_fd = createListeningSocket(*(serverName->_default_server));
+		serverName->_fd = server_fd;
+		_socket_fds[server_fd] = serverName;
 		addFdEpoll(server_fd, EPOLLIN);
-
-		std::cout<< "Listening on port: " <<  _config._servers[i]._listen_port << "| fd: " << server_fd << std::endl;
-
 	}
 }
+
+
+//void Server::setupListeningSockets()
+//{
+//	// set for each port only not configs // virtual servers
+//	for(size_t i = 0; i < _config._servers.size(); ++i)
+//	{
+//		int server_fd = createListeningSocket(_config._servers[i]);
+//		this->_socket_fds[server_fd] = NULL;
+//		addFdEpoll(server_fd, EPOLLIN);
+
+//		std::cout<< "Listening on port: " <<  _config._servers[i]._listen_port << "| fd: " << server_fd << std::endl;
+
+//	}
+//}

@@ -23,6 +23,7 @@ Server::~Server()
 	for(const auto &[fd ,ListenContext] : _socket_fds)
 	{
 		close(fd);
+		delete ListenContext;
 	}
 	
 	// client sockets
@@ -33,7 +34,7 @@ Server::~Server()
 
 }
 
-
+//brower connect
 
 //browser connects
 //server accepts
