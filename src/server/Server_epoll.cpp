@@ -27,3 +27,17 @@ void Server::removeFdEpoll(int fd)
     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("epoll_ctl DEL failed (fd invalid,notRegistered,closed)");
 }
+
+
+
+bool Server::isServerFd(int fd) const
+{
+	return (this->_socket_fds.find(fd) != _socket_fds.end());
+}
+
+void Server::closeClient(int client_fd)
+{
+	removeFdEpoll(client_fd);
+	close(client_fd);
+	_clients.erase(client_fd);
+}

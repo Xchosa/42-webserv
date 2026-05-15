@@ -32,7 +32,6 @@ class Server
 		void			removeFdEpoll(int fd);
 		int				createListeningSocket(const ServerConfig& server_config);
 		void			setupListeningSockets();
-		bool			isServerFd(int fd) const;
 		void			acceptClient(int server_fd);
 		void 			recvClientData(int client_fd);
 		void 			sendToClient(int client_fd);
@@ -40,7 +39,9 @@ class Server
 		std::string		makeListenKey(const ServerConfig& server_config);
 		ListenContext* 	getOrCreateListenContext(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config);
 		void 			checkHostWithSamePort(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config);
-
+		
+		bool			isServerFd(int fd) const;
+		void 			closeClient(int client_fd);
 
 	public:
 		// OCF

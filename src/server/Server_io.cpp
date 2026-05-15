@@ -67,30 +67,22 @@ void Server::recvClientData(int client_fd)
 			}
 			if(tmp_status == ERROR)
 			{
-				removeFdEpoll(client_fd);
-				close(client_fd);
-				_clients.erase(client_fd);
+				closeClient(client_fd);
 				break;
 			}
 		}
 		else if (bytes == 0)
   		{
-  			removeFdEpoll(client_fd);
-  			close(client_fd);
-  			_clients.erase(client_fd);
+  			closeClient(client_fd);
   			break;
   		}
 		else
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)// no data available right now
   				break;
-			removeFdEpoll(client_fd);
-  			close(client_fd);
-  			_clients.erase(client_fd);
+			closeClient(client_fd);
   			break;
-
 		}
-
 	}
 }
 

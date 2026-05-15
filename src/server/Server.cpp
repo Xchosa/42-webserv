@@ -43,10 +43,6 @@ Server::~Server()
 //server sends fixed dummy HTTP response
 //browser displays page
 
-bool Server::isServerFd(int fd) const
-{
-	return (this->_socket_fds.find(fd) != _socket_fds.end());
-}
 
 
 
@@ -73,7 +69,11 @@ void Server::run()
 
 			if(event_flag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 			{
-				close(fd);// find error client TODO PAUL
+				if(isServerFd(fd))
+				{
+					throw std::runtime_error("listening socket error");
+				}
+				closeClient(fd);
 				continue;
 			}
 			if (isServerFd(fd))
