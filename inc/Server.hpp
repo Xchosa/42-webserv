@@ -26,20 +26,22 @@ class Server
 		std::map<int, ListenContext*>	_socket_fds;	// key = server_fd, value ListenContext*
 		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
 	
-		void	addFdEpoll(int fd, uint32_t events);
-		void	setNonBlocking(int server_fd);
-		void	modifyFdEpoll(int fd, uint32_t events);
-		void	removeFdEpoll(int fd);
-		int		createListeningSocket(const ServerConfig& server_config);
-		void	setupListeningSockets();
-		bool	isServerFd(int fd) const;
-		void	acceptClient(int server_fd);
-		void 	recvClientData(int client_fd);
-		void 	sendToClient(int client_fd);
-		std::string normalizeListenHost(const std::string& host);
-		std::string makeListenKey(const ServerConfig& server_config);
-		ListenContext* getOrCreateListenContext(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config);
-	
+		void			setNonBlocking(int server_fd);
+		void			addFdEpoll(int fd, uint32_t events);
+		void			modifyFdEpoll(int fd, uint32_t events);
+		void			removeFdEpoll(int fd);
+		int				createListeningSocket(const ServerConfig& server_config);
+		void			setupListeningSockets();
+		bool			isServerFd(int fd) const;
+		void			acceptClient(int server_fd);
+		void 			recvClientData(int client_fd);
+		void 			sendToClient(int client_fd);
+		std::string		normalizeListenHost(const std::string& host);
+		std::string		makeListenKey(const ServerConfig& server_config);
+		ListenContext* 	getOrCreateListenContext(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config);
+		void 			checkHostWithSamePort(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config);
+
+
 	public:
 		// OCF
 		Server() = delete;

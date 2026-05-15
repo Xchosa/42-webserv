@@ -1,5 +1,5 @@
 #include "Server.hpp"
-
+#include <iostream>
 
 
 // constructor initialisiert _config und _epoll_fd via epoll_create1()
@@ -48,10 +48,13 @@ bool Server::isServerFd(int fd) const
 	return (this->_socket_fds.find(fd) != _socket_fds.end());
 }
 
+
+
 void Server::run()
 {
 	setupListeningSockets();
-
+	for (const auto& [fd, context] : _socket_fds)
+		std::cout << "Server FD: " << fd << " | Port: " << context->_port << std::endl;
 	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
 	
 	while(true)

@@ -11,7 +11,7 @@ struct ListenContext {
     std::vector<ServerConfig*>	                _candidates;	            // alle moeglichen server_configs (gleicher listen)
     ServerConfig*				                _default_server;			// erster server_block in _candidates
 };
-
+// 
 // doppelte servernamen verbieten 
 // if error page nicht gesetzt -> default error -> option class -> ist gesetzt
 
