@@ -10,6 +10,9 @@
 #include "Token.hpp"
 #include "Config.hpp"
 
+inline constexpr std::string_view FORBIDDEN_PATH_CHARS = "*?[]{}():;\n#\"' \\";
+inline constexpr std::string_view FORBIDDEN_INDEX_CHARS = "*?[]{}():;\n#\"' \\/";
+
 class Parser
 {
 	private:

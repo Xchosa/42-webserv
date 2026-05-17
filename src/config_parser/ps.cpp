@@ -2,8 +2,7 @@
 
 void Parser::psRoot(const Token& t)
 {
-	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\";
-	auto pos = t.value.find_first_of(forbidden_chars);
+	auto pos = t.value.find_first_of(FORBIDDEN_PATH_CHARS);
 	if (pos != std::string::npos)
 	{
 		char invalid_char = t.value[pos];
@@ -13,8 +12,7 @@ void Parser::psRoot(const Token& t)
 
 void Parser::psIndex(const Token& t)
 {
-	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\/";
-	auto pos = t.value.find_first_of(forbidden_chars);
+	auto pos = t.value.find_first_of(FORBIDDEN_INDEX_CHARS);
 	if (pos != std::string::npos)
 	{
 		char invalid_char = t.value[pos];

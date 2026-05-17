@@ -51,12 +51,10 @@ void Parser::pssListen(ServerConfig& sc)
 
 void Parser::pssServername(ServerConfig& sc)
 {
-	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\/";
-
 	while (current().type != SEMICOLIN)
 	{
 		Token t = consume();
-		auto pos = t.value.find_first_of(forbidden_chars);
+		auto pos = t.value.find_first_of(FORBIDDEN_INDEX_CHARS);
 		if (pos != std::string::npos)
 		{
 			char invalid_char = t.value[pos];
