@@ -51,7 +51,7 @@ void Parser::pssListen(ServerConfig& sc)
 
 void Parser::pssServername(ServerConfig& sc)
 {
-	const std::string forbidden_chars = "*?[]{};\n#\"' \\/";
+	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\/";
 
 	while (current().type != SEMICOLIN)
 	{

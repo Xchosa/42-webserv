@@ -75,7 +75,7 @@ void Parser::plsReturn(LocationConfig& lc)
 void Parser::plsUploadStore(LocationConfig& lc)
 {
 	Token t = consume();
-	const std::string forbidden_chars = "*?[]{};\n#\"' \\";
+	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\";
 	auto pos = t.value.find_first_of(forbidden_chars);
 	if (pos != std::string::npos)
 	{
