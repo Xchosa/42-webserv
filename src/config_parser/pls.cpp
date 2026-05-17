@@ -44,7 +44,15 @@ void Parser::plsReturn(LocationConfig& lc)
 	// validate redirect code
 	Token	t = consume();
 	size_t	idx;
-	int		code = std::stoi(t.value, &idx);
+	int		code;
+	try
+	{
+		code = std::stoi(t.value, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Failed to convert value");
+	}
 	if (idx != t.value.length())
 		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
 	if (code < 200 || code >= 600)
