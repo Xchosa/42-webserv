@@ -108,10 +108,18 @@ LocationConfig Parser::parseLocationBlock()
 	return (lc);
 }
 
-// TODO all
 void Parser::validateLocationPath(const Token& t)
 {
-	(void)t;
+	if (t.value[0] != '/')
+		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with '/'");
+
+	const std::string forbidden_chars = "*?[]{}():;\n#\"' \\";
+	auto pos = t.value.find_first_of(forbidden_chars);
+	if (pos != std::string::npos)
+	{
+		char invalid_char = t.value[pos];
+		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+	}
 }
 
 void Parser::setLocationDefaultSettings(ServerConfig& sc)
@@ -149,10 +157,10 @@ ServerConfig Parser::parseServerBlock()
 
 	while (current().type != RBRACE)
 	{
-		if (current().value == "location" && peek().type == WORD)
+		if (current().value == "location")
 		{
 			expectTypeValue(WORD, "location");
-			Token location_path = expectType(WORD, "<location_path");
+			Token location_path = expectType(WORD, "<location_path>");
 			validateLocationPath(location_path);
 			
 			// if location double -> error

@@ -27,9 +27,6 @@ class Parser
 		LocationConfig	parseLocationBlock();
 		void			validateLocationPath(const Token& t);
 		void			setLocationDefaultSettings(ServerConfig& sc);
-
-		// TODO
-		// void validatePath(const std::string& path);
 		
 		// parse doubled settings (server and location)
 		void	psRoot(const Token &t);
