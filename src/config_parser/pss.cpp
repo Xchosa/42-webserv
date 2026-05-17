@@ -115,7 +115,7 @@ void Parser::pssErrorPage(ServerConfig& sc)
 	// validate error code
 	Token	t = consume();
 	size_t	idx;
-	size_t	errcode = std::stoi(t.value, &idx);
+	int		errcode = std::stoi(t.value, &idx);
 	if (idx != t.value.length())
 		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
 	if (errcode < 300 || errcode >= 600)
