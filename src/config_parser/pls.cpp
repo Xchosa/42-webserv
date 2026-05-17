@@ -72,10 +72,18 @@ void Parser::plsReturn(LocationConfig& lc)
 		throw std::runtime_error("[Exception:plsReturn] Redirect URL/path necceccary on code '" + t.value + "' in line " + std::to_string(t.line));
 }
 
-// TODO alles
 void Parser::plsUploadStore(LocationConfig& lc)
 {
-	lc._upload_store = consume().value;
+	Token t = consume();
+	const std::string forbidden_chars = "*?[]{};\n#\"' \\";
+	auto pos = t.value.find_first_of(forbidden_chars);
+	if (pos != std::string::npos)
+	{
+		char invalid_char = t.value[pos];
+		throw std::runtime_error("[Exception:plsUploadStore] Invalid upload_store path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+	}
+
+	lc._upload_store = t.value;
 }
 
 // TODO alles
