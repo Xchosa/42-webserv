@@ -102,7 +102,7 @@ LocationConfig Parser::parseLocationBlock()
 		if (current().type == WORD && peek().type == WORD)
 			parseLocationSetting(lc);
 		else
-			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
+			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
 	}
 	expectType(RBRACE, "}");
 	return (lc);
@@ -163,7 +163,7 @@ ServerConfig Parser::parseServerBlock()
 		else if (current().type == WORD && peek().type == WORD)
 			parseServerSetting(sc);
 		else
-			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
+			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
 	}
 	expectType(RBRACE, "}");
 	setLocationDefaultSettings(sc);
