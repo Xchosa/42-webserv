@@ -46,8 +46,6 @@ void HttpParser::parseHeader(const std::string& line)
 		val.erase(0, 1);
 	
 	_request._headers[key] = val;
-	std::cout << "Header -> [" << key << "] = [" << val << "]" << std::endl;
-
 }
 
 void HttpParser::parseBuffer()
@@ -72,7 +70,12 @@ void HttpParser::parseBuffer()
 				if (_request._headers.count("transfer-encoding") && _request._headers["transfer-encoding"] == "chunked")
 					_state = BODY_CHUNKED;
 				else if (_request._headers.count("content-length"))
+				{
 					_state = BODY_CONTENT_LEN;
+					_content_len_expected = std::stoull(_request._headers["content-length"]);
+					if (_content_len_expected <= 0)
+						_state = DONE;
+				}
 				else
 					_state = DONE;
 				break ;
@@ -88,42 +91,22 @@ void HttpParser::parseBuffer()
 
 	if (_state == BODY_CONTENT_LEN)
 	{
-		// todo
+		if (_raw_buffer.size() < _content_len_expected)
+			return ;
+		_request._body = _raw_buffer.substr(0, _content_len_expected);
+		_raw_buffer.erase(0, _content_len_expected);
+		_state = DONE;
 	}
 
 	if (_state == DONE)
 		_status = COMPLETE;
-
-	// // parse body
-	// if (_request._headers.find("Transfer-Encoding") != _request._headers.end())
-	// {
-	// 	if (_request._headers["Transfer-Encoding"] == "chunked")
-	// 	{
-	// 		// get body with chunked blocks
-	// 	}
-	// }
-	// else if (_request._headers.find("Content-Length") != _request._headers.end())
-	// {
-	// 	// get body with content length
-	// }
-	// _status = COMPLETE;
 }
 
 ParseStatus HttpParser::feed(const char *data, size_t n)
 {
-	_status = INCOMPLETE;
 	_raw_buffer.append(data, n);
 	std::cout << TMP_getRawBuffer() << std::endl;	// debugging
 	this->parseBuffer();
-
-	// if (_raw_buffer.find("\r\n\r\n") == std::string::npos)
-	// {
-	// 	_status = INCOMPLETE;
-	// 	return _status;
-	// }
-
-
-
 
 
 	return (this->getStatus());

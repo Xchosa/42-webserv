@@ -27,8 +27,9 @@ class HttpParser
 	private:
 		std::string		_raw_buffer;
 		HttpRequest		_request;
-		ParseStatus		_status;
+		ParseStatus		_status = INCOMPLETE;
 		ParseState		_state = REQUEST_LINE;
+		size_t			_content_len_expected = 0;
 
 		void			parseBuffer();
 		bool			extractLine(std::string& buffer, std::string &line);
