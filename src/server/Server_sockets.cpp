@@ -69,7 +69,7 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 }
 
 
-void Server::checkHostWithSamePort(std::map<std::string, ListenContext*>& contexts_by_listen, ServerConfig* server_config)
+void Server::checkHostWithSamePort(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config)
 {
 	// new serverConfig 
 	std::string host = normalizeListenHost(server_config->_listen_host);
@@ -85,18 +85,18 @@ void Server::checkHostWithSamePort(std::map<std::string, ListenContext*>& contex
 
 	}
 	// if new host is wildcard , loop whether any specific host listens on that port. same hosts still work-> get grouped together
-	for (const auto& entry : contexts_by_listen)
-  	{
-  		ListenContext* context = entry.second;
 
-  		if (context->_port == port && context->_host != "0.0.0.0")
+	for (const auto&[key,ListenContext] : contexts_by_listen)
+  	{
+  		if (ListenContext._port == port && ListenContext._host != "0.0.0.0")
   			throw std::runtime_error("Config error: 0.0.0.0 conflicts with specific listen host on same port");
   	}
+
 }
 
 
-ListenContext* Server::getOrCreateListenContext(
-  	std::map<std::string, ListenContext*>& contexts_by_listen,
+ListenContext Server::getOrCreateListenContext(
+  	std::map<std::string, ListenContext>& contexts_by_listen,
   	ServerConfig* server_config
   )
 {
@@ -106,11 +106,11 @@ ListenContext* Server::getOrCreateListenContext(
 
   	if (contexts_by_listen.find(listen_key) == contexts_by_listen.end())
   	{
-  		ListenContext* context = new ListenContext();
-  		context->_fd = -1;
-  		context->_port = server_config->_listen_port;
-  		context->_host = normalizeListenHost(server_config->_listen_host);
-  		context->_default_server = server_config;
+  		ListenContext context;
+  		context._fd = -1;
+  		context._port = server_config->_listen_port;
+  		context._host = normalizeListenHost(server_config->_listen_host);
+  		context._default_server = server_config;
 
   		contexts_by_listen[listen_key] = context;
   	}
@@ -123,25 +123,25 @@ ListenContext* Server::getOrCreateListenContext(
 void Server::setupListeningSockets()
 {
 		// 0.0.0.0:9091 => key
-	std::map<std::string, ListenContext*> contexts_by_listen;
+	std::map<std::string, ListenContext> contexts_by_listen;
 
 	for (size_t i = 0; i < _config._servers.size(); ++i)
 	{
 		ServerConfig* server_config = &_config._servers[i];
-		ListenContext* context = getOrCreateListenContext(contexts_by_listen, server_config);
+		ListenContext context =getOrCreateListenContext(contexts_by_listen, server_config);
 
-		context->_candidates.push_back(server_config);
+		context._candidates.push_back(std::move(server_config));
 
 		if (server_config->_is_default_server)
-			context->_default_server = server_config;
+			context._default_server = server_config;
 	}
 	for(auto& [key, serverName]: contexts_by_listen)
 	{
-		int server_fd = createListeningSocket(*(serverName->_default_server));
-		serverName->_fd = server_fd;
+		int server_fd = createListeningSocket(*(serverName._default_server));
+		serverName._fd = server_fd;
 		_socket_fds[server_fd] = serverName;
 		addFdEpoll(server_fd, EPOLLIN);
-		std::cout << "Server Fd: " << serverName << " | Host: " << serverName->_host << " | Port: " << serverName->_port << std::endl;
+		std::cout << "Server Fd: " << serverName._default_server << " | Host: " << serverName._host << " | Port: " << serverName._port << std::endl;
 	}
 }
 

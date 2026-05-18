@@ -20,7 +20,7 @@ void Server::acceptClient(int server_fd)
 		setNonBlocking(client_fd);
 		
 		ClientInfos client;
-		client._listen_context = _socket_fds[server_fd];
+		client._listen_context = &_socket_fds[server_fd];
 		client._selected_server = NULL;
 		_clients[client_fd] = client;
 
@@ -86,6 +86,8 @@ void Server::recvClientData(int client_fd)
 	}
 }
 
+
+// send feature 
 void Server::sendToClient(int client_fd)
 {
 	std::string response = _clients[client_fd]._response_buffer;

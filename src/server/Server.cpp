@@ -23,7 +23,6 @@ Server::~Server()
 	for(const auto &[fd ,ListenContext] : _socket_fds)
 	{
 		close(fd);
-		delete ListenContext;
 	}
 	
 	// client sockets
@@ -50,7 +49,7 @@ void Server::run()
 {
 	setupListeningSockets();
 	for (const auto& [fd, context] : _socket_fds)
-		std::cout << "Server FD: " << fd << " | Port: " << context->_port << std::endl;
+		std::cout << "Server FD: " << fd << " | Port: " << context._port << std::endl;
 	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
 	
 	while(true)
