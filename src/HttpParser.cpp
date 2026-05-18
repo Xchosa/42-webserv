@@ -92,7 +92,7 @@ void HttpParser::parseBuffer()
 	}
 
 	if (_state == DONE)
-		_status == COMPLETE;
+		_status = COMPLETE;
 
 	// // parse body
 	// if (_request._headers.find("Transfer-Encoding") != _request._headers.end())

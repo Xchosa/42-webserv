@@ -1,8 +1,9 @@
 # compiling stuff
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++17
-FLAG_OPTIMIZING = -O2
-FLAG_DEBUG = -g -O0
+# FLAG_OPTIMIZING = -O2
+# FLAG_DEBUG = -g -O0
+FLAG_DEBUG = -g -O0 -fno-omit-frame-pointer
 
 # header files
 INCLUDE = ./inc ./inc/config ./inc/config_parser ./inc/config_server
@@ -33,7 +34,7 @@ SRCS =	main.cpp \
 OBJ_DIR = obj
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.cpp=.o))
 
-all: CXXFLAGS += $(FLAG_OPTIMIZING)
+# all: CXXFLAGS += $(FLAG_OPTIMIZING)
 all: $(NAME)
 
 $(NAME): $(OBJS)
