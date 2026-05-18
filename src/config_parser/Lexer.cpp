@@ -14,20 +14,20 @@ Lexer::Lexer(const std::string& conf_file_path)
 
 void Lexer::printTokens(const std::vector<Token>& tokens) const
 {
-    for (const Token& t : tokens)
-    {
-        std::string type;
-        switch (t.type)
-        {
-            case WORD:        type = "WORD       "; break;
-            case SEMICOLIN:   type = "SEMICOLIN  "; break;
-            case LBRACE:      type = "LBRACE     "; break;
-            case RBRACE:      type = "RBRACE     "; break;
-            case END_OF_FILE: type = "EOF        "; break;
-        }
-        std::cout << "[line " << std::setw(3) << t.line << "] "
-                  << type << " | " << t.value << "\n";
-    }
+	for (const Token& t : tokens)
+	{
+		std::string type;
+		switch (t.type)
+		{
+			case WORD:        type = "WORD       "; break;
+			case SEMICOLIN:   type = "SEMICOLIN  "; break;
+			case LBRACE:      type = "LBRACE     "; break;
+			case RBRACE:      type = "RBRACE     "; break;
+			case END_OF_FILE: type = "EOF        "; break;
+		}
+		std::cout << "[line " << std::setw(3) << t.line << "] "
+				<< type << " | " << t.value << "\n";
+	}
 }
 
 bool Lexer::isEof() const

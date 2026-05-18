@@ -30,7 +30,7 @@ void Parser::pssListen(ServerConfig& sc)
 		// validate ip
 		struct in_addr addr;
 		if (inet_pton(AF_INET, host_str.c_str(), &addr) != 1)
-			throw std::runtime_error("[Exception:pssListen] Invalid ip '" + host_str + "' in line " + std::to_string(t.line));
+			throw std::runtime_error(getFileLine(t) + "Invalid ip '" + host_str + "'");
 		sc._listen_host = host_str;
 	}
 
@@ -40,11 +40,11 @@ void Parser::pssListen(ServerConfig& sc)
 		size_t idx;
 		size_t port = std::stoull(port_str, &idx);
 		if (idx != port_str.length() || port < 1 || port > 65535)
-			throw std::runtime_error("[Exception:pssListen] Invalid port '" + port_str + "' in line " + std::to_string(t.line));
+			throw std::runtime_error(getFileLine(t) + "Invalid port '" + port_str + "'");
 	}
 	catch(const std::exception& e)
 	{
-		throw std::runtime_error("[Exception:pssListen] Invalid port '" + port_str + "' in line " + std::to_string(t.line));
+		throw std::runtime_error(getFileLine(t) + "Invalid port '" + port_str + "'");
 	}
 	sc._listen_port = std::stoull(port_str);
 }
@@ -58,7 +58,7 @@ void Parser::pssServername(ServerConfig& sc)
 		if (pos != std::string::npos)
 		{
 			char invalid_char = t.value[pos];
-			throw std::runtime_error("[Exception:pssServername] Invalid server_name '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+			throw std::runtime_error(getFileLine(t) + "Invalid server_name '" + t.value + "'! Invalid char: '" + invalid_char + "'");
 		}
 		sc._server_names.push_back(t.value);
 	}
@@ -74,7 +74,7 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 		return ;
 	}
 	if (t.value.length() <= 1)
-		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line));
+		throw std::runtime_error(getFileLine(t) + "Invalid data size '" + t.value + "'");
 
 	// get number
 	std::string	nbr_str = t.value.substr(0, t.value.length() - 1);
@@ -86,10 +86,10 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 	}
 	catch(const std::exception& e)
 	{
-		throw std::runtime_error("[Exception:pssClientMaxBodySize] Overflow when converting data size in bytes '" + nbr_str + "' in line " + std::to_string(t.line));
+		throw std::runtime_error(getFileLine(t) + "Overflow when converting data size '" + nbr_str + "'");
 	}
 	if (idx != nbr_str.length())
-		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + nbr_str + "' in line " + std::to_string(t.line));
+		throw std::runtime_error(getFileLine(t) + "Invalid data size '" + nbr_str + "'");
 
 	// get suffix (kb, mb, gb, etc)
 	char	suffix = t.value.back();
@@ -102,7 +102,7 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 	else if (suffix == 'g')
 		multiplier = 1024ULL * 1024 * 1024;
 	else
-		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line) + "! Expected: 'k', 'm' or 'g'");
+		throw std::runtime_error(getFileLine(t) + "Invalid data size suffix '" + std::string(1, suffix) + "'! Expected: 'k', 'm' or 'g'");
 
 	sc._client_max_body_size = nbr * multiplier;
 }
@@ -111,7 +111,10 @@ void Parser::pssErrorPage(ServerConfig& sc)
 {
 	// error if not enough params
 	if (current().type != WORD || peek().type != WORD)
-		throw std::runtime_error("[Exception:pssErrorPage] Excpected 'error_page <code> </page>' in line " + std::to_string(peek().line));
+	{
+		Token cur = current();
+		throw std::runtime_error(getFileLine(cur) + "Expected 'error_page <code> </page>'");
+	}
 
 	// validate error code
 	Token	t = consume();
@@ -123,19 +126,19 @@ void Parser::pssErrorPage(ServerConfig& sc)
 	}
 	catch(const std::exception& e)
 	{
-		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Failed to convert value");
+		throw std::runtime_error(getFileLine(t) + "Invalid error code '" + t.value + "'! Failed to convert value");
 	}
 	if (idx != t.value.length())
-		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
+		throw std::runtime_error(getFileLine(t) + "Invalid error code '" + t.value + "'! Code not a number");
 	if (errcode < 300 || errcode >= 600)
-		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code out of range");
+		throw std::runtime_error(getFileLine(t) + "Invalid error code '" + t.value + "'! Code out of range");
 
 	// validate error file
 	t = consume();
 	if (t.value.length() < 3)
-		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Too short to be the correct file");
+		throw std::runtime_error(getFileLine(t) + "Invalid error page '" + t.value + "'! Too short");
 	if (t.value.at(0) != '/')
-		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with a '/'");
+		throw std::runtime_error(getFileLine(t) + "Invalid error page '" + t.value + "'! Path has to start with '/'");
 
 	// write in map
 	sc._error_pages[errcode] = t.value;
@@ -151,6 +154,6 @@ void Parser::pssIsDefaultServer(ServerConfig& sc)
 	else if (t.value == "false" || t.value == "0")
 		flag = false;
 	else
-		throw std::runtime_error("[Exception:pssIsDefaultServer] Unexpected value for setting is_default_server '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: 'true' or 'false'");
+		throw std::runtime_error(getFileLine(t) + "Invalid is_default_server '" + t.value + "'! Expected: 'true' or 'false'");
 	sc._is_default_server = flag;
 }

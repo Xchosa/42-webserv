@@ -16,14 +16,19 @@ inline constexpr std::string_view FORBIDDEN_INDEX_CHARS = "*?[]{}():;\n#\"' \\/"
 class Parser
 {
 	private:
-		std::vector<Token> 	_tokens;	// tokens build by lexer
-		size_t				_pos;		// current pos in tokens
+		std::vector<Token> 	_tokens;			// tokens build by lexer
+		size_t				_pos;				// current pos in tokens
+		std::string			_conf_file_path; 	// config file path
 
+		// token tools
 		Token	current() const;
 		Token	consume();
 		Token	peek() const;
 		Token	expectType(TokenType type, const std::string& expected);
 		Token	expectTypeValue(TokenType type, const std::string& value);
+
+		// error msg
+		std::string	getFileLine(const Token& t) const;
 
 		// parse tokens
 		ServerConfig	parseServerBlock();
@@ -58,7 +63,7 @@ class Parser
 	public:
 		// OCF
 		Parser() = delete;
-		Parser(const std::vector<Token>& tokens);
+		Parser(const std::vector<Token>& tokens, const std::string& conf_file_path);
 		Parser(const Parser& other) = delete;
 		Parser& operator=(const Parser& other) = delete;
 		~Parser() = default;

@@ -20,7 +20,7 @@ void Parser::plsMethods(LocationConfig& lc)
 	{
 		Token t = consume();
 		if (!valid_methods.count(t.value))
-			throw std::runtime_error("[Exception:plsMethods] Unexpected method '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: 'GET', 'POST' or 'DELETE'");
+			throw std::runtime_error(getFileLine(t) + "Invalid method '" + t.value + "'! Expected: 'GET', 'POST' or 'DELETE'");
 		lc._methods.push_back(t.value);
 	}
 }
@@ -35,7 +35,7 @@ void Parser::plsAutoindex(LocationConfig& lc)
 	else if (t.value == "off")
 		flag = false;
 	else
-		throw std::runtime_error("[Exception:plsAutoindex] Unexpected value for setting autoindex '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: 'on' or 'off'");
+		throw std::runtime_error(getFileLine(t) + "Invalid autoindex '" + t.value + "'! Expected: 'on' or 'off'");
 	lc._autoindex = flag;
 }
 
@@ -51,12 +51,12 @@ void Parser::plsReturn(LocationConfig& lc)
 	}
 	catch(const std::exception& e)
 	{
-		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Failed to convert value");
+		throw std::runtime_error(getFileLine(t) + "Invalid redirect code '" + t.value + "'! Failed to convert value");
 	}
 	if (idx != t.value.length())
-		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
+		throw std::runtime_error(getFileLine(t) + "Invalid redirect code '" + t.value + "'! Code not a number");
 	if (code < 200 || code >= 600)
-		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Code out of range");
+		throw std::runtime_error(getFileLine(t) + "Invalid redirect code '" + t.value + "'! Code out of range");
 	lc._redirect_code = code;
 
 	// validate optional redirect url
@@ -70,14 +70,14 @@ void Parser::plsReturn(LocationConfig& lc)
 			if (t.value[0] != '/' 
 				&& t.value.substr(0,7) != "http://" 
 				&& t.value.substr(0,8) != "https://")
-				throw std::runtime_error("[Exception:plsReturn] Invalid redirect URL/path '" + t.value + "' in line " + std::to_string(t.line));
+				throw std::runtime_error(getFileLine(t) + "Invalid redirect URL/path '" + t.value + "'");
 		}
 		lc._redirect_url = t.value;
 	}
 
 	// if code 3xx, redirect url is neccesary
 	if (code >= 300 && code <= 399 && !lc._redirect_url.has_value())
-		throw std::runtime_error("[Exception:plsReturn] Redirect URL/path necceccary on code '" + t.value + "' in line " + std::to_string(t.line));
+		throw std::runtime_error(getFileLine(t) + "Redirect URL/path required for 3xx redirect code");
 }
 
 void Parser::plsUploadStore(LocationConfig& lc)
@@ -87,7 +87,7 @@ void Parser::plsUploadStore(LocationConfig& lc)
 	if (pos != std::string::npos)
 	{
 		char invalid_char = t.value[pos];
-		throw std::runtime_error("[Exception:plsUploadStore] Invalid upload_store path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+		throw std::runtime_error(getFileLine(t) + "Invalid upload_store path '" + t.value + "'! Invalid char: '" + invalid_char + "'");
 	}
 
 	lc._upload_store = t.value;
@@ -96,17 +96,18 @@ void Parser::plsUploadStore(LocationConfig& lc)
 void Parser::plsCgi(LocationConfig& lc)
 {
 	// error if not enough params
-	if (current().type != WORD || peek().type != WORD)
-		throw std::runtime_error("[Exception:plsCgi] Excpected 'cgi_ext <extension> </path>' in line " + std::to_string(peek().line));
+	Token t = current();
+	if (t.type != WORD || peek().type != WORD)
+		throw std::runtime_error(getFileLine(t) + "Expected 'cgi_ext <extension> </path>'");
 
 	// validate extenstion
 	Token ext = consume();
 	if (ext.value.length() < 2 || ext.value[0] != '.')
-		throw std::runtime_error("[Exception:plsCgi] Invalid cgi extension '" + ext.value + "' in line " + std::to_string(ext.line));
+		throw std::runtime_error(getFileLine(ext) + "Invalid cgi extension '" + ext.value + "'");
 	for (size_t i = 1; i < ext.value.length(); i++)
 	{
 		if (!std::isalnum(ext.value[i]))
-			throw std::runtime_error("[Exception:plsCgi] Invalid cgi extension '" + ext.value + "' in line " + std::to_string(ext.line) + "! Invalid char: '" + ext.value[i] + "'");
+			throw std::runtime_error(getFileLine(ext) + "Invalid cgi extension '" + ext.value + "'! Invalid char: '" + ext.value[i] + "'");
 	}
 
 	// validate path
@@ -115,7 +116,7 @@ void Parser::plsCgi(LocationConfig& lc)
 	if (pos != std::string::npos)
 	{
 		char invalid_char = path.value[pos];
-		throw std::runtime_error("[Exception:plsCgi] Invalid cgi path '" + path.value + "' in line " + std::to_string(path.line) + "! Invalid char: '" + invalid_char + "'");
+		throw std::runtime_error(getFileLine(path) + "Invalid cgi path '" + path.value + "'! Invalid char: '" + invalid_char + "'");
 	}
 
 	// write in map

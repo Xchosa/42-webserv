@@ -1,10 +1,15 @@
 #include "Parser.hpp"
 
-Parser::Parser(const std::vector<Token>& tokens)
-	: _tokens(tokens), _pos(0)
+Parser::Parser(const std::vector<Token>& tokens, const std::string& conf_file_path)
+	: _tokens(tokens), _pos(0), _conf_file_path(conf_file_path)
 {
 	if (_tokens[0].type == END_OF_FILE)
-		throw std::runtime_error("Empty config file!");
+		throw std::runtime_error(getFileLine(_tokens[0]) + "Empty config file!");
+}
+
+std::string Parser::getFileLine(const Token& t) const
+{
+	return ("[" + _conf_file_path + ":" + std::to_string(t.line) + "] ");
 }
 
 Token Parser::current() const
@@ -32,7 +37,7 @@ Token Parser::expectType(TokenType type, const std::string& expected)
 {
 	Token t = consume();
 	if (t.type != type)
-		throw std::runtime_error("[Exception:expectType] Unexpected value '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: '" + expected + "'");
+		throw std::runtime_error(getFileLine(t) + "Unexpected value '" + t.value + "'! Expected: '" + expected + "'");
 	return (t);
 }
 
@@ -40,7 +45,7 @@ Token Parser::expectTypeValue(TokenType type, const std::string& value)
 {
 	Token t = consume();
 	if (t.type != type || t.value != value)
-		throw std::runtime_error("[Exception:expectTypeValue] Unexpected value '" + t.value + "' in line " + std::to_string(t.line) + "! Expected: '" + value + "'");
+		throw std::runtime_error(getFileLine(t) + "Unexpected value '" + t.value + "'! Expected: '" + value + "'");
 	return (t);
 }
 
@@ -63,7 +68,7 @@ void Parser::parseServerSetting(ServerConfig& sc)
 	else if (setting_name.value == "is_default_server")
 		pssIsDefaultServer(sc);
 	else
-		throw std::runtime_error("[Exception:parseServerSetting] Unknown setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
+		throw std::runtime_error(getFileLine(setting_name) + "Unknown setting key '" + setting_name.value + "'");
 
 	expectType(SEMICOLIN, ";");
 }
@@ -87,7 +92,7 @@ void Parser::parseLocationSetting(LocationConfig& lc)
 	else if (setting_name.value == "cgi_ext")
 		plsCgi(lc);
 	else
-		throw std::runtime_error("[Exception:parseLocationSetting] Unknown setting key '" + setting_name.value + "' in line " + std::to_string(setting_name.line));
+		throw std::runtime_error(getFileLine(setting_name) + "Unknown setting key '" + setting_name.value + "'");
 
 	expectType(SEMICOLIN, ";");
 }
@@ -102,7 +107,10 @@ LocationConfig Parser::parseLocationBlock()
 		if (current().type == WORD && peek().type == WORD)
 			parseLocationSetting(lc);
 		else
-			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
+		{
+			Token t = current();
+			throw std::runtime_error(getFileLine(t) + "Unexpected value '" + t.value + "'! Missing parameter");
+		}
 	}
 	expectType(RBRACE, "}");
 	return (lc);
@@ -111,13 +119,13 @@ LocationConfig Parser::parseLocationBlock()
 void Parser::validateLocationPath(const Token& t)
 {
 	if (t.value[0] != '/')
-		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with '/'");
+		throw std::runtime_error(getFileLine(t) + "Invalid location path '" + t.value + "'! Path has to start with '/'");
 
 	auto pos = t.value.find_first_of(FORBIDDEN_PATH_CHARS);
 	if (pos != std::string::npos)
 	{
 		char invalid_char = t.value[pos];
-		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+		throw std::runtime_error(getFileLine(t) + "Invalid location path '" + t.value + "'! Invalid char: '" + invalid_char + "'");
 	}
 }
 
@@ -165,12 +173,15 @@ ServerConfig Parser::parseServerBlock()
 			// if location double -> error
 			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock());
 			if (!inserted)
-				throw std::runtime_error("[Exception:parseServerBlock] Doubled location '" + location_path.value + "' in line " + std::to_string(location_path.line));
+				throw std::runtime_error(getFileLine(location_path) + "Doubled location '" + location_path.value + "'");
 		}
 		else if (current().type == WORD && peek().type == WORD)
 			parseServerSetting(sc);
 		else
-			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
+		{
+			Token t = current();
+			throw std::runtime_error(getFileLine(t) + "Unexpected value '" + t.value + "'! Missing parameter");
+		}
 	}
 	expectType(RBRACE, "}");
 	setLocationDefaultSettings(sc);
