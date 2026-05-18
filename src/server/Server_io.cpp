@@ -60,10 +60,8 @@ std::string buildHelloWorldResponse()
 // recv und send timeout checken 
 void Server::recvClientData(int client_fd)
 {
-	//std::string buffer;
-	//buffer.resize(4096);
 	char buffer[4096];
-	while(true)
+	while (true)
 	{
 		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer),0  );
 		//ssize_t timer = timer_settime();
@@ -72,11 +70,9 @@ void Server::recvClientData(int client_fd)
 			_clients[client_fd]._last_activity = time(NULL);
 			ParseStatus tmp_status = _clients[client_fd]._parser.feed(buffer, bytes);
 
-
-			if(tmp_status == COMPLETE)
+			if (tmp_status == COMPLETE)
 			{
-				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
-				std::cout << _clients[client_fd]._parser.TMP_getRawBuffer() << std::endl;
+				// std::cout << "Request complete from client_fd: " << client_fd << std::endl;
 				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
@@ -115,7 +111,7 @@ void Server::sendToClient(int client_fd)
 	std::string response = _clients[client_fd]._response_buffer;
 
 	ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
-	std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
+	// std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
 	if (bytes < 0)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
