@@ -1,13 +1,11 @@
 #include "Parser.hpp"
 
-// TODO alles
 void Parser::pssRoot(ServerConfig& sc)
 {
 	psRoot(current());
 	sc._tmp_root = consume().value;
 }
 
-// TODO alles
 void Parser::pssIndex(ServerConfig& sc)
 {
 	psIndex(current());
@@ -51,31 +49,95 @@ void Parser::pssListen(ServerConfig& sc)
 	sc._listen_port = std::stoull(port_str);
 }
 
-// TODO alles
 void Parser::pssServername(ServerConfig& sc)
 {
 	while (current().type != SEMICOLIN)
 	{
-		sc._server_names.push_back(consume().value);
+		Token t = consume();
+		auto pos = t.value.find_first_of(FORBIDDEN_INDEX_CHARS);
+		if (pos != std::string::npos)
+		{
+			char invalid_char = t.value[pos];
+			throw std::runtime_error("[Exception:pssServername] Invalid server_name '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+		}
+		sc._server_names.push_back(t.value);
 	}
-
 }
 
-// TODO alles
 void Parser::pssClientMaxBodySize(ServerConfig& sc)
 {
-	sc._client_max_body_size = 1024 * 1024;
-	consume();
+	Token t = consume();
+
+	if (t.value == "0") // unlimited
+	{
+		sc._client_max_body_size = 0;
+		return ;
+	}
+	if (t.value.length() <= 1)
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line));
+
+	// get number
+	std::string	nbr_str = t.value.substr(0, t.value.length() - 1);
+	size_t		idx;
+	size_t		nbr;
+	try
+	{
+		nbr = std::stoull(nbr_str, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Overflow when converting data size in bytes '" + nbr_str + "' in line " + std::to_string(t.line));
+	}
+	if (idx != nbr_str.length())
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + nbr_str + "' in line " + std::to_string(t.line));
+
+	// get suffix (kb, mb, gb, etc)
+	char	suffix = t.value.back();
+	size_t	multiplier;
+	if (suffix == 'k')
+		multiplier = 1024ULL;
+	else if (suffix == 'm')
+		multiplier = 1024ULL * 1024;
+	else if (suffix == 'g')
+		multiplier = 1024ULL * 1024 * 1024;
+	else
+		throw std::runtime_error("[Exception:pssClientMaxBodySize] Invalid data size '" + std::string(1, t.value.back()) + "' in line " + std::to_string(t.line) + "! Expected: 'k', 'm' or 'g'");
+
+	sc._client_max_body_size = nbr * multiplier;
 }
 
-// TODO alles
 void Parser::pssErrorPage(ServerConfig& sc)
 {
-	int key = std::stoi(consume().value);
-	std::string val = consume().value;
+	// error if not enough params
+	if (current().type != WORD || peek().type != WORD)
+		throw std::runtime_error("[Exception:pssErrorPage] Excpected 'error_page <code> </page>' in line " + std::to_string(peek().line));
 
-	sc._error_pages.emplace(key, val);
-	// TODO klaeren: was soll bei doppelten error pages passieren? -> rueckgabewert emplace klaert auf
+	// validate error code
+	Token	t = consume();
+	size_t	idx;
+	int		errcode;
+	try
+	{
+		errcode = std::stoi(t.value, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Failed to convert value");
+	}
+	if (idx != t.value.length())
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
+	if (errcode < 300 || errcode >= 600)
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error code '" + t.value + "' in line " + std::to_string(t.line) + "! Code out of range");
+
+	// validate error file
+	t = consume();
+	if (t.value.length() < 3)
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Too short to be the correct file");
+	if (t.value.at(0) != '/')
+		throw std::runtime_error("[Exception:pssErrorPage] Invalid error page '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with a '/'");
+
+	// write in map
+	sc._error_pages[errcode] = t.value;
 }
 
 void Parser::pssIsDefaultServer(ServerConfig& sc)

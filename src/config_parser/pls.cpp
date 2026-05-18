@@ -1,13 +1,11 @@
 #include "Parser.hpp"
 
-// TODO alles
 void Parser::plsRoot(LocationConfig& lc)
 {
 	psRoot(current());
 	lc._root = consume().value;
 }
 
-// TODO alles
 void Parser::plsIndex(LocationConfig& lc)
 {
 	psIndex(current());
@@ -41,29 +39,85 @@ void Parser::plsAutoindex(LocationConfig& lc)
 	lc._autoindex = flag;
 }
 
-// TODO alles
 void Parser::plsReturn(LocationConfig& lc)
 {
-	Token code = consume();
-	Token to = consume();
+	// validate redirect code
+	Token	t = consume();
+	size_t	idx;
+	int		code;
+	try
+	{
+		code = std::stoi(t.value, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Failed to convert value");
+	}
+	if (idx != t.value.length())
+		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Code not a number");
+	if (code < 200 || code >= 600)
+		throw std::runtime_error("[Exception:plsReturn] Invalid redirect code '" + t.value + "' in line " + std::to_string(t.line) + "! Code out of range");
+	lc._redirect_code = code;
 
-	if (code.type != WORD || to.type != WORD) // hier noch pruefung ob url/pfad stimmt
-		throw std::runtime_error("[Exception:plsReturn] Unexpected value for redirect url '" + to.value + "' in line " + std::to_string(to.line) + "! Expected: a path or url");
+	// validate optional redirect url
+	// 2xx, 4xx, 5xx -> body text, everyting allowed
+	// 3xx -> validate url or path
+	if (current().type == WORD)
+	{
+		t = consume();
+		if (code >= 300 && code <= 399)
+		{
+			if (t.value[0] != '/' 
+				&& t.value.substr(0,7) != "http://" 
+				&& t.value.substr(0,8) != "https://")
+				throw std::runtime_error("[Exception:plsReturn] Invalid redirect URL/path '" + t.value + "' in line " + std::to_string(t.line));
+		}
+		lc._redirect_url = t.value;
+	}
 
-	lc._redirect_code = std::stoi(code.value);
-	lc._redirect_url = to.value;
+	// if code 3xx, redirect url is neccesary
+	if (code >= 300 && code <= 399 && !lc._redirect_url.has_value())
+		throw std::runtime_error("[Exception:plsReturn] Redirect URL/path necceccary on code '" + t.value + "' in line " + std::to_string(t.line));
 }
 
-// TODO alles
 void Parser::plsUploadStore(LocationConfig& lc)
 {
-	lc._upload_store = consume().value;
+	Token t = consume();
+	auto pos = t.value.find_first_of(FORBIDDEN_PATH_CHARS);
+	if (pos != std::string::npos)
+	{
+		char invalid_char = t.value[pos];
+		throw std::runtime_error("[Exception:plsUploadStore] Invalid upload_store path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+	}
+
+	lc._upload_store = t.value;
 }
 
-// TODO alles
 void Parser::plsCgi(LocationConfig& lc)
 {
-	auto key = consume().value;
-	auto val = consume().value;
-	lc._cgi_map[key] = val;
+	// error if not enough params
+	if (current().type != WORD || peek().type != WORD)
+		throw std::runtime_error("[Exception:plsCgi] Excpected 'cgi_ext <extension> </path>' in line " + std::to_string(peek().line));
+
+	// validate extenstion
+	Token ext = consume();
+	if (ext.value.length() < 2 || ext.value[0] != '.')
+		throw std::runtime_error("[Exception:plsCgi] Invalid cgi extension '" + ext.value + "' in line " + std::to_string(ext.line));
+	for (size_t i = 1; i < ext.value.length(); i++)
+	{
+		if (!std::isalnum(ext.value[i]))
+			throw std::runtime_error("[Exception:plsCgi] Invalid cgi extension '" + ext.value + "' in line " + std::to_string(ext.line) + "! Invalid char: '" + ext.value[i] + "'");
+	}
+
+	// validate path
+	Token path = consume();
+	auto pos = path.value.find_first_of(FORBIDDEN_PATH_CHARS);
+	if (pos != std::string::npos)
+	{
+		char invalid_char = path.value[pos];
+		throw std::runtime_error("[Exception:plsCgi] Invalid cgi path '" + path.value + "' in line " + std::to_string(path.line) + "! Invalid char: '" + invalid_char + "'");
+	}
+
+	// write in map
+	lc._cgi_map[ext.value] = path.value;
 }
