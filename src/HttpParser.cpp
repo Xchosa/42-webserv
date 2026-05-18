@@ -37,6 +37,11 @@ void HttpParser::parseHeader(const std::string& line)
 	std::string key = line.substr(0, pos);
 	std::string val = line.substr(pos + 1);
 
+	for (char& c : key)
+	{
+		c = std::tolower(c);
+	}
+
 	if (val[0] == ' ')
 		val.erase(0, 1);
 	
@@ -49,34 +54,59 @@ void HttpParser::parseBuffer()
 {
 	std::string line;
 
+	if (_state == REQUEST_LINE)
+	{
+		if (!extractLine(_raw_buffer, line))
+			return ;
+		parseRequestLine(line);
+		_state = HEADERS;
+	}
+
 	// parse header
-	while (extractLine(_raw_buffer, line))
+	if (_state == HEADERS)
 	{
-		if (line.empty()) // on \r\n\r\n
-			break ;
-
-		if (_state == REQUEST_LINE)
+		while (extractLine(_raw_buffer, line))
 		{
-			parseRequestLine(line);
-			_state = HEADERS;
-		}
-		else if (_state == HEADERS)
+			if (line.empty()) // \r\n\r\n -> headers completed, choose what happens next
+			{
+				if (_request._headers.count("transfer-encoding") && _request._headers["transfer-encoding"] == "chunked")
+					_state = BODY_CHUNKED;
+				else if (_request._headers.count("content-length"))
+					_state = BODY_CONTENT_LEN;
+				else
+					_state = DONE;
+				break ;
+			}
 			parseHeader(line);
-	}
-
-	// parse body
-	if (_request._headers.find("Transfer-Encoding") != _request._headers.end())
-	{
-		if (_request._headers["Transfer-Encoding"] == "chunked")
-		{
-			// get body with chunked blocks
 		}
 	}
-	else if (_request._headers.find("Content-Length") != _request._headers.end())
+
+	if (_state == BODY_CHUNKED)
 	{
-		// get body with content length
+		// todo
 	}
-	_status = COMPLETE;
+
+	if (_state == BODY_CONTENT_LEN)
+	{
+		// todo
+	}
+
+	if (_state == DONE)
+		_status == COMPLETE;
+
+	// // parse body
+	// if (_request._headers.find("Transfer-Encoding") != _request._headers.end())
+	// {
+	// 	if (_request._headers["Transfer-Encoding"] == "chunked")
+	// 	{
+	// 		// get body with chunked blocks
+	// 	}
+	// }
+	// else if (_request._headers.find("Content-Length") != _request._headers.end())
+	// {
+	// 	// get body with content length
+	// }
+	// _status = COMPLETE;
 }
 
 ParseStatus HttpParser::feed(const char *data, size_t n)
