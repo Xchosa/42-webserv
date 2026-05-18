@@ -93,6 +93,7 @@ void Parser::pssClientMaxBodySize(ServerConfig& sc)
 
 	// get suffix (kb, mb, gb, etc)
 	char	suffix = t.value.back();
+	suffix = std::tolower(suffix);
 	size_t	multiplier;
 	if (suffix == 'k')
 		multiplier = 1024ULL;
