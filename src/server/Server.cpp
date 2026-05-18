@@ -54,7 +54,7 @@ void Server::run()
 	
 	while(true)
 	{
-		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, TIMEOUT ); // nbr of events(for each client) retured , cut of by max events
+		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, TIMEOUT * 1000); // nbr of events(for each client) retured , cut of by max events
 		if (readyEvents == -1)
 		{
 			if (errno == EINTR)
@@ -81,6 +81,10 @@ void Server::run()
 				recvClientData(fd);
 			else if (event_flag & EPOLLOUT)
 				sendToClient(fd);
+		}
+		if(readyEvents == 0)
+		{
+			checkClientTimeouts();
 		}
 	}
 }

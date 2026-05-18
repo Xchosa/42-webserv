@@ -37,7 +37,25 @@ bool Server::isServerFd(int fd) const
 
 void Server::closeClient(int client_fd)
 {
+	std::cout << "close client fd: " << client_fd << std::endl;
 	removeFdEpoll(client_fd);
 	close(client_fd);
 	_clients.erase(client_fd);
 }
+
+
+void Server::checkClientTimeouts()
+{
+	std::vector<int> timed_out_clients;
+
+	for (const auto& [client_fd, client] : _clients)
+	{
+		if (checklastActivity(client_fd) >= TIMEOUT)
+			timed_out_clients.emplace_back(client_fd);
+	}
+
+	for (int client_fd : timed_out_clients)
+	{
+		closeClient(client_fd);
+	}
+  }

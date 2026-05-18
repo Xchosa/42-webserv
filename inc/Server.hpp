@@ -16,7 +16,8 @@
 
 
 inline constexpr size_t MAXEVENTS = 64;
-inline constexpr int TIMEOUT = 10;
+// seconds 
+inline constexpr int TIMEOUT = 15;
 
 class Server
 {
@@ -42,6 +43,9 @@ class Server
 		
 		bool			isServerFd(int fd) const;
 		void 			closeClient(int client_fd);
+
+		void			checkClientTimeouts();
+		int				checklastActivity(int client_fd);
 
 	public:
 		// OCF

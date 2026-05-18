@@ -44,27 +44,19 @@ std::string buildHelloWorldResponse()
 }
 
 
-//void Server::checklastActivity()
-//{
-//	- time 1970
-//}
+int	Server::checklastActivity(int client_fd)
+{
+	int time_delta = time(NULL)- _clients[client_fd]._last_activity;
+	return time_delta;
+}
 
 
-// ➜  ~ telnet localhost 8081
-//Trying 127.0.0.1...
-//Connected to localhost.
-//Escape character is '^]'.
-//GET / HTTP/1.1
-
-
-// recv und send timeout checken 
 void Server::recvClientData(int client_fd)
 {
 	char buffer[4096];
 	while (true)
 	{
 		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer),0  );
-		//ssize_t timer = timer_settime();
 		if(bytes >0)
 		{
 			_clients[client_fd]._last_activity = time(NULL);
@@ -72,7 +64,7 @@ void Server::recvClientData(int client_fd)
 
 			if (tmp_status == COMPLETE)
 			{
-				// std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				 std::cout << "Request complete from client_fd: " << client_fd << std::endl;
 				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
@@ -82,9 +74,8 @@ void Server::recvClientData(int client_fd)
 				closeClient(client_fd);
 				break;
 			}
-			if( _clients[client_fd]._last_activity >= TIMEOUT)
+			if( checklastActivity(client_fd) >= TIMEOUT)
 			{
-				std::cout << "timeout of client fd: " << client_fd << std::endl;
 				closeClient(client_fd);
 				break;
 			}
@@ -105,7 +96,6 @@ void Server::recvClientData(int client_fd)
 }
 
 
-// send feature 
 void Server::sendToClient(int client_fd)
 {
 	std::string response = _clients[client_fd]._response_buffer;
