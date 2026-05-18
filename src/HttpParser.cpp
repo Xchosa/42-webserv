@@ -19,12 +19,21 @@ bool HttpParser::extractLine(std::string& buffer, std::string& line)
 
 void HttpParser::parseRequestLine(const std::string& line)
 {
-	std::stringstream ss(line);
+	std::stringstream	ss(line);
+	std::string			raw_path;
 
 	ss >> _request._method;
-	ss >> _request._path;
+	ss >> raw_path;
 	ss >> _request._version;
 
+	size_t pos = raw_path.find("?");
+	if (pos == std::string::npos)
+		_request._path = raw_path;
+	else
+	{
+		_request._path = raw_path.substr(0, pos);
+		_request._query = raw_path.substr(pos + 1);
+	}
 	// query noch splitten vom path
 }
 
