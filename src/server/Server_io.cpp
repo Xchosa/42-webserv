@@ -22,6 +22,7 @@ void Server::acceptClient(int server_fd)
 		ClientInfos client;
 		client._listen_context = &_socket_fds[server_fd];
 		client._selected_server = NULL;
+		client._last_activity = time(NULL);
 		_clients[client_fd] = client;
 
 		addFdEpoll(client_fd, EPOLLIN | EPOLLRDHUP); 
@@ -43,6 +44,20 @@ std::string buildHelloWorldResponse()
 }
 
 
+//void Server::checklastActivity()
+//{
+//	- time 1970
+//}
+
+
+// ➜  ~ telnet localhost 8081
+//Trying 127.0.0.1...
+//Connected to localhost.
+//Escape character is '^]'.
+//GET / HTTP/1.1
+
+
+// recv und send timeout checken 
 void Server::recvClientData(int client_fd)
 {
 	//std::string buffer;
@@ -51,9 +66,10 @@ void Server::recvClientData(int client_fd)
 	while(true)
 	{
 		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer),0  );
-
+		//ssize_t timer = timer_settime();
 		if(bytes >0)
 		{
+			_clients[client_fd]._last_activity = time(NULL);
 			ParseStatus tmp_status = _clients[client_fd]._parser.feed(buffer, bytes);
 
 
@@ -67,6 +83,12 @@ void Server::recvClientData(int client_fd)
 			}
 			if(tmp_status == ERROR)
 			{
+				closeClient(client_fd);
+				break;
+			}
+			if( _clients[client_fd]._last_activity >= TIMEOUT)
+			{
+				std::cout << "timeout of client fd: " << client_fd << std::endl;
 				closeClient(client_fd);
 				break;
 			}
