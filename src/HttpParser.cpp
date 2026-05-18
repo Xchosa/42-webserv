@@ -34,7 +34,6 @@ void HttpParser::parseRequestLine(const std::string& line)
 		_request._path = raw_path.substr(0, pos);
 		_request._query = raw_path.substr(pos + 1);
 	}
-	// query noch splitten vom path
 }
 
 void HttpParser::parseHeader(const std::string& line)
