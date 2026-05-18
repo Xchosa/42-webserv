@@ -102,16 +102,23 @@ LocationConfig Parser::parseLocationBlock()
 		if (current().type == WORD && peek().type == WORD)
 			parseLocationSetting(lc);
 		else
-			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
+			throw std::runtime_error("[Exception:parseLocationBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
 	}
 	expectType(RBRACE, "}");
 	return (lc);
 }
 
-// TODO all
 void Parser::validateLocationPath(const Token& t)
 {
-	(void)t;
+	if (t.value[0] != '/')
+		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Path has to start with '/'");
+
+	auto pos = t.value.find_first_of(FORBIDDEN_PATH_CHARS);
+	if (pos != std::string::npos)
+	{
+		char invalid_char = t.value[pos];
+		throw std::runtime_error("[Exception:validateLocationPath] Invalid location path '" + t.value + "' in line " + std::to_string(t.line) + "! Invalid char: '" + invalid_char + "'");
+	}
 }
 
 void Parser::setLocationDefaultSettings(ServerConfig& sc)
@@ -149,10 +156,10 @@ ServerConfig Parser::parseServerBlock()
 
 	while (current().type != RBRACE)
 	{
-		if (current().value == "location" && peek().type == WORD)
+		if (current().value == "location")
 		{
 			expectTypeValue(WORD, "location");
-			Token location_path = expectType(WORD, "<location_path");
+			Token location_path = expectType(WORD, "<location_path>");
 			validateLocationPath(location_path);
 			
 			// if location double -> error
@@ -163,7 +170,7 @@ ServerConfig Parser::parseServerBlock()
 		else if (current().type == WORD && peek().type == WORD)
 			parseServerSetting(sc);
 		else
-			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line));
+			throw std::runtime_error("[Exception:parseServerBlock] Unexpected value '" + current().value + "' in line " + std::to_string(current().line) + "! Missing parameter");
 	}
 	expectType(RBRACE, "}");
 	setLocationDefaultSettings(sc);

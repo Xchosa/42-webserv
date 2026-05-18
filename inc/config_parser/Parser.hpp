@@ -5,9 +5,13 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <set>
+#include <string>
 
 #include "Token.hpp"
 #include "Config.hpp"
+
+inline constexpr std::string_view FORBIDDEN_PATH_CHARS = "*?[]{}():;\n#\"' \\";
+inline constexpr std::string_view FORBIDDEN_INDEX_CHARS = "*?[]{}():;\n#\"' \\/";
 
 class Parser
 {
@@ -26,9 +30,6 @@ class Parser
 		LocationConfig	parseLocationBlock();
 		void			validateLocationPath(const Token& t);
 		void			setLocationDefaultSettings(ServerConfig& sc);
-
-		// TODO
-		// void validatePath(const std::string& path);
 		
 		// parse doubled settings (server and location)
 		void	psRoot(const Token &t);
