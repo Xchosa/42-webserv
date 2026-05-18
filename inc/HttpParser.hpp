@@ -49,6 +49,8 @@ class HttpParser
 
 		// const HttpRequest&	getRequest() const;					// damit client auf request struct zugreifen kann, vorher auch pruefen ob status = COMPLETE!
 		// void				reset();							// _raw_buffer, _request, _status leeren, damit parser bereit fuer naechsten request auf derselben verbindung
-		std::string			TMP_getRawBuffer() const;
-
+		
+		// for debugging
+		void	printRawBuffer() const;
+		void	printRequest() const;
 };

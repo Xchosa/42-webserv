@@ -113,14 +113,32 @@ void HttpParser::parseBuffer()
 ParseStatus HttpParser::feed(const char *data, size_t n)
 {
 	_raw_buffer.append(data, n);
-	std::cout << TMP_getRawBuffer() << std::endl;	// debugging
+	
+	// printRawBuffer();
+
 	this->parseBuffer();
 
+	printRequest();
 
 	return (this->getStatus());
 }
 
-std::string HttpParser::TMP_getRawBuffer() const
+void HttpParser::printRawBuffer() const
 {
-	return _raw_buffer;
+	std::cout << "------------ START RawBuffer ------------\n" << _raw_buffer << "------------ END RawBuffer ------------\n";
+}
+
+void HttpParser::printRequest() const
+{
+	std::cout << "------------ REQUEST START ------------\n";
+	std::cout << "Method -> [" << _request._method << "]" << std::endl;
+	std::cout << "Path   -> [" << _request._path << "]" << std::endl;
+	std::cout << "Query  -> [" << _request._query << "]" << std::endl;
+	std::cout << "Version-> [" << _request._version << "]" << std::endl;
+	for (auto& it : _request._headers)
+	{
+		std::cout << "Header -> [" << it.first << "] = [" << it.second << "]" << std::endl;
+	}
+	std::cout << "Body   -> [" << _request._body << "]" << std::endl;
+	std::cout << "------------ REQUEST END ------------\n";
 }
