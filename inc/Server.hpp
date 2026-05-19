@@ -39,7 +39,7 @@ class Server
 		void 			sendToClient(int client_fd);
 		std::string		normalizeListenHost(const std::string& host);
 		std::string		makeListenKey(const ServerConfig& server_config);
-		ListenContext 	getOrCreateListenContext(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);
+		ListenContext& 	getOrCreateListenContext(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);
 		void 			checkHostWithSamePort(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);
 		
 		bool			isServerFd(int fd) const;

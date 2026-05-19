@@ -142,3 +142,10 @@ void HttpParser::printRequest() const
 	std::cout << "Body   -> [" << _request._body << "]" << std::endl;
 	std::cout << "------------ REQUEST END ------------\n";
 }
+
+
+
+const HttpRequest& HttpParser::getRequest() const 
+{
+	return (this->_request);
+}

@@ -95,7 +95,7 @@ void Server::checkHostWithSamePort(std::map<std::string, ListenContext>& context
 }
 
 
-ListenContext Server::getOrCreateListenContext(
+ListenContext& Server::getOrCreateListenContext(
   	std::map<std::string, ListenContext>& contexts_by_listen,
   	ServerConfig* server_config
   )
@@ -128,12 +128,18 @@ void Server::setupListeningSockets()
 	for (size_t i = 0; i < _config._servers.size(); ++i)
 	{
 		ServerConfig* server_config = &_config._servers[i];
-		ListenContext context =getOrCreateListenContext(contexts_by_listen, server_config);
+		ListenContext& listenContext =getOrCreateListenContext(contexts_by_listen, server_config);
 
-		context._candidates.push_back(std::move(server_config));
+		listenContext._candidates.push_back(std::move(server_config));
+		std::cout << "listen "
+  		  << listenContext._host << ":"
+  		  << listenContext._port
+  		  << " candidates now: "
+  		  << listenContext._candidates.size()
+  		  << std::endl;
 
 		if (server_config->_is_default_server)
-			context._default_server = server_config;
+			listenContext._default_server = server_config;
 	}
 	for(auto& [key, serverName]: contexts_by_listen)
 	{

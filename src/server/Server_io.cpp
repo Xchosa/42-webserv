@@ -66,9 +66,13 @@ void Server::recvClientData(int client_fd)
 			{
 				// HttpResponse res;
 				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
-
+				ServerConfig *selectedServer;
 				// 1. server vom client raussuchen (*_selected_server)
-				// _clients[client_fd].searchServer();
+				selectedServer = _clients[client_fd].selectVirtualHost();
+
+
+
+				std::cout<< "serverName: " << selectedServer << "for listingsocket " << _clients[client_fd]._listen_context->_host << ":" << std::to_string(_clients[client_fd]._listen_context->_port)<< std::endl;
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
 				// Dispatcher dpatch;
 				// res = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
