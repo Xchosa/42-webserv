@@ -147,11 +147,17 @@ void HttpParser::parseBuffer()
 		}
 	}
 
+
+
+	// ab hier wird _selected_server benoetigt
+
 	if (_state == BODY_CHUNKED)
 	{
 		// todo
+		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
 	}
 
+	// _client_max_body_size gegen _content_len_expected pruefen und 413 thrown wenn ueberschritten
 	if (_state == BODY_CONTENT_LEN)
 	{
 		if (_raw_buffer.size() < _content_len_expected)

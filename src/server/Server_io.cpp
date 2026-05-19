@@ -74,6 +74,8 @@ void Server::recvClientData(int client_fd)
 			_clients[client_fd]._last_activity = time(NULL);
 			ParseStatus parse_status = _clients[client_fd]._parser.feed(buffer, bytes);
 
+			// if header completed parsing dann server setzen und weiter feeden
+
 			if (parse_status == COMPLETE)
 			{
 				// HttpResponse res;
