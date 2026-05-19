@@ -39,7 +39,10 @@ class HttpParser
 		void			parseRequestLine(const std::string& line);
 		void			parseHeader(const std::string& line);
 
+		// validation
 		void			validateRequest();
+		void			validateHeaderHost(const std::string& value);
+		void			validateHeaderContentLen(const std::string& value);
 
 	public:
 		// OCF

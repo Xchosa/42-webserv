@@ -22,6 +22,16 @@ void HttpParser::validateRequest()
 	this->_status = COMPLETE;
 }
 
+void HttpParser::validateHeaderHost(const std::string& value)
+{
+	(void)value;
+}
+
+void HttpParser::validateHeaderContentLen(const std::string& value)
+{
+	(void)value;
+}
+
 void HttpParser::parseRequestLine(const std::string& line)
 {
 	if (!std::regex_match(line, REGEX_REQUEST_LINE))
@@ -50,7 +60,8 @@ void HttpParser::parseRequestLine(const std::string& line)
 void HttpParser::parseHeader(const std::string& line)
 {
 	size_t pos = line.find(":");
-	if (pos == std::string::npos)
+	// skip insert in header map when no delemiter or no value after delemiter
+	if (pos == std::string::npos || pos == line.length() - 1)
 		return ;
 	
 	std::string key = line.substr(0, pos);
@@ -61,8 +72,20 @@ void HttpParser::parseHeader(const std::string& line)
 		c = std::tolower(c);
 	}
 
-	if (val[0] == ' ')
+	// trim optional white space at begin and end of value
+	while (val[0] == ' ')
 		val.erase(0, 1);
+	while (val[val.length() - 1] == ' ')
+		val.erase(val.length() - 1, 1);
+
+	// validate important headers
+	if (key == "host")
+		validateHeaderHost(val);
+	else if (key == "content-length")
+		validateHeaderContentLen(val);
+	
+	if (_status == ERROR)
+		return ;
 	
 	_request._headers[key] = val;
 }
@@ -102,6 +125,8 @@ void HttpParser::parseBuffer()
 				break ;
 			}
 			parseHeader(line);
+			if (_status == ERROR)
+				return ;
 		}
 	}
 
