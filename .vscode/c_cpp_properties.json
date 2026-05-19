@@ -7,7 +7,7 @@
 				"${workspaceFolder}/inc/config_parser",
 				"${workspaceFolder}/inc/config",
 				"${workspaceFolder}/inc/http_request",
-				"${workspaceFolder}/inc/http_reponse"
+				"${workspaceFolder}/inc/http_response"
 			],
 			"compilerPath": "/usr/bin/g++",
 			"cppStandard": "c++17",
