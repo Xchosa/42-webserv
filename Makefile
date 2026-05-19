@@ -5,7 +5,7 @@ FLAG_OPTIMIZING = -O2
 FLAG_DEBUG = -g -O0
 
 # header files
-INCLUDE = ./inc ./inc/config ./inc/config_parser ./inc/config_server
+INCLUDE = ./inc ./inc/config ./inc/config_parser ./inc/config_server ./inc/http_request ./inc/http_response
 CXXFLAGS += $(addprefix -I,$(INCLUDE))
 
 # program name
@@ -14,7 +14,8 @@ NAME = webserv
 # source files
 VPATH =	src \
 		src/config_parser \
-		src/server
+		src/server \
+		src/http_request
 
 SRCS =	main.cpp \
 		Lexer.cpp \
