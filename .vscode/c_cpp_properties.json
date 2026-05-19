@@ -5,7 +5,9 @@
 			"includePath": [
 				"${workspaceFolder}/inc",
 				"${workspaceFolder}/inc/config_parser",
-				"${workspaceFolder}/inc/config"
+				"${workspaceFolder}/inc/config",
+				"${workspaceFolder}/inc/http_request",
+				"${workspaceFolder}/inc/http_reponse"
 			],
 			"compilerPath": "/usr/bin/g++",
 			"cppStandard": "c++17",
