@@ -43,6 +43,18 @@ std::string buildHelloWorldResponse()
 			body;
 }
 
+std::string buildErrorResponse()
+{
+	std::string body = "Error!\n";
+
+	return "HTTP/1.1 400 Bad Request\r\n"
+			"Content-Type: text/plain\r\n"
+			"Content-Length: " + std::to_string(body.size()) + "\r\n"
+			"Connection: close\r\n"
+			"\r\n" +
+			body;
+}
+
 
 int	Server::checklastActivity(int client_fd)
 {
@@ -71,7 +83,10 @@ void Server::recvClientData(int client_fd)
 			}
 			if(tmp_status == ERROR)
 			{
-				closeClient(client_fd);
+				// error reponse muss noch raus an den client, nicht direkt schliessen
+				_clients[client_fd]._response_buffer = buildErrorResponse();
+				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+				// closeClient(client_fd);
 				break;
 			}
 			if( checklastActivity(client_fd) >= TIMEOUT)

@@ -17,8 +17,19 @@ bool HttpParser::extractLine(std::string& buffer, std::string& line)
 	return (true);
 }
 
+void HttpParser::validateRequest()
+{
+	this->_status = COMPLETE;
+}
+
 void HttpParser::parseRequestLine(const std::string& line)
 {
+	if (!std::regex_match(line, REGEX_REQUEST_LINE))
+	{
+		_status = ERROR;
+		return ;
+	}
+
 	std::stringstream	ss(line);
 	std::string			raw_path;
 
@@ -65,6 +76,8 @@ void HttpParser::parseBuffer()
 		if (!extractLine(_raw_buffer, line))
 			return ;
 		parseRequestLine(line);
+		if (getStatus() == ERROR)
+			return ;
 		_state = HEADERS;
 	}
 
@@ -107,7 +120,7 @@ void HttpParser::parseBuffer()
 	}
 
 	if (_state == DONE)
-		_status = COMPLETE;
+		this->validateRequest();
 }
 
 ParseStatus HttpParser::feed(const char *data, size_t n)

@@ -3,8 +3,11 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 #include "HttpRequest.hpp"
+
+inline const std::regex REGEX_REQUEST_LINE{R"(^(GET|POST|DELETE) [\x21-\x7E]{1,2048} HTTP/1\.1$)"};
 
 enum ParseStatus
 {
@@ -35,6 +38,8 @@ class HttpParser
 		bool			extractLine(std::string& buffer, std::string &line);
 		void			parseRequestLine(const std::string& line);
 		void			parseHeader(const std::string& line);
+
+		void			validateRequest();
 
 	public:
 		// OCF
