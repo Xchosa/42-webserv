@@ -1,0 +1,15 @@
+#pragma once
+
+#include <string>
+#include <map>
+
+struct HttpResponse {
+	int									_status_code;
+	std::string							_status_text;
+	std::string							_version;
+	std::map<std::string, std::string>	_headers;
+	std::string							_body;
+
+	// std::string serialize() const;	// baut HttpResponse in ein string fuer _response_buffer in ClientInfos
+};
+	

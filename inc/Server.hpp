@@ -13,6 +13,7 @@
 
 #include "ClientInfos.hpp"
 #include "Config.hpp"
+#include "Dispatcher.hpp"
 
 
 inline constexpr size_t MAXEVENTS = 64;
