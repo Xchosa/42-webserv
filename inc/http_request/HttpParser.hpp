@@ -8,6 +8,7 @@
 #include "HttpRequest.hpp"
 
 inline const std::regex REGEX_REQUEST_LINE{R"(^(GET|POST|DELETE) [\x21-\x7E]{1,2048} HTTP/1\.1$)"};
+inline constexpr std::string_view FORBIDDEN_HOST_CHARS = "*?{}();\n\t#\"' \\/";
 
 enum ParseStatus
 {

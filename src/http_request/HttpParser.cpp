@@ -24,12 +24,29 @@ void HttpParser::validateRequest()
 
 void HttpParser::validateHeaderHost(const std::string& value)
 {
-	(void)value;
+	auto pos = value.find_first_of(FORBIDDEN_HOST_CHARS);
+	if (pos != std::string::npos)
+		_status = ERROR;
 }
 
 void HttpParser::validateHeaderContentLen(const std::string& value)
 {
-	(void)value;
+	size_t idx;
+	if (value[0] == '-' || value[0] == '+')
+	{
+		_status = ERROR;
+		return ;
+	}
+	try
+	{
+		std::stoull(value, &idx);
+	}
+	catch(const std::exception& e)
+	{
+		_status = ERROR;
+	}
+	if (idx != value.length())
+		_status = ERROR;
 }
 
 void HttpParser::parseRequestLine(const std::string& line)
