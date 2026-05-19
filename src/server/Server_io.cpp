@@ -72,16 +72,24 @@ void Server::recvClientData(int client_fd)
 		if(bytes >0)
 		{
 			_clients[client_fd]._last_activity = time(NULL);
-			ParseStatus tmp_status = _clients[client_fd]._parser.feed(buffer, bytes);
+			ParseStatus parse_status = _clients[client_fd]._parser.feed(buffer, bytes);
 
-			if (tmp_status == COMPLETE)
+			if (parse_status == COMPLETE)
 			{
-				 std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				// HttpResponse res;
+				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+
+				// 1. server vom client raussuchen (*_selected_server)
+				// _clients[client_fd].searchServer();
+				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
+				// Dispatcher dpatch;
+				// res = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
+
 				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
-			if(tmp_status == ERROR)
+			if(parse_status == ERROR)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
 				_clients[client_fd]._response_buffer = buildErrorResponse();
