@@ -27,28 +27,34 @@ void Server::acceptClient(int server_fd)
 
 }
 
-std::string buildHelloWorldResponse()
+HttpResponse DUMMY_response_OK()
 {
-	std::string body = "Hello Gabriel on the 11th of May\n";
+	HttpResponse re;
 
-	return "HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: " + std::to_string(body.size()) + "\r\n"
-			"Connection: keep-alive\r\n"
-			"\r\n" +
-			body;
+	re._status_code = 200;
+	re._status_text = "OK";
+	re._version = "HTTP/1.1";
+	re._body = "Okay!\n";
+	re._headers["Content-Length"] = std::to_string(re._body.length());
+	re._headers["Content-Type"] = "text/plain";
+	re._headers["Connection"] = "keep-alive";
+
+	return (re);
 }
 
-std::string buildErrorResponse()
+HttpResponse DUMMY_response_ERR400()
 {
-	std::string body = "Error!\n";
+	HttpResponse re;
 
-	return "HTTP/1.1 400 Bad Request\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: " + std::to_string(body.size()) + "\r\n"
-			"Connection: close\r\n"
-			"\r\n" +
-			body;
+	re._status_code = 400;
+	re._status_text = "Bad Request";
+	re._version = "HTTP/1.1";
+	re._body = "Fehler du versager!\n";
+	re._headers["Content-Length"] = std::to_string(re._body.length());
+	re._headers["Content-Type"] = "text/plain";
+	re._headers["Connection"] = "close";
+
+	return (re);
 }
 
 int	Server::checklastActivity(int client_fd)
@@ -82,20 +88,19 @@ void Server::recvClientData(int client_fd)
 				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
 				
 				
-				// HttpResponse res;
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
 				// Dispatcher dpatch;
-				// res = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
+				// _clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 
+				_clients[client_fd]._response = DUMMY_response_OK();
 
-				_clients[client_fd]._response_buffer = buildHelloWorldResponse();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
 			if(parse_status == ERROR_400)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
-				_clients[client_fd]._response_buffer = buildErrorResponse();
+				_clients[client_fd]._response = DUMMY_response_ERR400();
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				// closeClient(client_fd);
 				break;
@@ -122,11 +127,9 @@ void Server::recvClientData(int client_fd)
 	}
 }
 
-
-// 
 void Server::sendToClient(int client_fd)
 {
-	std::string response = _clients[client_fd]._response_buffer;
+	std::string response = _clients[client_fd]._response.serialize();
 
 	ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
 	// std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;

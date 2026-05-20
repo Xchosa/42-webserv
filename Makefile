@@ -16,6 +16,7 @@ VPATH =	src \
 		src/config_parser \
 		src/server \
 		src/http_request \
+		src/http_response
 		
 
 SRCS =	main.cpp \
@@ -29,7 +30,8 @@ SRCS =	main.cpp \
 		Server_epoll.cpp \
 		Server_io.cpp \
 		Server_sockets.cpp \
-		ClientInfos.cpp
+		ClientInfos.cpp \
+		HttpResponse.cpp
 
 
 # obejct files

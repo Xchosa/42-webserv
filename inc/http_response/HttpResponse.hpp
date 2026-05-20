@@ -10,6 +10,5 @@ struct HttpResponse {
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
 
-	// std::string serialize() const;	// baut HttpResponse in ein string fuer _response_buffer in ClientInfos
+	std::string serialize() const;	// baut HttpResponse in ein string fuer _response_buffer in ClientInfos
 };
-	
