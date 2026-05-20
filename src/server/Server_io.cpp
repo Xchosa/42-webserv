@@ -34,7 +34,7 @@ HttpResponse DUMMY_response_OK()
 	re._status_code = 200;
 	re._status_text = "OK";
 	re._version = "HTTP/1.1";
-	re._body = "Okay!\n";
+	re._body = "Okay!";
 	re._headers["Content-Length"] = std::to_string(re._body.length());
 	re._headers["Content-Type"] = "text/plain";
 	re._headers["Connection"] = "keep-alive";
@@ -49,7 +49,7 @@ HttpResponse DUMMY_response_ERR400()
 	re._status_code = 400;
 	re._status_text = "Bad Request";
 	re._version = "HTTP/1.1";
-	re._body = "Fehler du versager!\n";
+	re._body = "Fehler du versager!";
 	re._headers["Content-Length"] = std::to_string(re._body.length());
 	re._headers["Content-Type"] = "text/plain";
 	re._headers["Connection"] = "close";
@@ -93,7 +93,9 @@ void Server::recvClientData(int client_fd)
 				// _clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 
 				_clients[client_fd]._response = DUMMY_response_OK();
+				std::cout << "METHODE: " << _clients[client_fd]._parser.getRequest()._method << std::endl;
 				_clients[client_fd]._parser.reset();
+				std::cout << "METHODE: " << _clients[client_fd]._parser.getRequest()._method << std::endl;
 
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;

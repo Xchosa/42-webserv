@@ -7,4 +7,9 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* serv
 
 	// find correct location
 	// ...
+
+	(void)request;
+	(void)server_config;
+	HttpResponse dummy;
+	return dummy;
 }

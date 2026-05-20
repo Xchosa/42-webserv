@@ -7,12 +7,18 @@ ParseStatus HttpParser::getStatus() const
 
 void HttpParser::reset()
 {
-	_raw_buffer.erase(_raw_buffer.begin(), _raw_buffer.end());
+	_raw_buffer.clear();
 	_status = INCOMPLETE;
 	_state = REQUEST_LINE;
 	_content_len_expected = 0;
 	_client_server_config = nullptr;
-	// request cleanen TODO
+	
+	_request._method.clear();
+	_request._path.clear();
+	_request._query.clear();
+	_request._version.clear();
+	_request._headers.clear();
+	_request._body.clear();
 }
 
 bool HttpParser::extractLine(std::string& buffer, std::string& line)
@@ -128,6 +134,7 @@ ParseStatus HttpParser::parseBuffer()
 
 	if (_state == REQUEST_LINE)
 	{
+		std::cout << "<<<< parse request line >>>>>>>\n";
 		if (!extractLine(_raw_buffer, line))
 			return (this->getStatus());
 		parseRequestLine(line);
@@ -139,10 +146,12 @@ ParseStatus HttpParser::parseBuffer()
 	// parse header
 	if (_state == HEADERS)
 	{
+		std::cout << "<<<< parse header >>>>>>>\n";
 		while (extractLine(_raw_buffer, line))
 		{
 			if (line.empty()) // \r\n\r\n -> headers completed
 			{
+				std::cout << "<<<< parse header complete :( >>>>>>>\n";
 				_status = HEADER_COMPLETE;
 
 				// choose what happens next
@@ -169,6 +178,7 @@ ParseStatus HttpParser::parseBuffer()
 			parseHeader(line);
 			if (_status == ERROR_400)
 				return (this->getStatus());
+			std::cout << "<<<< parse header end >>>>>>>\n";
 		}
 	}
 
@@ -198,7 +208,10 @@ ParseStatus HttpParser::parseBuffer()
 	}
 
 	if (_state == DONE)
+	{
 		this->validateRequest();
+		std::cout << "<<<< parsing COMPLETE >>>>>>>\n";
+	}
 
 	return (this->getStatus());
 }
