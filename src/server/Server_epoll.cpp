@@ -50,7 +50,7 @@ void Server::checkClientTimeouts()
 
 	for (const auto& [client_fd, client] : _clients)
 	{
-		if (checklastActivity(client_fd) >= TIMEOUT)
+		if (checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
 			timed_out_clients.emplace_back(client_fd);
 	}
 

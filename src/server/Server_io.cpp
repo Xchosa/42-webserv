@@ -34,7 +34,7 @@ std::string buildHelloWorldResponse()
 	return "HTTP/1.1 200 OK\r\n"
 			"Content-Type: text/plain\r\n"
 			"Content-Length: " + std::to_string(body.size()) + "\r\n"
-			"Connection: close\r\n"
+			"Connection: keep-alive\r\n"
 			"\r\n" +
 			body;
 }
@@ -73,7 +73,6 @@ void Server::recvClientData(int client_fd)
 			if (parse_status == HEADER_COMPLETE)
 			{
 				_clients[client_fd].selectVirtualHost();
-				std::cout << ">>> FOUND SERVER: " << _clients[client_fd]._selected_server->_server_names[0] << std::endl;
 				parse_status = _clients[client_fd]._parser.parseBuffer();
 			}
 
@@ -101,7 +100,8 @@ void Server::recvClientData(int client_fd)
 				// closeClient(client_fd);
 				break;
 			}
-			if( checklastActivity(client_fd) >= TIMEOUT)
+
+			if( checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
 			{
 				closeClient(client_fd);
 				break;
@@ -122,6 +122,8 @@ void Server::recvClientData(int client_fd)
 	}
 }
 
+
+// 
 void Server::sendToClient(int client_fd)
 {
 	std::string response = _clients[client_fd]._response_buffer;
