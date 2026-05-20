@@ -15,7 +15,8 @@ NAME = webserv
 VPATH =	src \
 		src/config_parser \
 		src/server \
-		src/http_request
+		src/http_request \
+		
 
 SRCS =	main.cpp \
 		Lexer.cpp \
@@ -27,7 +28,8 @@ SRCS =	main.cpp \
 		Server.cpp \
 		Server_epoll.cpp \
 		Server_io.cpp \
-		Server_sockets.cpp
+		Server_sockets.cpp \
+		Client_infos.cpp
 
 
 # obejct files

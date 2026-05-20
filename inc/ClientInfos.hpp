@@ -12,4 +12,6 @@ struct ClientInfos
     ServerConfig	*_selected_server = nullptr;	// null until header parsed
     std::string		_response_buffer;				// ganzer response, inkl header
     time_t          _last_activity;
+
+    ServerConfig*    selectVirtualHost();
 };
