@@ -61,7 +61,7 @@ class HttpParser
 		ParseStatus			parseBuffer();
 		void				setServerConfig(ServerConfig* conf);
 		const HttpRequest&	getRequest() const;					// damit client auf request struct zugreifen kann, vorher auch pruefen ob status = COMPLETE!
-		// void				reset();							// _raw_buffer, _request, _status leeren, damit parser bereit fuer naechsten request auf derselben verbindung
+		void				reset();							// _raw_buffer, _request, _status leeren, damit parser bereit fuer naechsten request auf derselben verbindung
 	
 		// for debugging
 		void	printRawBuffer() const;

@@ -5,6 +5,16 @@ ParseStatus HttpParser::getStatus() const
 	return (this->_status);
 }
 
+void HttpParser::reset()
+{
+	_raw_buffer.erase(_raw_buffer.begin(), _raw_buffer.end());
+	_status = INCOMPLETE;
+	_state = REQUEST_LINE;
+	_content_len_expected = 0;
+	_client_server_config = nullptr;
+	// request cleanen TODO
+}
+
 bool HttpParser::extractLine(std::string& buffer, std::string& line)
 {
 	size_t pos = buffer.find("\r\n");
