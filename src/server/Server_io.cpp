@@ -94,14 +94,14 @@ void Server::recvClientData(int client_fd)
 
 				_clients[client_fd]._response = DUMMY_response_OK();
 
-				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
 			if(parse_status == ERROR_400)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
 				_clients[client_fd]._response = DUMMY_response_ERR400();
-				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				// closeClient(client_fd);
 				break;
 			}
@@ -129,27 +129,28 @@ void Server::recvClientData(int client_fd)
 
 void Server::sendToClient(int client_fd)
 {
-	std::string response = _clients[client_fd]._response.serialize();
 
-	ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
-	// std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
-	if (bytes < 0)
+	std::string response = _clients[client_fd]._response.serialize();
+	while (!response.empty())
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-  			return;
-		removeFdEpoll(client_fd),
-		close(client_fd);
-		_clients.erase(client_fd);
-		return;
+		int i = 0;
+		i++;
+		ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
+		if (bytes < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+				  return;
+			closeClient(client_fd);
+			return;
+		}
+		response.erase(0, bytes);
 
 	}
-	response.erase(0, bytes);
+	// std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
 
-  	if (response.empty())
-  	{
-  		removeFdEpoll(client_fd);
-  		close(client_fd);
-  		_clients.erase(client_fd);
-  	}
+	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
+	{
+		closeClient(client_fd);
+	}
 
 }

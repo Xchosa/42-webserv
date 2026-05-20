@@ -78,9 +78,16 @@ void Server::run()
 			if (isServerFd(fd))
 				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
 			else if (event_flag & EPOLLIN)
+			{
 				recvClientData(fd);
+				modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
+			}
 			else if (event_flag & EPOLLOUT)
+			{
 				sendToClient(fd);
+				if(_clients.count(fd))
+					modifyFdEpoll(fd, EPOLLIN | EPOLLRDHUP);
+			}
 		}
 		if(readyEvents == 0)
 		{
