@@ -180,7 +180,6 @@ ParseStatus HttpParser::parseBuffer()
 			_status = ERROR_413;
 			return (this->getStatus());
 		}
-		// _client_max_body_size gegen _content_len_expected pruefen und 413 thrown wenn ueberschritten
 		if (_raw_buffer.size() < _content_len_expected)
 			return (this->getStatus());
 		_request._body = _raw_buffer.substr(0, _content_len_expected);

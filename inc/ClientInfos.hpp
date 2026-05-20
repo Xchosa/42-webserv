@@ -13,5 +13,5 @@ struct ClientInfos
     std::string		_response_buffer;				// ganzer response, inkl header
     time_t          _last_activity;
 
-    ServerConfig*    selectVirtualHost();
+    void	selectVirtualHost();
 };
