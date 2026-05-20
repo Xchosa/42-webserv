@@ -134,7 +134,6 @@ ParseStatus HttpParser::parseBuffer()
 
 	if (_state == REQUEST_LINE)
 	{
-		std::cout << "<<<< parse request line >>>>>>>\n";
 		if (!extractLine(_raw_buffer, line))
 			return (this->getStatus());
 		parseRequestLine(line);
@@ -146,12 +145,10 @@ ParseStatus HttpParser::parseBuffer()
 	// parse header
 	if (_state == HEADERS)
 	{
-		std::cout << "<<<< parse header >>>>>>>\n";
 		while (extractLine(_raw_buffer, line))
 		{
 			if (line.empty()) // \r\n\r\n -> headers completed
 			{
-				std::cout << "<<<< parse header complete :( >>>>>>>\n";
 				_status = HEADER_COMPLETE;
 
 				// choose what happens next
@@ -178,7 +175,6 @@ ParseStatus HttpParser::parseBuffer()
 			parseHeader(line);
 			if (_status == ERROR_400)
 				return (this->getStatus());
-			std::cout << "<<<< parse header end >>>>>>>\n";
 		}
 	}
 
@@ -208,10 +204,7 @@ ParseStatus HttpParser::parseBuffer()
 	}
 
 	if (_state == DONE)
-	{
 		this->validateRequest();
-		std::cout << "<<<< parsing COMPLETE >>>>>>>\n";
-	}
 
 	return (this->getStatus());
 }

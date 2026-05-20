@@ -93,9 +93,7 @@ void Server::recvClientData(int client_fd)
 				// _clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 
 				_clients[client_fd]._response = DUMMY_response_OK();
-				std::cout << "METHODE: " << _clients[client_fd]._parser.getRequest()._method << std::endl;
-				_clients[client_fd]._parser.reset();
-				std::cout << "METHODE: " << _clients[client_fd]._parser.getRequest()._method << std::endl;
+
 
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
@@ -155,5 +153,7 @@ void Server::sendToClient(int client_fd)
 	{
 		closeClient(client_fd);
 	}
+
+	std::cout << "GESENDET\n";
 
 }

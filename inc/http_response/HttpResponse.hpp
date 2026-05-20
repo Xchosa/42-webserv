@@ -4,7 +4,7 @@
 #include <map>
 
 struct HttpResponse {
-	int									_status_code;
+	int									_status_code = 0;
 	std::string							_status_text;
 	std::string							_version;
 	std::map<std::string, std::string>	_headers;

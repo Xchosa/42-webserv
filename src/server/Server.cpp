@@ -80,7 +80,12 @@ void Server::run()
 			else if (event_flag & EPOLLIN)
 			{
 				recvClientData(fd);
-				modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
+				ParseStatus status = _clients[fd]._parser.getStatus();
+				if (status == COMPLETE || status == ERROR_400 || status == ERROR_413) // nur senden wenn response ready
+				{
+					modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
+					_clients[fd]._parser.reset();
+				}
 			}
 			else if (event_flag & EPOLLOUT)
 			{

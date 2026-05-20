@@ -7,7 +7,8 @@ std::string HttpResponse::serialize() const
 	// response line
 	buffer.append(_version);
 	buffer.append(" ");
-	buffer.append(std::to_string(_status_code));
+	if (_status_code > 0)
+		buffer.append(std::to_string(_status_code));
 	buffer.append(" ");
 	buffer.append(_status_text);
 	buffer.append("\r\n");
