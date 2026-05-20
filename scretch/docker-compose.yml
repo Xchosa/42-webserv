@@ -1,0 +1,11 @@
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/hmtl:/usr/share/nginx/hmtl
+      - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf
+    restart: unless-stopped 
