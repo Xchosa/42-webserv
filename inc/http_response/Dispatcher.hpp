@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <string>
+
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
 #include "HttpRequest.hpp"
@@ -9,10 +12,13 @@ class Dispatcher
 {
 	private:
 		// handler
-		HttpResponse handleStatic(HttpRequest& request, LocationConfig& location_config); // baut response
+		HttpResponse handleStatic(HttpRequest& request, LocationConfig* lc); // baut response
 		// handleStatic
 		// handleCgi
 		// handleUpload
+
+		// helper
+
 
 	public:
 		// OCF
@@ -22,5 +28,5 @@ class Dispatcher
 		~Dispatcher() = default;
 
 		// member functions
-		HttpResponse dispatch(const HttpRequest& request, ServerConfig* server_config); // sucht richtigen handler und passende location_config
+		HttpResponse dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
 };

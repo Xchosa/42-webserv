@@ -20,7 +20,7 @@ inline constexpr size_t MAXEVENTS = 64;
 // seconds 
 inline constexpr int TIMEOUT = 5;
 inline constexpr int IDLE_TIME = 5;
-inline constexpr int KEEP_ALIVE_TIMEOUT = 20;
+inline constexpr int KEEP_ALIVE_TIMEOUT = 3;
 
 class Server
 {

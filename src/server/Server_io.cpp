@@ -34,7 +34,7 @@ HttpResponse DUMMY_response_OK()
 	re._status_code = 200;
 	re._status_text = "OK";
 	re._version = "HTTP/1.1";
-	re._body = "Okay!";
+	re._body = "Okay!\n";
 	re._headers["Content-Length"] = std::to_string(re._body.length());
 	re._headers["Content-Type"] = "text/plain";
 	re._headers["Connection"] = "keep-alive";
@@ -49,7 +49,7 @@ HttpResponse DUMMY_response_ERR400()
 	re._status_code = 400;
 	re._status_text = "Bad Request";
 	re._version = "HTTP/1.1";
-	re._body = "Fehler du versager!";
+	re._body = "Fehler du versager!\n";
 	re._headers["Content-Length"] = std::to_string(re._body.length());
 	re._headers["Content-Type"] = "text/plain";
 	re._headers["Connection"] = "close";
@@ -89,6 +89,7 @@ void Server::recvClientData(int client_fd)
 				
 				
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
+				// std::cout << std::to_string(_clients[client_fd]._selected_server->_locations.size()) << std::endl;
 				// Dispatcher dpatch;
 				// _clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 
@@ -153,7 +154,4 @@ void Server::sendToClient(int client_fd)
 	{
 		closeClient(client_fd);
 	}
-
-	std::cout << "GESENDET\n";
-
 }
