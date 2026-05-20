@@ -40,7 +40,10 @@ void HttpParser::setServerConfig(ServerConfig* conf)
 
 void HttpParser::validateRequest()
 {
-	this->_status = COMPLETE;
+	if (!_request._headers.count("host"))
+		this->_status = ERROR_400;
+	else
+		this->_status = COMPLETE;
 }
 
 void HttpParser::validateHeaderHost(const std::string& value)
