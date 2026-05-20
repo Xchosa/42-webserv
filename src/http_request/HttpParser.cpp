@@ -17,6 +17,11 @@ bool HttpParser::extractLine(std::string& buffer, std::string& line)
 	return (true);
 }
 
+void HttpParser::setServerConfig(ServerConfig* conf)
+{
+	_client_server_config = conf;
+}
+
 void HttpParser::validateRequest()
 {
 	this->_status = COMPLETE;
@@ -26,7 +31,7 @@ void HttpParser::validateHeaderHost(const std::string& value)
 {
 	auto pos = value.find_first_of(FORBIDDEN_HOST_CHARS);
 	if (pos != std::string::npos)
-		_status = ERROR;
+		_status = ERROR_400;
 }
 
 void HttpParser::validateHeaderContentLen(const std::string& value)
@@ -34,7 +39,7 @@ void HttpParser::validateHeaderContentLen(const std::string& value)
 	size_t idx;
 	if (value[0] == '-' || value[0] == '+')
 	{
-		_status = ERROR;
+		_status = ERROR_400;
 		return ;
 	}
 	try
@@ -43,17 +48,17 @@ void HttpParser::validateHeaderContentLen(const std::string& value)
 	}
 	catch(const std::exception& e)
 	{
-		_status = ERROR;
+		_status = ERROR_400;
 	}
 	if (idx != value.length())
-		_status = ERROR;
+		_status = ERROR_400;
 }
 
 void HttpParser::parseRequestLine(const std::string& line)
 {
 	if (!std::regex_match(line, REGEX_REQUEST_LINE))
 	{
-		_status = ERROR;
+		_status = ERROR_400;
 		return ;
 	}
 
@@ -101,23 +106,23 @@ void HttpParser::parseHeader(const std::string& line)
 	else if (key == "content-length")
 		validateHeaderContentLen(val);
 	
-	if (_status == ERROR)
+	if (_status == ERROR_400)
 		return ;
 	
 	_request._headers[key] = val;
 }
 
-void HttpParser::parseBuffer()
+ParseStatus HttpParser::parseBuffer()
 {
 	std::string line;
 
 	if (_state == REQUEST_LINE)
 	{
 		if (!extractLine(_raw_buffer, line))
-			return ;
+			return (this->getStatus());
 		parseRequestLine(line);
-		if (getStatus() == ERROR)
-			return ;
+		if (getStatus() == ERROR_400)
+			return (this->getStatus());
 		_state = HEADERS;
 	}
 
@@ -126,42 +131,58 @@ void HttpParser::parseBuffer()
 	{
 		while (extractLine(_raw_buffer, line))
 		{
-			if (line.empty()) // \r\n\r\n -> headers completed, choose what happens next
+			if (line.empty()) // \r\n\r\n -> headers completed
 			{
+				_status = HEADER_COMPLETE;
+
+				// choose what happens next
 				if (_request._headers.count("transfer-encoding") && _request._headers["transfer-encoding"] == "chunked")
+				{
 					_state = BODY_CHUNKED;
+					return (this->getStatus());
+				}
 				else if (_request._headers.count("content-length"))
 				{
 					_state = BODY_CONTENT_LEN;
 					_content_len_expected = std::stoull(_request._headers["content-length"]);
 					if (_content_len_expected <= 0)
+					{
 						_state = DONE;
+						break ;
+					}
+					return (this->getStatus());
 				}
 				else
 					_state = DONE;
 				break ;
 			}
 			parseHeader(line);
-			if (_status == ERROR)
-				return ;
+			if (_status == ERROR_400)
+				return (this->getStatus());
 		}
 	}
 
 
 
-	// ab hier wird _selected_server benoetigt
-
-	if (_state == BODY_CHUNKED)
+	
+	
+	if (_state == BODY_CHUNKED) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
 	{
 		// todo
 		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
 	}
 
-	// _client_max_body_size gegen _content_len_expected pruefen und 413 thrown wenn ueberschritten
-	if (_state == BODY_CONTENT_LEN)
+	
+	if (_state == BODY_CONTENT_LEN) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
 	{
+		if (_content_len_expected > _client_server_config->_client_max_body_size)
+		{
+			_status = ERROR_413;
+			return (this->getStatus());
+		}
+		// _client_max_body_size gegen _content_len_expected pruefen und 413 thrown wenn ueberschritten
 		if (_raw_buffer.size() < _content_len_expected)
-			return ;
+			return (this->getStatus());
 		_request._body = _raw_buffer.substr(0, _content_len_expected);
 		_raw_buffer.erase(0, _content_len_expected);
 		_state = DONE;
@@ -169,19 +190,21 @@ void HttpParser::parseBuffer()
 
 	if (_state == DONE)
 		this->validateRequest();
+
+	return (this->getStatus());
 }
 
-ParseStatus HttpParser::feed(const char *data, size_t n)
+void HttpParser::feedBuffer(const char *data, size_t n)
 {
 	_raw_buffer.append(data, n);
 	
 	// printRawBuffer();
 
-	this->parseBuffer();
+	// this->parseBuffer();
 
-	printRequest();
+	// printRequest();
 
-	return (this->getStatus());
+	// return (this->getStatus());
 }
 
 void HttpParser::printRawBuffer() const

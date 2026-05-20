@@ -72,17 +72,33 @@ void Server::recvClientData(int client_fd)
 		if(bytes >0)
 		{
 			_clients[client_fd]._last_activity = time(NULL);
-			ParseStatus parse_status = _clients[client_fd]._parser.feed(buffer, bytes);
+
+			_clients[client_fd]._parser.feedBuffer(buffer, bytes);
+			ParseStatus parse_status = _clients[client_fd]._parser.parseBuffer();
+
+			if (parse_status == HEADER_COMPLETE)
+			{
+				// 1. server vom client raussuchen (*_selected_server)
+				// _clients[client_fd].searchServer();
+				// kann search server auf fehler laufen oder nichts zurueckgeben?
+				if (_clients[client_fd]._selected_server == nullptr)
+				{
+					std::cout << ">>>>>>>> header complete, no selectedServer found after searching\n";
+				}
+				_clients[client_fd]._parser.setServerConfig(_clients[client_fd]._selected_server); // das hier in searchServer machen
+				std::cout << ">>>>>>>>>>> header complete aber body enthalten\n";
+				parse_status = _clients[client_fd]._parser.parseBuffer(); // _client_server_config MUSS gefuellt sein! vorher pruefen
+			}
 
 			// if header completed parsing dann server setzen und weiter feeden
 
 			if (parse_status == COMPLETE)
 			{
+				_clients[client_fd]._parser.printRequest();
 				// HttpResponse res;
 				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
 
-				// 1. server vom client raussuchen (*_selected_server)
-				// _clients[client_fd].searchServer();
+
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
 				// Dispatcher dpatch;
 				// res = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
@@ -91,7 +107,7 @@ void Server::recvClientData(int client_fd)
 				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
-			if(parse_status == ERROR)
+			if(parse_status == ERROR_400)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
 				_clients[client_fd]._response_buffer = buildErrorResponse();
