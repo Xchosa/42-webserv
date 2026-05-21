@@ -189,6 +189,23 @@ ParseStatus HttpParser::parseBuffer()
 	{
 		// todo
 		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
+		
+		//while(1)
+		//{
+		//	_request._body = _raw_buffer.substr(0, _content_len_expected);
+		//	_raw_buffer.erase(0, _content_len_expected);
+			
+		//	if (_request._body.size() > _client_server_config->_client_max_body_size)
+		//	{
+		//		std::cout << "raw_buffer size: " << _raw_buffer.size() << std::endl;
+ 		//		printRawBuffer();
+		//	}
+		//	if (_request._body.find("0\r\n\r\n") != std::string::npos)
+		//		_state = DONE;
+
+		//}
+		//	if (_raw_buffer.size() )
+		//	if(_client_server_config->_client_max_body_size)
 	}
 
 	
