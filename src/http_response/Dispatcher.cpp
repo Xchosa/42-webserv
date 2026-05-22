@@ -1,23 +1,35 @@
 #include "Dispatcher.hpp"
 
+LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* sc) const
+{
+	LocationConfig*	lc = nullptr;
+	size_t			longest_match = 0;
+
+	for (auto& it : sc->_locations)
+	{
+		// std::cout << "search for: '" << it.first << "' in '" << path << "'\n";
+		if (path.find(it.first) != std::string::npos)
+		{
+			size_t location_len = it.first.length();
+			if (location_len > longest_match)
+			{
+				longest_match = location_len;
+				lc = &it.second;
+				// std::cout << "'" << it.first << "' ist neue location\n";
+			}
+		}
+	}
+	return (lc);
+}
+
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	// find location with longest path match
-	// LocationConfig* lc = nullptr;
-	// std::cout << std::to_string(sc->_locations.size()) << std::endl;
-	// for (auto& it : sc->_locations)
-	// {
-	// 	(void)it;
-	// 	// if (request._path.find(it.first) != std::string::npos)
-	// 	// {
-	// 	// 	std::cout << "gefunden!\n";
-	// 	// }
-	// 	// else
-	// 	// {
-	// 	// 	std::cout << "nicht gefunden!\n";
-	// 	// }
-	// }
-
+	LocationConfig*	lc = this->findLocation(request._path, sc);
+	if (lc == nullptr)
+	{
+		// 404 error werfen
+	}
 
 	// find correct handler
 	// ...
@@ -25,8 +37,6 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 	// find correct location
 	// ...
 
-	(void)sc;
-	(void)request;
 	HttpResponse dummy;
 	return dummy;
 }

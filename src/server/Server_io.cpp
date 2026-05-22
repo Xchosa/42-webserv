@@ -68,19 +68,22 @@ void Server::recvClientData(int client_fd)
 	char buffer[4096];
 	while (true)
 	{
-		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer),0  );
-		if(bytes >0)
+		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer), 0);
+		if (bytes > 0)
 		{
 			_clients[client_fd]._last_activity = time(NULL);
 
 			_clients[client_fd]._parser.feedBuffer(buffer, bytes);
 			ParseStatus parse_status = _clients[client_fd]._parser.parseBuffer();
 
-			if (parse_status == HEADER_COMPLETE)
+			if (parse_status == HEADER_COMPLETE) // header complete, but body missing
 			{
 				_clients[client_fd].selectVirtualHost();
 				parse_status = _clients[client_fd]._parser.parseBuffer();
 			}
+
+			if (parse_status == COMPLETE && _clients[client_fd]._selected_server == nullptr) // request complete parsed, no body, search now for correct sever
+				_clients[client_fd].selectVirtualHost();
 
 			if (parse_status == COMPLETE)
 			{
@@ -89,9 +92,8 @@ void Server::recvClientData(int client_fd)
 				
 				
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
-				// std::cout << std::to_string(_clients[client_fd]._selected_server->_locations.size()) << std::endl;
-				// Dispatcher dpatch;
-				// _clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
+				Dispatcher dpatch;
+				_clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 
 				_clients[client_fd]._response = DUMMY_response_OK();
 

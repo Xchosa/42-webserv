@@ -18,6 +18,7 @@ class Dispatcher
 		// handleUpload
 
 		// helper
+		LocationConfig* findLocation(const std::string& path, ServerConfig* sc) const;
 
 
 	public:
