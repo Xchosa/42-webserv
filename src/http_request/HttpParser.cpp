@@ -132,7 +132,86 @@ void HttpParser::parseHeader(const std::string& line)
 }
 
 
-
+ParseStatus HttpParser::parseChunkedBody()
+{
+	while(_raw_buffer.size() != 0)
+	{	
+		
+		std::size_t posCRLF = _raw_buffer.find("\r\n");
+		if (posCRLF == std::string::npos)
+		{ 
+			std::cout << "empty _rawbuffer" <<std::endl;
+			_status = INCOMPLETE;
+			return(this->getStatus());
+		}
+		
+		std::string ChunkHexSize= _raw_buffer.substr(0, posCRLF);
+		std::size_t dataStart = posCRLF + 2;
+		std::cout << "HexSizeHttpReq: "<<  ChunkHexSize <<std::endl;
+		std::size_t parsedChars = 0;
+		// stoul can thow try Catch? how clean retrn status
+		unsigned long ChunkSizeDez = 0;
+		try
+		{
+			ChunkSizeDez = std::stoul( ChunkHexSize, &parsedChars, 16);
+		}
+		catch(const std::exception& e)
+		{
+			_status = ERROR_400;
+			return (this->getStatus());
+			
+		}
+		if(parsedChars != ChunkHexSize.length())
+		{
+			std::cout << "invalid HezSizeHttReq" <<std::endl;
+			_status = ERROR_400;
+			return (this->getStatus());
+		}
+		if (ChunkSizeDez == 0)
+		{
+			if (_request._body.size() > _client_server_config->_client_max_body_size)
+			{
+				_status = ERROR_413;
+				return (this->getStatus());
+			}
+			if ( _raw_buffer.find_last_of("\r\n\r\n") == std::string::npos)
+			{
+				_status = INCOMPLETE;
+				return(this->getStatus());
+			}
+			_raw_buffer.erase(0, posCRLF + 4);
+			std::cout << "complete chunked" <<std::endl;
+			_state = DONE;
+			return(this->getStatus());
+		}
+		size_t neededSubstr = posCRLF+ 2 + ChunkSizeDez + 2;
+		if(neededSubstr > _raw_buffer.length())
+		{
+			_status = INCOMPLETE;
+			return(this->getStatus());
+		}
+		if(_raw_buffer.substr(dataStart+ ChunkSizeDez, 2) != ("\r\n"))
+		{
+			if( _raw_buffer.size() < ChunkSizeDez + 2)
+			{
+				_status = ERROR_400;
+				return(this->getStatus());
+			}
+			_status = INCOMPLETE;
+			return(this->getStatus());
+		}
+		// only check if Header is complete
+		//std::cout << "client_max body size: set? " << _client_server_config->_client_max_body_size <<std::endl;
+		if(_request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
+		{
+			_status = ERROR_413;
+			return (this->getStatus());
+		}
+		_request._body += _raw_buffer.substr(posCRLF + 2, ChunkSizeDez);
+		_raw_buffer = _raw_buffer.erase(0,posCRLF + 2 + ChunkSizeDez + 2);
+	}
+	return _status;
+}
 
 ParseStatus HttpParser::parseBuffer()
 {
@@ -195,89 +274,7 @@ ParseStatus HttpParser::parseBuffer()
 
 	if (_state == BODY_CHUNKED) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
 	{
-		// todo
-		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
-		int i = 0;
-		while(_raw_buffer.size() != 0)
-		{	
-			
-			std::size_t posCRLF = _raw_buffer.find("\r\n");
-			if (posCRLF == std::string::npos)
-			{ 
-				std::cout << "empty _rawbuffer" <<std::endl;
-				_status = INCOMPLETE;
-				return(this->getStatus());
-			}
-
-			
-			std::string ChunkHexSize= _raw_buffer.substr(0, posCRLF);
-			std::size_t dataStart = posCRLF + 2;
-			std::cout << "HexSizeHttpReq: "<<  ChunkHexSize <<std::endl;
-
-			std::size_t parsedChars = 0;
-			// stoul can thow try Catch? how clean retrn status
-			unsigned long ChunkSizeDez = 0;
-			try
-			{
-				ChunkSizeDez = std::stoul( ChunkHexSize, &parsedChars, 16);
-			}
-			catch(const std::exception& e)
-			{
-				_status = ERROR_400;
-				return (this->getStatus());
-				
-			}
-			if(parsedChars != ChunkHexSize.length())
-			{
-				std::cout << "invalid HezSizeHttReq" <<std::endl;
-				_status = ERROR_400;
-				return (this->getStatus());
-			}
-			if (ChunkSizeDez == 0)
-			{
-				if (_request._body.size() > _client_server_config->_client_max_body_size)
-				{
-					_status = ERROR_413;
-					return (this->getStatus());
-				}
-				if ( _raw_buffer.find_last_of("\r\n\r\n") == std::string::npos)
-				{
-					_status = INCOMPLETE;
-					return(this->getStatus());
-				}
-				_raw_buffer.erase(0, posCRLF + 4);
-				std::cout << "complete chunked" <<std::endl;
-				_state = DONE;
-				return(this->getStatus());
-			}
-
-			size_t neededSubstr = posCRLF+ 2 + ChunkSizeDez + 2;
-			if(neededSubstr > _raw_buffer.length())
-			{
-				_status = INCOMPLETE;
-				return(this->getStatus());
-			}
-			if(_raw_buffer.substr(dataStart+ ChunkSizeDez, 2) != ("\r\n"))
-			{
-				if( _raw_buffer.size() < ChunkSizeDez + 2)
-				{
-					_status = ERROR_400;
-					return(this->getStatus());
-				}
-				_status = INCOMPLETE;
-				return(this->getStatus());
-			}
-			// only check if Header is complete
-			if(_request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
-			{
-				_status = ERROR_413;
-				return (this->getStatus());
-			}
-			_request._body += _raw_buffer.substr(posCRLF + 2, ChunkSizeDez);
-			std::cout << "loop: "<< i << _request._body << std::endl;
-			_raw_buffer = _raw_buffer.erase(0,posCRLF + 2 + ChunkSizeDez + 2);
-		}
-
+		_status = parseChunkedBody();
 	}
 
 	
