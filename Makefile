@@ -32,7 +32,8 @@ SRCS =	main.cpp \
 		Server_sockets.cpp \
 		ClientInfos.cpp \
 		HttpResponse.cpp \
-		Dispatcher.cpp
+		Dispatcher.cpp \
+		HttpException.cpp
 
 
 # obejct files
