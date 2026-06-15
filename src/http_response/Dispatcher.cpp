@@ -59,10 +59,11 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 		if (lc == nullptr)
 			throw HttpException(404);
 
-		checkMethodAllowed(request._method, lc->_methods);
-
 		if (lc->_redirect_code.has_value())
 			return (handleRedirect(lc));
+
+		checkMethodAllowed(request._method, lc->_methods);
+
 
 		// find correct handler
 		// ...
