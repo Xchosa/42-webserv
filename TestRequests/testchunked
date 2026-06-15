@@ -1,1 +1,1 @@
-printf "POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: text/plain\r\n\r\nb\r\nHello World\r\n0\r\n\r\n' | nc localhost 8080"
+printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: text/plain\r\n\r\nb\r\nHello World\r\n0\r\n\r\n' | nc localhost 8080
