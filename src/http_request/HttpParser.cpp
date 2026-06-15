@@ -131,6 +131,9 @@ void HttpParser::parseHeader(const std::string& line)
 	_request._headers[key] = val;
 }
 
+
+
+
 ParseStatus HttpParser::parseBuffer()
 {
 	std::string line;
@@ -181,7 +184,14 @@ ParseStatus HttpParser::parseBuffer()
 		}
 	}
 
-
+/*
+<size in hex>\r\n
+  <body bytes of exactly that size>\r\n
+  <size in hex>\r\n
+  <body bytes>\r\n
+  0\r\n
+  \r\n
+*/
 
 	
 	
@@ -189,8 +199,74 @@ ParseStatus HttpParser::parseBuffer()
 	{
 		// todo
 		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
+		int i = 0;
+		while(_raw_buffer.size() != 0)
+		{	
+			std::cout << "empty _rawbuffer: " << _raw_buffer << std::endl;
+			std::size_t posCRLF = _raw_buffer.find("\r\n");
+
+			//std::size_t line_end = _raw_buffer.find("\r\n");
+
+			if (posCRLF == std::string::npos)
+			{
+				std::cout << "empty _rawbuffer" <<std::endl;
+				_status = INCOMPLETE;
+				return(this->getStatus());
+			}
+
+			
+			std::string ChunkHexSize= _raw_buffer.substr(0, posCRLF);
+			
+			std::cout << "HexSizeHttpReq: "<<  ChunkHexSize <<std::endl;
+
+			std::size_t idx = 0;
+			// stoul can thow try Catch? how clean retrn status
+			unsigned long ChunkSizeDez = std::stoul( ChunkHexSize, &idx, 16);
+			
+			if(idx != ChunkHexSize.length())
+			{
+				if (ChunkSizeDez == 0)
+				{
+					_state = DONE;
+					return(this->getStatus());
+				}
+				std::cout << "invalid HezSizeHttReq" <<std::endl;
+				_status = ERROR_400;
+				return (this->getStatus());
+			}
+			// print them  CRLF
+			// erase CRRL + Nr 
+			// parse the a substr as long as the number to request._body
+			// de;ete this substr from raw_buffer
+
+			std::string deletedHttpReq = _raw_buffer.substr(0, posCRLF + 2);
+			std::cout<< deletedHttpReq << std::endl;
+			_raw_buffer = _raw_buffer.erase(0, posCRLF + 2);
+			
+
+			// parsed line complete
+			if( _raw_buffer.size() < ChunkSizeDez + 2)
+			{
+				if(_raw_buffer.substr(ChunkSizeDez, 2) != ("\r\n"))
+				{
+					_status = ERROR_400;
+					return(this->getStatus());
+				}
+				_status = INCOMPLETE;
+				return(this->getStatus());
+			}
+			_request._body += _raw_buffer.substr(0, ChunkSizeDez);
+			std::cout << "loop: "<< i << _request._body << std::endl;
+			_raw_buffer = _raw_buffer.erase(0, ChunkSizeDez + 2);
 		
-		//while(1)
+			// check if only one CRLF is left -> state don
+
+			// parse to request body
+
+
+
+		}
+
 		//{
 		//	_request._body = _raw_buffer.substr(0, _content_len_expected);
 		//	_raw_buffer.erase(0, _content_len_expected);
