@@ -12,7 +12,7 @@ class Dispatcher
 {
 	private:
 		// handler (baut response)
-		HttpResponse handleRedirect(HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleRedirect(LocationConfig* lc);
 		HttpResponse handleStatic(HttpRequest& request, LocationConfig* lc);
 		// handleCgi
 		// handleUpload

@@ -37,6 +37,19 @@ void Dispatcher::checkMethodAllowed(std::string method, std::vector<std::string>
 		throw HttpException(405);
 }
 
+HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
+{
+	HttpResponse r;
+
+	r._version = "HTTP/1.1";
+	r._status_code = lc->_redirect_code.value();
+	r._status_text = "Moved Permanently";
+	r._headers["Location"] = lc->_redirect_url.value();
+	r._headers["Content-Length"] = "0";
+
+	return (r);
+}
+
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	try
@@ -47,6 +60,9 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 			throw HttpException(404);
 
 		checkMethodAllowed(request._method, lc->_methods);
+
+		if (lc->_redirect_code.has_value())
+			return (handleRedirect(lc));
 
 		// find correct handler
 		// ...

@@ -94,8 +94,7 @@ void Server::recvClientData(int client_fd)
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
 				Dispatcher dpatch;
 				_clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
-
-				_clients[client_fd]._response = DUMMY_response_OK();
+				// _clients[client_fd]._response = DUMMY_response_OK();
 
 
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
