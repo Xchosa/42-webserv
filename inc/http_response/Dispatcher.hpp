@@ -11,14 +11,15 @@
 class Dispatcher
 {
 	private:
-		// handler
-		HttpResponse handleStatic(HttpRequest& request, LocationConfig* lc); // baut response
-		// handleStatic
+		// handler (baut response)
+		HttpResponse handleRedirect(HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleStatic(HttpRequest& request, LocationConfig* lc);
 		// handleCgi
 		// handleUpload
 
 		// helper
-		LocationConfig* findLocation(const std::string& path, ServerConfig* sc) const;
+		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;
+		void			checkMethodAllowed(std::string method, std::vector<std::string> allowed_methods);
 
 
 	public:

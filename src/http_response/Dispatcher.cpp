@@ -1,5 +1,6 @@
 #include "Dispatcher.hpp"
 #include "HttpException.hpp"
+#include "algorithm"
 
 LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* sc) const
 {
@@ -28,6 +29,14 @@ LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* 
 	return (lc);
 }
 
+void Dispatcher::checkMethodAllowed(std::string method, std::vector<std::string> allowed_methods)
+{
+	auto it = std::find(allowed_methods.begin(), allowed_methods.end(), method);
+
+	if (it == allowed_methods.end())
+		throw HttpException(405);
+}
+
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	try
@@ -36,6 +45,8 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 		LocationConfig*	lc = this->findLocation(request._path, sc);
 		if (lc == nullptr)
 			throw HttpException(404);
+
+		checkMethodAllowed(request._method, lc->_methods);
 
 		// find correct handler
 		// ...
