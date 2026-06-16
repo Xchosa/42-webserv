@@ -19,8 +19,12 @@ class Dispatcher
 
 		// helper
 		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;
-		void			checkMethodAllowed(std::string method, std::vector<std::string> allowed_methods);
+		void			checkMethodAllowed(std::string method, std::vector<std::string> allowed_methods) const;
+		std::string		readFile(std::string& filepath) const;
+		std::string		cwd() const;
 
+		// error handling
+		HttpResponse 		buildErrorResponse(int code, ServerConfig* sc);
 
 	public:
 		// OCF
