@@ -5,6 +5,9 @@ This describes the syntax and validation rules applied when receiving a HTTP req
 ## TODO
 - Implement BODY_CHUNKED and add it to the docs
 - `_client_server_config` must be set before reaching `BODY_CONTENT_LEN`/`BODY_CHUNKED`, otherwise null-pointer access
+- bug: whitespaces only nach dem :, leert value auf "" danach zugriff mit size_t -1 geht ins negative, HttpParser.cpp:117-120
+- transfer encoding wird case sensitiv verglichen, wenn val "Chunked" wird nicht erkannt, nur key wird lowercased
+- header laenge begrenzen sonst kann der client unendlich viele daten senden solange keine leerzeile kommt
 
 ## 1. States
 
