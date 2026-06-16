@@ -41,6 +41,8 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
 {
 	HttpResponse r;
 
+	// TODO: text ist aktuell nur fuer code 301
+
 	r._version = "HTTP/1.1";
 	r._status_code = lc->_redirect_code.value();
 	r._status_text = "Moved Permanently";
