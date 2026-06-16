@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <cctype>
 
 #include "HttpRequest.hpp"
 #include "ServerConfig.hpp"
