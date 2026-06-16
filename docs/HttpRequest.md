@@ -1,0 +1,71 @@
+# HTTP Request Parser – Rules
+
+This describes the syntax and validation rules applied when receiving a HTTP request.
+
+## TODO
+- Implement BODY_CHUNKED and add it to the docs
+- `_client_server_config` must be set before reaching `BODY_CONTENT_LEN`/`BODY_CHUNKED`, otherwise null-pointer access
+
+## 1. States
+
+The parser works incrementally over `_raw_buffer` (filled via `feedBuffer`) and goes through the following states (`ParseState`):
+
+```
+REQUEST_LINE → HEADERS → (BODY_CHUNKED | BODY_CONTENT_LEN | -) → DONE
+```
+
+- As long as a complete line (terminated by `\r\n`) is missing, the status stays `INCOMPLETE`
+  and the parser waits for more data.
+- Return values (ParseStatus): `INCOMPLETE`, `HEADER_COMPLETE`, `COMPLETE`, `ERROR_400`, `ERROR_413`.
+
+## 2. Request line
+
+- Must match exactly the following pattern:
+  `^(GET|POST|DELETE) [\x21-\x7E]{1,2048} HTTP/1\.1$`
+  - Only the methods `GET`, `POST`, `DELETE` are allowed.
+  - The path may contain 1–2048 printable ASCII characters (no whitespace).
+  - Only `HTTP/1.1` is accepted.
+- If not matched → `ERROR_400`.
+- The path is split at the first `?` into `_path` and `_query` (the query string is
+  not further validated/decoded).
+
+## 3. Headers
+
+- Read line by line until the empty line (`\r\n\r\n`).
+- A header line without `:` or without a value after the `:` is skipped (no error).
+- The header key is lowercased; the header value is trimmed of leading/trailing spaces.
+- Duplicate headers overwrite the previous value ("last wins").
+- Special validation:
+  - `host`: must not contain characters from `FORBIDDEN_HOST_CHARS` (`*?{}();\n\t#"' \/`) → otherwise `ERROR_400`.
+  - `content-length`: must be a plain, non-negative integer (no `+`/`-` sign,
+    no non-digit characters, no overflow) → otherwise `ERROR_400`.
+- After headers are complete (empty line):
+  - If `transfer-encoding: chunked` is set → state `BODY_CHUNKED` (takes precedence over content-length).
+  - If `content-length` is set → state `BODY_CONTENT_LEN`
+    - If the length is `0` (or less) → directly `DONE` (no body).
+  - Otherwise → directly `DONE` (no body expected).
+
+## 4. Body – `Content-Length`
+
+- As long as `_raw_buffer` is shorter than `_content_len_expected` → `INCOMPLETE` (wait for more data).
+- If `_content_len_expected` is greater than `_client_server_config->_client_max_body_size`
+  → `ERROR_413` (Payload Too Large).
+- Otherwise exactly `_content_len_expected` bytes are taken as `_body`, the rest
+  stays in `_raw_buffer`.
+
+## 5. Body – `Transfer-Encoding: chunked`
+
+- DOKU TODO @PAUL
+
+## 6. Final validation (`validateRequest`)
+
+- Reached as soon as the state is `DONE`.
+- Mandatory: the `host` header must be present → otherwise `ERROR_400`.
+- Otherwise `COMPLETE`.
+
+## 7. Other
+
+- `reset()` fully resets the parser, so the same `HttpParser` instance can be reused for the
+  next request on the same connection (keep-alive connections).
+- `setServerConfig()` must have been called before reaching `BODY_CONTENT_LEN`/`BODY_CHUNKED`,
+  since the pointer is directly dereferenced there (`_client_server_config->_client_max_body_size`).
