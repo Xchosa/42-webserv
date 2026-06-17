@@ -2,6 +2,8 @@
 
 const std::string& getStatusText(int code)
 {
+	static const std::string unknown = "unknown";
+
 	static const std::map<int, std::string> texts = {
 		// ok
 		{200, "OK"},
@@ -21,7 +23,6 @@ const std::string& getStatusText(int code)
 		{410, "Gone"},
 		{413, "Payload Too Large"},
 	};
-	static const std::string unknown = "unknown";
 
 	auto it = texts.find(code);
 	if (it != texts.end())
