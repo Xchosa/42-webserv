@@ -34,7 +34,8 @@ SRCS =	main.cpp \
 		HttpResponse.cpp \
 		Dispatcher.cpp \
 		HttpException.cpp \
-		HttpStatus.cpp
+		HttpStatus.cpp \
+		HttpMimeType.cpp
 
 
 # obejct files
