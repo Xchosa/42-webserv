@@ -83,12 +83,15 @@ std::string Dispatcher::readFile(std::string& filepath) const
 	return (file_content);
 }
 
-HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc)
+HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm)
 {
 	std::string body;
 
 	try
 	{
+		if (sc == nullptr)
+			throw std::runtime_error("no server config selected");
+
 		if (sc->_error_pages.find(code) == sc->_error_pages.end())
 			throw std::runtime_error("no error_page found for code " + std::to_string(code));
 		
@@ -112,7 +115,12 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc)
 	r._version = "HTTP/1.1";
 	r._status_code = code;
 	r._status_text = getStatusText(code);
+	r._headers["Content-Type"] = "text/html";
 	r._headers["Content-Length"] = std::to_string(body.length());
+	if (cm == CON_KEEP_ALIVE)
+		r._headers["Connection"] = "keep-alive";
+	else
+		r._headers["Connection"] = "close";
 	r._body = body;
 
 	return (r);
@@ -156,7 +164,7 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 	}
 	catch(const HttpException& e)
 	{
-		return(buildErrorResponse(e.code(), sc));
+		return(buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE));
 	}
 
 	HttpResponse dummy;

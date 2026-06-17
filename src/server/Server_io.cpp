@@ -66,6 +66,8 @@ int	Server::checklastActivity(int client_fd)
 void Server::recvClientData(int client_fd)
 {
 	char buffer[4096];
+	Dispatcher dpatch;
+
 	while (true)
 	{
 		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer), 0);
@@ -92,7 +94,6 @@ void Server::recvClientData(int client_fd)
 				
 				
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
-				Dispatcher dpatch;
 				_clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
 				// _clients[client_fd]._response = DUMMY_response_OK();
 
@@ -100,16 +101,22 @@ void Server::recvClientData(int client_fd)
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
-			if(parse_status == ERROR_400)
+			else if (parse_status == ERROR_400)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
-				_clients[client_fd]._response = DUMMY_response_ERR400();
+				// _clients[client_fd]._response = DUMMY_response_ERR400();
+				_clients[client_fd]._response = dpatch.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE);
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				// closeClient(client_fd);
 				break;
 			}
+			else if (parse_status == ERROR_413)
+			{
+				_clients[client_fd]._response = dpatch.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE);
+				break;
+			}
 
-			if( checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
+			if (checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
 			{
 				closeClient(client_fd);
 				break;

@@ -8,6 +8,12 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 
+enum ConnectionMode
+{
+	CON_CLOSE,
+	CON_KEEP_ALIVE
+};
+
 class Dispatcher
 {
 	private:
@@ -23,9 +29,6 @@ class Dispatcher
 		std::string		readFile(std::string& filepath) const;
 		std::string		cwd() const;
 
-		// error handling
-		HttpResponse 		buildErrorResponse(int code, ServerConfig* sc);
-
 	public:
 		// OCF
 		Dispatcher() = default;
@@ -34,5 +37,6 @@ class Dispatcher
 		~Dispatcher() = default;
 
 		// member functions
-		HttpResponse dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
+		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
+		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm);
 };
