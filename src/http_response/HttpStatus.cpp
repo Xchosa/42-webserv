@@ -22,6 +22,8 @@ const std::string& getStatusText(int code)
 		{405, "Method Not Allowed"},
 		{410, "Gone"},
 		{413, "Payload Too Large"},
+		{500, "Internal Server Error"},
+		{502, "Bad Gateway"},
 	};
 
 	auto it = texts.find(code);

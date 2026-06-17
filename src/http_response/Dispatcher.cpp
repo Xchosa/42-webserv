@@ -173,6 +173,49 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
 	return (r);
 }
 
+std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
+{
+	std::string path;
+	if (lc->_root[0] == '/')	// relativ to workdir
+	{
+		path = lc->_root;
+	}
+	else						// relativ to executable
+	{
+		path = cwd() + "/" + lc->_root;
+	}
+	return (path);
+}
+
+HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig* lc)
+{
+	HttpResponse r;
+
+	if (lc == nullptr)
+		throw HttpException(500);
+
+	std::string full_path = getFullRootPath(lc) + request._path;
+
+	// pfad vorhanden?
+	// verzeichnis oder datei?
+	// verzeichnis?
+	// 		bei verzeichnis index dranhaengen und nochmal pruefen vorhanden readFile?
+	// 		kein index vorhanden oder index existiert nicht -> autoindex bauen
+	// 		sonst fehler
+	// datei?
+	//		lesen und zurueckgeben, bei fehler throwm
+	// mime type festlegen
+	// return HttpResponse 
+
+
+
+	(void) request;
+	(void) lc;
+
+
+	return (r);
+}
+
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	try
@@ -187,12 +230,7 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 
 		checkMethodAllowed(request._method, lc->_methods);
 
-
-		// find correct handler
-		// ...
-
-		// find correct location
-		// ...
+		return (handleStatic(request, lc));
 	}
 	catch(const HttpException& e)
 	{

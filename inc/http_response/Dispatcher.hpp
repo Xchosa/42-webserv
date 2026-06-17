@@ -19,7 +19,7 @@ class Dispatcher
 	private:
 		// handler (baut response)
 		HttpResponse handleRedirect(LocationConfig* lc);
-		HttpResponse handleStatic(HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
 		// handleCgi
 		// handleUpload
 
@@ -29,6 +29,7 @@ class Dispatcher
 		std::string		readFile(std::string& filepath) const;
 		std::string		cwd() const;
 		std::string		getDefaultBody(int code) const;
+		std::string		getFullRootPath(LocationConfig* lc) const;
 
 	public:
 		// OCF
