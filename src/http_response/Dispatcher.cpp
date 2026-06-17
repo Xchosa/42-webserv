@@ -164,7 +164,7 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
 	else
 	{
 		r._body = getDefaultBody(redirect_code);
-		std::cout << r._body << std::endl;
+		// std::cout << r._body << std::endl;
 		r._headers["Content-Type"] = "text/html";
 		r._headers["Connection"] = "keep-alive";
 		r._headers["Content-Length"] = std::to_string(r._body.length());
@@ -195,23 +195,65 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		throw HttpException(500);
 
 	std::string full_path = getFullRootPath(lc) + request._path;
+	// std::cout << full_path << std::endl;
 
 	// pfad vorhanden?
-	// verzeichnis oder datei?
-	// verzeichnis?
-	// 		bei verzeichnis index dranhaengen und nochmal pruefen vorhanden readFile?
-	// 		kein index vorhanden oder index existiert nicht -> autoindex bauen
-	// 		sonst fehler
-	// datei?
-	//		lesen und zurueckgeben, bei fehler throwm
-	// mime type festlegen
-	// return HttpResponse 
+	struct stat statbuf;
+	if (stat(full_path.c_str(), &statbuf) == -1)
+		throw HttpException(404);
+
+	std::string body;
+	if (S_ISREG(statbuf.st_mode)) // path is a file
+	{
+		try
+		{
+			body = readFile(full_path);
+		}
+		catch(const std::exception& e)
+		{
+			throw HttpException(404);
+		}
+	}
+	else if (S_ISDIR(statbuf.st_mode)) // path is a directory
+	{
+		if (lc->_index.length() > 0) // index file exist
+		{
+			std::string index_path = full_path + "/" + lc->_index;
+
+			try
+			{
+				body = readFile(index_path);
+			}
+			catch(const std::exception& e)
+			{
+				if (lc->_autoindex == true)
+					body = "TODO autoindex\n";
+				else
+					throw HttpException(404);
+			}
+		}
+		else // no index file
+		{
+			if (lc->_autoindex == true)
+				body = "TODO autoindex\n";
+			else
+				throw HttpException(403);
+		}
+	}
+	else
+	{
+		throw HttpException(502);
+	}
+
+	// TODO mime type festlegen
 
 
-
-	(void) request;
-	(void) lc;
-
+	r._version = "HTTP/1.1";
+	r._status_code = 200;
+	r._status_text = getStatusText(200);
+	r._body = body;
+	r._headers["Connection"] = "keep-alive";
+	r._headers["Content-Length"] = std::to_string(r._body.length());
 
 	return (r);
 }
