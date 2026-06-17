@@ -137,7 +137,7 @@ ParseStatus HttpParser::parseChunkedBody()
 {
 	while(true)
 	{	
-		std::cout << "debugging chunked" <<std::endl;
+		//std::cout << "debugging chunked" <<std::endl;
 		std::size_t posCRLF = _raw_buffer.find("\r\n");
 		if (posCRLF == std::string::npos)
 		{ 
@@ -172,7 +172,6 @@ ParseStatus HttpParser::parseChunkedBody()
 		//std::cout << "DezSize: " << ChunkSizeDez <<std::endl;
         if(parsedChars != ChunkHexSize.length())
         {
-            
             _status = ERROR_400;
 			//throw std::runtime_error("Invalid hexadecimal character in chunk size");
             return(this->getStatus());
@@ -184,11 +183,6 @@ ParseStatus HttpParser::parseChunkedBody()
 				_status = ERROR_413;
 				return(this->getStatus());
 			}
-			//if ( _raw_buffer.find("\r\n\r\n") == std::string::npos)
-			//{
-			//	_status = INCOMPLETE;
-			//	return(this->getStatus());
-			//}
 			if(_raw_buffer.size() < posCRLF + 4)
 			{
 				_status = INCOMPLETE;
@@ -199,11 +193,6 @@ ParseStatus HttpParser::parseChunkedBody()
 				_status = ERROR_400;
 				return(this->getStatus());
 			}
-			//if (_raw_buffer.substr(posCRLF, 4) != "\r\n\r\n")
-			//{
-			//	_status = INCOMPLETE;
-			//	return(this->getStatus());
-			//}
 
 			_raw_buffer.erase(0, posCRLF + 4);
 			//std::cout << "complete chunked" <<std::endl;
