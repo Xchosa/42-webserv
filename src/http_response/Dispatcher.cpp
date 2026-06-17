@@ -49,6 +49,27 @@ std::string Dispatcher::cwd() const
 	return (std::filesystem::current_path().string());
 }
 
+std::string Dispatcher::getDefaultBody(int code) const
+{
+	std::string body;
+
+	std::string full_path = cwd() + "/default_pages/" + std::to_string(code) + ".html";
+	try
+	{
+		body = readFile(full_path);
+	}
+	catch(const std::exception& e)
+	{
+		body = "<!DOCTYPE html>\n"
+				"<html>\n"
+				"<body>\n"
+				"    <h1>" + std::to_string(code) + " - " + getStatusText(code) + "</h1>\n"
+				"</body>\n"
+				"</html>\n";
+	}
+	return (body);
+}
+
 std::string Dispatcher::readFile(std::string& filepath) const
 {
 	// get file mode and size
@@ -100,15 +121,7 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	}
 	catch(const std::exception& e)
 	{
-		std::string full_path = cwd() + "/errors/" + std::to_string(code) + ".html";
-		try
-		{
-			body = readFile(full_path);
-		}
-		catch(const std::exception& e)
-		{
-			body = "<!DOCTYPE html><html><body><h1>" + std::to_string(code) + " - " + getStatusText(code) + "</h1></body></html>";
-		}
+		body = getDefaultBody(code);
 	}
 
 	HttpResponse r;
@@ -129,14 +142,33 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
 {
 	HttpResponse r;
-
-	// TODO: text ist aktuell nur fuer code 301
+	int redirect_code = lc->_redirect_code.value();
 
 	r._version = "HTTP/1.1";
-	r._status_code = lc->_redirect_code.value();
-	r._status_text = "Moved Permanently";
-	r._headers["Location"] = lc->_redirect_url.value();
-	r._headers["Content-Length"] = "0";
+
+	r._status_code = redirect_code;
+	r._status_text = getStatusText(redirect_code);
+
+	if (redirect_code >= 300 && redirect_code < 400)
+	{
+		r._headers["Content-Length"] = "0";
+		r._headers["Location"] = lc->_redirect_url.value();
+	}
+	else if (lc->_redirect_url.has_value())
+	{
+		r._headers["Content-Type"] = "text/plain";
+		r._headers["Content-Length"] = std::to_string(lc->_redirect_url.value().length());
+		r._headers["Connection"] = "keep-alive";
+		r._body = lc->_redirect_url.value();
+	}
+	else
+	{
+		r._body = getDefaultBody(redirect_code);
+		std::cout << r._body << std::endl;
+		r._headers["Content-Type"] = "text/html";
+		r._headers["Connection"] = "keep-alive";
+		r._headers["Content-Length"] = std::to_string(r._body.length());
+	}
 
 	return (r);
 }
