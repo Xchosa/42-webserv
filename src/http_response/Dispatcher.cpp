@@ -208,6 +208,7 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		try
 		{
 			body = readFile(full_path);
+			r._headers["Content-Type"] = getMimeTypeFromFile(full_path);
 		}
 		catch(const std::exception& e)
 		{
