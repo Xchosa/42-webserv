@@ -105,14 +105,14 @@ void Server::recvClientData(int client_fd)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
 				// _clients[client_fd]._response = DUMMY_response_ERR400();
-				_clients[client_fd]._response = dpatch.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE);
+				_clients[client_fd]._response = dpatch.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				// closeClient(client_fd);
 				break;
 			}
 			else if (parse_status == ERROR_413)
 			{
-				_clients[client_fd]._response = dpatch.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE);
+				_clients[client_fd]._response = dpatch.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				break;
 			}
 

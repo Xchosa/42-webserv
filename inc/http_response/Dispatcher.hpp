@@ -18,7 +18,7 @@ class Dispatcher
 {
 	private:
 		// handler (baut response)
-		HttpResponse handleRedirect(LocationConfig* lc);
+		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
 		// handleCgi
 		// handleUpload
@@ -30,6 +30,7 @@ class Dispatcher
 		std::string		cwd() const;
 		std::string		getDefaultBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
+		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 
 	public:
 		// OCF
@@ -40,5 +41,5 @@ class Dispatcher
 
 		// member functions
 		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
-		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm);
+		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
 };

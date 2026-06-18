@@ -105,7 +105,15 @@ std::string Dispatcher::readFile(std::string& filepath) const
 	return (file_content);
 }
 
-HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm)
+std::string	Dispatcher::getConnectionMode(const std::map<std::string, std::string>& headers) const
+{
+	auto it = headers.find("connection");
+	if (it != headers.end() && it->second == "close")
+		return ("close");
+	return ("keep-alive");
+}
+
+HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request)
 {
 	std::string body;
 
@@ -132,7 +140,7 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	r._headers["Content-Type"] = "text/html";
 	r._headers["Content-Length"] = std::to_string(body.length());
 	if (cm == CON_KEEP_ALIVE)
-		r._headers["Connection"] = "keep-alive";
+		r._headers["Connection"] = getConnectionMode(request._headers);
 	else
 		r._headers["Connection"] = "close";
 	r._body = body;
@@ -140,15 +148,15 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	return (r);
 }
 
-HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
+HttpResponse Dispatcher::handleRedirect(LocationConfig* lc, const HttpRequest& request)
 {
 	HttpResponse r;
 	int redirect_code = lc->_redirect_code.value();
 
 	r._version = "HTTP/1.1";
-
 	r._status_code = redirect_code;
 	r._status_text = getStatusText(redirect_code);
+	r._headers["Connection"] = getConnectionMode(request._headers);
 
 	if (redirect_code >= 300 && redirect_code < 400)
 	{
@@ -159,15 +167,12 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc)
 	{
 		r._headers["Content-Type"] = "text/plain";
 		r._headers["Content-Length"] = std::to_string(lc->_redirect_url.value().length());
-		r._headers["Connection"] = "keep-alive";
 		r._body = lc->_redirect_url.value();
 	}
 	else
 	{
 		r._body = getDefaultBody(redirect_code);
-		// std::cout << r._body << std::endl;
 		r._headers["Content-Type"] = "text/html";
-		r._headers["Connection"] = "keep-alive";
 		r._headers["Content-Length"] = std::to_string(r._body.length());
 	}
 
@@ -257,7 +262,7 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	r._status_code = 200;
 	r._status_text = getStatusText(200);
 	r._body = body;
-	r._headers["Connection"] = "keep-alive";
+	r._headers["Connection"] = getConnectionMode(request._headers);
 	r._headers["Content-Length"] = std::to_string(r._body.length());
 
 	return (r);
@@ -273,7 +278,7 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 			throw HttpException(404);
 
 		if (lc->_redirect_code.has_value())
-			return (handleRedirect(lc));
+			return (handleRedirect(lc, request));
 
 		checkMethodAllowed(request._method, lc->_methods);
 
@@ -281,7 +286,7 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 	}
 	catch(const HttpException& e)
 	{
-		return(buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE));
+		return(buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request));
 	}
 
 	HttpResponse dummy;
