@@ -1,4 +1,4 @@
-#include "HttpStatus.hpp"
+#include "HttpMimeType.hpp"
 
 const std::string& getMimeType(std::string& suffix)
 {
@@ -15,4 +15,17 @@ const std::string& getMimeType(std::string& suffix)
 		return (it->second);
 	else
 		return (unknown);
+}
+
+const std::string& getMimeTypeFromFile(std::string& path)
+{
+	static const std::string unknown = "application/octet-stream";
+	size_t dot_pos = path.rfind('.');
+
+	if (dot_pos != std::string::npos)
+	{
+		std::string suffix = path.substr(dot_pos);
+		return (getMimeType(suffix));
+	}
+	return (unknown);
 }

@@ -1,6 +1,7 @@
 #include "Dispatcher.hpp"
 #include "HttpException.hpp"
 #include "HttpStatus.hpp"
+#include "HttpMimeType.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -195,7 +196,6 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		throw HttpException(500);
 
 	std::string full_path = getFullRootPath(lc) + request._path;
-	// std::cout << full_path << std::endl;
 
 	// pfad vorhanden?
 	struct stat statbuf;
@@ -223,11 +223,15 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 			try
 			{
 				body = readFile(index_path);
+				r._headers["Content-Type"] = getMimeTypeFromFile(index_path);
 			}
 			catch(const std::exception& e)
 			{
 				if (lc->_autoindex == true)
+				{
 					body = "TODO autoindex\n";
+					r._headers["Content-Type"] = "text/html";
+				}
 				else
 					throw HttpException(404);
 			}
@@ -235,7 +239,10 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		else // no index file
 		{
 			if (lc->_autoindex == true)
+			{
 				body = "TODO autoindex\n";
+				r._headers["Content-Type"] = "text/html";
+			}
 			else
 				throw HttpException(403);
 		}
@@ -244,9 +251,6 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	{
 		throw HttpException(502);
 	}
-
-	// TODO mime type festlegen
-
 
 	r._version = "HTTP/1.1";
 	r._status_code = 200;
