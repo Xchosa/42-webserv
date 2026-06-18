@@ -7,7 +7,7 @@ The server uses `epoll` with non-blocking sockets.
 - If no events occur, the server checks clients for timeout.
 - Clients idle longer than `KEEP_ALIVE_TIMEOUT` are closed.
 
-# Listening Rules 
+# Listening Rules
 
 Server creates one listening socket per unique host:port
 
@@ -17,7 +17,7 @@ Server creates one listening socket per unique host:port
 
 Virtual hosts allow multiple `server` configs to share the same listening socket.
 
-For every unique host:port a listening Server socket gets created 
+For every unique host:port a listening Server socket gets created
 
 Example:
 
@@ -26,13 +26,13 @@ Example:
 
 Both configs use the same host:port, so the server creates only one listening socekt for 127.0.0.1:8081
 
-Internally, all server configs with the same normalized host:port are stored as candiates for that listening socket. 
+Internally, all server configs with the same normalized host:port are stored as candiates for that listening socket.
 
-When a HTTP request arrives the server reads the HTTP Host header and compares it against each candiate server.s name 
+When a HTTP request arrives the server reads the HTTP Host header and compares it against each candiate server.s name
 
-Host: site b 
+Host: site b
 
-If Host value matches configured server_name, that server config is selected. 
+If Host value matches configured server_name, that server config is selected.
 
 if no match is found, the default server for that listen socket is used. The default server, is the first of the 'Candidates'
 
@@ -40,7 +40,7 @@ so multiple 127.0.0.1 hosts on the same port create one Server Socket same as 0.
 
 ## Listen Host Rules
 
-empty listen host is normalized to 0.0.0.0 => wildcard bind , it accepts connections on any local interface 
+empty listen host is normalized to 0.0.0.0 => wildcard bind , it accepts connections on any local interface
 
 the server does not allow mixing wildcard and specific hosts e.g.localhost/127.0.0.1  the same port
 
@@ -75,11 +75,11 @@ Time out Values
 
 all Values are in Seconds
 
-## IDLE_TIME
+### IDLE_TIME
 
-IDLE_TIME = 5 
+IDLE_TIME = 5
 
-used as the epoll_wait timeout 
+used as the epoll_wait timeout
 
 Max Time a connection can stay idle before server considers it inactive.
 
@@ -89,7 +89,7 @@ Every 5 seconds, epoll wait returns 0 if no request arrived (ready Filedescripto
 
 Every 5 seconds the loop for inactive connected clients gets checked
 
-## KEEP_ALIVE_TIMEOUT
+### KEEP_ALIVE_TIMEOUT
 
 KEEP_ALIVE_TIMEOUT = 3;
 
@@ -110,3 +110,7 @@ Every Client has a "last Activity Timestemp", if this is above 3 seconds, the co
   ────────────────────  ───────  ─────────  ─────────────────────────────────────────────
 
    KEEP_ALIVE_TIMEOUT        3    seconds    Keep-alive wait timeout
+
+## Signaling
+
+Either with Ctrl + C or killing the process with kill `<PID >` will trigger the signal Handler in the epoll run() loop  , and let the programm close gracefully ( calls destructure and  prints  a Clean statement")

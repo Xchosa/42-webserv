@@ -10,6 +10,8 @@
 #include <iostream>
 #include <fcntl.h>
 #include <map>
+#include <csignal>
+#include <signal.h>
 
 #include "ClientInfos.hpp"
 #include "Config.hpp"
@@ -20,7 +22,7 @@ inline constexpr size_t MAXEVENTS = 64;
 // seconds 
 //inline constexpr int TIMEOUT = 5;
 inline constexpr int IDLE_TIME = 5;
-inline constexpr int KEEP_ALIVE_TIMEOUT = 3;
+inline constexpr int KEEP_ALIVE_TIMEOUT = 10;
 
 class Server
 {
@@ -60,4 +62,6 @@ class Server
 
 		void run();
 
-};
+	};
+	void signalHandler(int sig);
+	void initSignal(void);

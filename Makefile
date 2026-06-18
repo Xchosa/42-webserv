@@ -30,6 +30,7 @@ SRCS =	main.cpp \
 		Server_epoll.cpp \
 		Server_io.cpp \
 		Server_sockets.cpp \
+		handleSignal.cpp \
 		ClientInfos.cpp \
 		HttpResponse.cpp \
 		Dispatcher.cpp \

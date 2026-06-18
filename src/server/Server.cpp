@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include <iostream>
 
+extern volatile std::sig_atomic_t gSignalStatus;
 
 // constructor initialisiert _config und _epoll_fd via epoll_create1()
 Server::Server(const Config &config) : _config(config) , _epoll_fd(epoll_create1(0))
@@ -30,6 +31,7 @@ Server::~Server()
 	{
 		close(fd);
 	}
+	std::cout<< "Sockets and epoll Instance cleaned" <<std::endl;
 
 }
 
@@ -50,11 +52,12 @@ void Server::run()
 	setupListeningSockets();
 	for (const auto& [fd, context] : _socket_fds)
 		std::cout << "Server FD: " << fd << " | Port: " << context._port << std::endl;
-	epoll_event triggeredEvents[MAXEVENTS]; // size of events 
+	epoll_event triggeredEvents[MAXEVENTS];
+	initSignal();
 	
-	while(true)
+	while(gSignalStatus)
 	{
-		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, IDLE_TIME * 1000); // nbr of events(for each client) retured , cut of by max events
+		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, IDLE_TIME * 1000);
 		if (readyEvents == -1)
 		{
 			if (errno == EINTR)

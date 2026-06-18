@@ -64,7 +64,6 @@ REQUEST_LINE → HEADERS → (BODY_CHUNKED | BODY_CONTENT_LEN | -) → DONE
 - HexSize\r\n Body_Bytes\r\n Hez_size\r\n Body_bytes \r\n 0 \r\n\r\n
 
   5\r\nHello\r\n6\r\n World\r\n0\r\n\r\n
-
 - Chunked Body arrives always in this format:
 
   - hexValue specfic states how many bytes the next text block has until next \r\n comes (Cariage return + new line)
@@ -77,11 +76,10 @@ REQUEST_LINE → HEADERS → (BODY_CHUNKED | BODY_CONTENT_LEN | -) → DONE
 
 Each chunk starts with a hexadecimal size line ending in \r\n.
 
-  - The hex size must contain only hex digits (0-9, a-f, A-F).
+- The hex size must contain only hex digits (0-9, a-f, A-F).
+- Chunk extensions are not accepted.
 
-  - Chunk extensions are not accepted.
-
-    - Invalid: 5;abc=1\r\nHello\r\n
+  - Invalid: 5;abc=1\r\nHello\r\n
 
  After the size line, exactly that many bytes are copied into _request._body.
 
@@ -95,6 +93,18 @@ Each chunk starts with a hexadecimal size line ending in \r\n.
 #### Priority: chunked or Content-Length
 
 Transfer-Encoding: chunked takes priority over Content-Length. If both headers exist, the parser enters BODY_CHUNKED.
+
+### Limitations
+
+valid Trailing Headers such as  get ignored, and get handled as a invalid Request Error = 400
+
+X-Test: ok\r\n
+
+Digest: sha-256=...
+
+ X-Checksum: abc123
+
+ X-Request-Debug: done
 
 ## 6. Final validation (`validateRequest`)
 

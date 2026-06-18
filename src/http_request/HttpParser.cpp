@@ -141,7 +141,7 @@ ParseStatus HttpParser::parseChunkedBody()
 		std::size_t posCRLF = _raw_buffer.find("\r\n");
 		if (posCRLF == std::string::npos)
 		{ 
-			std::cout << "empty _rawbuffer" <<std::endl;
+			//std::cout << "empty _rawbuffer" <<std::endl;
 			_status = INCOMPLETE;
 			return(this->getStatus());
 		}
@@ -149,7 +149,6 @@ ParseStatus HttpParser::parseChunkedBody()
 		std::string ChunkHexSize= _raw_buffer.substr(0, posCRLF);
 		//std::cout << "chunkHex: [ "<<  ChunkHexSize << "]" <<std::endl;
 		std::size_t parsedChars = 0;
-
 		unsigned long ChunkSizeDez = 0;
 		try
 		{
@@ -167,7 +166,6 @@ ParseStatus HttpParser::parseChunkedBody()
 		{
 			_status = ERROR_400;
 			return(this->getStatus());
-			
 		}
 		//std::cout << "DezSize: " << ChunkSizeDez <<std::endl;
         if(parsedChars != ChunkHexSize.length())
@@ -195,8 +193,6 @@ ParseStatus HttpParser::parseChunkedBody()
 			}
 
 			_raw_buffer.erase(0, posCRLF + 4);
-			//std::cout << "complete chunked" <<std::endl;
-			//_status = COMPLETE;
 			_state = DONE;
 			return(this->getStatus());
         }

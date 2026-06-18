@@ -271,7 +271,9 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
 	// TODO pov
-
+	std::string fullpath = getFullRootPath(lc); // anhaegen 
+	//std::string uploadpath = 
+	//std::string requestpath = request
 	(void) request;
 	(void) lc;
 	HttpResponse dummy;
