@@ -20,8 +20,8 @@ class Dispatcher
 		// handler (baut response)
 		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
-		// handleCgi
-		// handleUpload
+		HttpResponse handleCgi(const HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
 
 		// helper
 		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;

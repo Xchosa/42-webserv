@@ -268,6 +268,26 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	return (r);
 }
 
+HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
+{
+	// TODO pov
+
+	(void) request;
+	(void) lc;
+	HttpResponse dummy;
+	return (dummy);
+}
+
+HttpResponse Dispatcher::handleCgi(const HttpRequest& request, LocationConfig* lc)
+{
+	// TODO gha
+
+	(void) request;
+	(void) lc;
+	HttpResponse dummy;
+	return (dummy);
+}
+
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	try
@@ -282,7 +302,12 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 
 		checkMethodAllowed(request._method, lc->_methods);
 
-		return (handleStatic(request, lc));
+		if (lc->_cgi_map.size() > 0)
+			return (handleCgi(request, lc));
+		else if (lc->_upload_store.has_value())
+			return (handleUpload(request, lc));
+		else
+			return(handleStatic(request, lc));
 	}
 	catch(const HttpException& e)
 	{
