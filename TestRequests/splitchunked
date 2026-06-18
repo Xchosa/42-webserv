@@ -1,0 +1,27 @@
+printf 'GET / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: text/plain\r\n\r\n5\r\nHello\r\n6\r\n World\r\n0\r\n\r\n' | nc localhost 8081
+
+
+
+printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:
+chunked\r\nContent-Type: text/plain\r\n\r\n5;abc=1\r\nHello\r\n0\r\n\r\n' |
+nc localhost 8081
+
+  Valid trailer, your parser likely waits/incomplete:
+
+  printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:
+  chunked\r\nContent-Type: text/plain\r\n\r\n5\r\nHello\r\n0\r\nX-Test:
+  ok\r\n\r\n' | nc localhost 8081
+
+  Simple valid request, should work:
+
+  printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:
+  chunked\r\nContent-Type: text/plain\r\n\r\n5\r\nHello\r\n6\r\n
+  World\r\n0\r\n\r\n' | nc localhost 8081
+
+  Malformed trailing CRLF, should return ERROR_400:
+
+  printf 'POST / HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding:
+  chunked\r\nContent-Type: text/plain\r\n\r\n5\r\nHelloXX0\r\n\r\n' | nc
+  localhost 8081
+  => no error 
+  => check HelloXX0\r\n\r\n

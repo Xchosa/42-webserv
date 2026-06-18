@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <cctype>
 
 #include "HttpRequest.hpp"
 #include "ServerConfig.hpp"
@@ -57,6 +58,7 @@ class HttpParser
 
 		// member functions
 		ParseStatus			getStatus() const;
+		ParseStatus 		parseChunkedBody();
 		void		 		feedBuffer(const char* data, size_t n);	// feed nach jedem recv() callen und dann status returnen (INCOMPLETE, COMPLETE, ...)
 		ParseStatus			parseBuffer();
 		void				setServerConfig(ServerConfig* conf);

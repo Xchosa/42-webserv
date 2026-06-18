@@ -3,8 +3,12 @@
 This describes the syntax and validation rules applied when receiving a HTTP request.
 
 ## TODO
+
 - Implement BODY_CHUNKED and add it to the docs
 - `_client_server_config` must be set before reaching `BODY_CONTENT_LEN`/`BODY_CHUNKED`, otherwise null-pointer access
+- bug: whitespaces only nach dem :, leert value auf "" danach zugriff mit size_t -1 geht ins negative, HttpParser.cpp:117-120
+- transfer encoding wird case sensitiv verglichen, wenn val "Chunked" wird nicht erkannt, nur key wird lowercased
+- header laenge begrenzen sonst kann der client unendlich viele daten senden solange keine leerzeile kommt
 
 ## 1. States
 
@@ -55,7 +59,42 @@ REQUEST_LINE → HEADERS → (BODY_CHUNKED | BODY_CONTENT_LEN | -) → DONE
 
 ## 5. Body – `Transfer-Encoding: chunked`
 
-- DOKU TODO @PAUL
+- Chunked body is parsed incrementally from _raw_buffer
+- Accepted format only :
+- HexSize\r\n Body_Bytes\r\n Hez_size\r\n Body_bytes \r\n 0 \r\n\r\n
+
+  5\r\nHello\r\n6\r\n World\r\n0\r\n\r\n
+
+- Chunked Body arrives always in this format:
+
+  - hexValue specfic states how many bytes the next text block has until next \r\n comes (Cariage return + new line)
+  - each text block ends with a \r\n
+  - tha http request only ends with a 0\r\n\r\n . ONLY this is valid.
+    Example:
+  - hexNbr\r\n TEXTBODY \r\nhexNbr\r\nMORE TEXT\r\n0\r\n\r\n
+
+#### Parsing Rules
+
+Each chunk starts with a hexadecimal size line ending in \r\n.
+
+  - The hex size must contain only hex digits (0-9, a-f, A-F).
+
+  - Chunk extensions are not accepted.
+
+    - Invalid: 5;abc=1\r\nHello\r\n
+
+ After the size line, exactly that many bytes are copied into _request._body.
+
+- Every chunk body must be followed by \r\n.
+- The request body ends only with the final chunk: 0\r\n\r\n
+- Trailer headers after the final chunk are not accepted.
+- If a full chunk has not arrived yet, parser returns INCOMPLETE.
+- If the chunk syntax is wrong, parser returns ERROR_400.
+- If the built body becomes larger than _client_server_config->_client_max_body_size, parser returns ERROR_413.
+
+#### Priority: chunked or Content-Length
+
+Transfer-Encoding: chunked takes priority over Content-Length. If both headers exist, the parser enters BODY_CHUNKED.
 
 ## 6. Final validation (`validateRequest`)
 

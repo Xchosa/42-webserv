@@ -131,6 +131,97 @@ void HttpParser::parseHeader(const std::string& line)
 	_request._headers[key] = val;
 }
 
+
+
+ParseStatus HttpParser::parseChunkedBody()
+{
+	while(true)
+	{	
+		//std::cout << "debugging chunked" <<std::endl;
+		std::size_t posCRLF = _raw_buffer.find("\r\n");
+		if (posCRLF == std::string::npos)
+		{ 
+			std::cout << "empty _rawbuffer" <<std::endl;
+			_status = INCOMPLETE;
+			return(this->getStatus());
+		}
+		
+		std::string ChunkHexSize= _raw_buffer.substr(0, posCRLF);
+		//std::cout << "chunkHex: [ "<<  ChunkHexSize << "]" <<std::endl;
+		std::size_t parsedChars = 0;
+
+		unsigned long ChunkSizeDez = 0;
+		try
+		{
+			for(size_t i = 0; i < ChunkHexSize.length() ; ++i )
+			{
+				if (!std::isxdigit(ChunkHexSize[i]))
+				{
+					//std::cout << "invalid Hex: "  << ChunkHexSize[i] <<std::endl;
+					throw std::runtime_error("Invalid hexadecimal character in chunk size");
+				}
+			}
+			ChunkSizeDez = std::stoul( ChunkHexSize, &parsedChars, 16);
+		}
+		catch(const std::exception& e)
+		{
+			_status = ERROR_400;
+			return(this->getStatus());
+			
+		}
+		//std::cout << "DezSize: " << ChunkSizeDez <<std::endl;
+        if(parsedChars != ChunkHexSize.length())
+        {
+            _status = ERROR_400;
+			//throw std::runtime_error("Invalid hexadecimal character in chunk size");
+            return(this->getStatus());
+        }
+		if (ChunkSizeDez == 0)
+		{
+			if (_request._body.size() > _client_server_config->_client_max_body_size)
+			{
+				_status = ERROR_413;
+				return(this->getStatus());
+			}
+			if(_raw_buffer.size() < posCRLF + 4)
+			{
+				_status = INCOMPLETE;
+				return(this->getStatus());
+			}
+			if ( _raw_buffer.substr(posCRLF + 2, 2) != "\r\n")
+			{
+				_status = ERROR_400;
+				return(this->getStatus());
+			}
+
+			_raw_buffer.erase(0, posCRLF + 4);
+			//std::cout << "complete chunked" <<std::endl;
+			//_status = COMPLETE;
+			_state = DONE;
+			return(this->getStatus());
+        }
+		size_t neededSubstr = posCRLF+ 2 + ChunkSizeDez + 2;
+		if(neededSubstr > _raw_buffer.length())
+		{
+			_status = INCOMPLETE;
+			return(this->getStatus());
+		}
+		if(_raw_buffer.substr(posCRLF + 2+ ChunkSizeDez, 2) != ("\r\n"))
+		{
+			_status = ERROR_400;
+			return(this->getStatus());
+		}
+		if(_client_server_config->_client_max_body_size <= 0 || _request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
+		{
+			_status = ERROR_413;
+			return(this->getStatus());
+		}
+		_request._body += _raw_buffer.substr(posCRLF + 2, ChunkSizeDez);
+		_raw_buffer = _raw_buffer.erase(0,posCRLF + 2 + ChunkSizeDez + 2);
+	}
+	return _status;
+}
+
 ParseStatus HttpParser::parseBuffer()
 {
 	std::string line;
@@ -180,15 +271,9 @@ ParseStatus HttpParser::parseBuffer()
 				return (this->getStatus());
 		}
 	}
-
-
-
-	
-	
-	if (_state == BODY_CHUNKED) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
+	if (_state == BODY_CHUNKED)
 	{
-		// todo
-		// _client_max_body_size muss bekannt sein, chunks hochzaehlen und abbrechen wenn groesse ueberschritten
+		_status = parseChunkedBody();
 	}
 
 	
