@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <regex>
 
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
@@ -31,6 +32,8 @@ class Dispatcher
 		std::string		getDefaultBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
+		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
+		std::string		buildFileName(const HttpRequest& request);
 
 	public:
 		// OCF

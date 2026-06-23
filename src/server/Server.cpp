@@ -79,7 +79,10 @@ void Server::run()
 				continue;
 			}
 			if (isServerFd(fd))
+			{
+				std::cout << "----------- Connection Attempt --------------- " << std::endl;
 				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
+			}
 			else if (event_flag & EPOLLIN)
 			{
 				recvClientData(fd);

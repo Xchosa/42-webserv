@@ -1,0 +1,1 @@
+printf 'POST /maus/upload/file.bin HTTP/1.1\r\nHost: maus\r\nContent-Type: application/octet-stream\r\nContent-Length: 6\r\nConnection: close\r\n\r\n\x00\xffAB\x0a\x00' | nc localhost 8081

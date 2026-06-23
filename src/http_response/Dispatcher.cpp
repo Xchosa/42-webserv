@@ -182,15 +182,43 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc, const HttpRequest& r
 std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 {
 	std::string path;
-	if (lc->_root[0] == '/')	// relativ to workdir
+	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? alles muss von executable ausgehen?
 	{
 		path = lc->_root;
+
+	}
+	else if (lc->_root[0] == '.' && lc->_root[1] == '/') // relativ to executable 
+	{
+		std::string rootWithoutDot = lc->_root;
+		rootWithoutDot= rootWithoutDot.erase(0,1);
+		path = cwd() + rootWithoutDot;
 	}
 	else						// relativ to executable
 	{
 		path = cwd() + "/" + lc->_root;
 	}
 	return (path);
+}
+
+std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPath)
+{
+	std::string uploadDir;
+	uploadDir= lc->_upload_store.value();
+	
+	if (uploadDir.find("./") == 0 )
+	{
+		uploadDir.erase(0,1);
+		rootPath += uploadDir; 
+	}
+	else if(uploadDir.find('/') == 0)						// absolut to executable
+	{
+		rootPath += uploadDir;
+	}
+	else
+	{
+		rootPath += '/' + uploadDir;
+	}
+	return (rootPath);
 }
 
 HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig* lc)
@@ -268,17 +296,97 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	return (r);
 }
 
+
+std::string Dispatcher::buildFileName(const HttpRequest& request)
+{
+	std::string filename;
+	// handle decoded and encoded URLs 
+	// firs URL decode and regex check 
+	std::regex traversalPattern("(^|/)\\.\\.(/|$)"); // 
+	
+	/*
+		(^|/)    start of string OR slash
+	\\.\\.   exactly two dots
+	(/|$)    slash OR end of string
+
+	So it matches:
+
+	../x
+	/a/../b
+	/a/..
+	..
+	*/
+	
+	size_t filenameStart = request._path.find_last_of('/');
+	if (filenameStart == std::string::npos )
+		throw HttpException(500);
+	filename = request._path.substr(filenameStart + 1);
+	return filename;
+}
+
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
-	// TODO pov
-	std::string fullpath = getFullRootPath(lc); // anhaegen 
-	//std::string uploadpath = 
-	//std::string requestpath = request
-	(void) request;
-	(void) lc;
-	HttpResponse dummy;
-	return (dummy);
+	std::string uploadpath;
+	std::cout<< "rootPath:  " << lc->_root << std::endl;
+	std::string rootPath = getFullRootPath(lc); // anhaegen 
+	//std::string currentDir = get_current_dir_name();
+
+
+	std::cout<< "rootPath to danceserv:  " << rootPath << std::endl;
+	if (lc->_upload_store.has_value())
+		uploadpath = getFullUploadPath(lc, rootPath);
+	else
+	{
+		std::cout << "now upload path" << std::endl; // or value_or
+		throw HttpException(404);
+	}
+	std::cout << "requst path: " << request._path << std::endl;
+	
+	std::string filename = buildFileName(request);
+	std::cout<< "filename: " <<filename << std::endl;
+	std::cout << "uploadPath: " << uploadpath<< std::endl;
+
+	bool OverWriteFile = true;
+	std::string target = uploadpath + "/" + filename;
+
+	struct stat statbuf;
+	if (stat(target.c_str(), &statbuf) == -1)
+		OverWriteFile = false;
+	//struct stat statbuf; // check if uploadpath/filename exists (only for boolean)
+		// OverWriteFile = true;
+	std::filesystem::create_directories(uploadpath);
+
+	std::ofstream NewFile(target, std::ios::binary);
+	//std::ofstream NewFile(target);
+	if (!NewFile.is_open())
+		throw HttpException(500);
+	NewFile.write(request._body.data(), request._body.size());
+	//NewFile << request._body;
+	NewFile.close();
+	
+
+	
+	std::cout << "body size: " << request._body.size() << std::endl;
+	std::cout << "body content: " << request._body << std::endl;
+	
+	HttpResponse respond;
+	if (OverWriteFile == true)
+	{
+		respond._status_code = 200;
+		respond._version = "HTTP/ 1.1 OK"; // overwrites file 204 No Content auch moeglich
+	}
+	else
+	{
+		respond._status_code = 201;
+		respond._version = "HTTP/ 1.1 Created";
+	}
+	respond._headers["Content-Length"] = "0";
+	respond._headers["Connection"] = getConnectionMode(request._headers);
+	
+	return (respond);
 }
+
+
 
 HttpResponse Dispatcher::handleCgi(const HttpRequest& request, LocationConfig* lc)
 {
@@ -298,16 +406,20 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 		LocationConfig*	lc = this->findLocation(request._path, sc);
 		if (lc == nullptr)
 			throw HttpException(404);
-
+		
 		if (lc->_redirect_code.has_value())
 			return (handleRedirect(lc, request));
-
+		
 		checkMethodAllowed(request._method, lc->_methods);
+		// reject path traversal .. or /../
 
 		if (lc->_cgi_map.size() > 0)
 			return (handleCgi(request, lc));
 		else if (lc->_upload_store.has_value())
+		{
+			std::cout << lc->_upload_store.value() << std::endl;
 			return (handleUpload(request, lc));
+		}
 		else
 			return(handleStatic(request, lc));
 	}
