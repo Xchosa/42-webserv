@@ -182,7 +182,7 @@ HttpResponse Dispatcher::handleRedirect(LocationConfig* lc, const HttpRequest& r
 std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 {
 	std::string path;
-	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? alles muss von executable ausgehen?
+	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? oder wird gehandelt vom executable ausgehend?
 	{
 		path = lc->_root;
 
@@ -323,15 +323,37 @@ std::string Dispatcher::buildFileName(const HttpRequest& request)
 	filename = request._path.substr(filenameStart + 1);
 	return filename;
 }
+void Dispatcher::createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target)
+{
+	std::filesystem::create_directories(uploadpath);
+	std::ofstream NewFile(target, std::ios::binary);
+	//std::ofstream NewFile(target);
+	if (!NewFile.is_open())
+		throw HttpException(500);
+	NewFile.write(request._body.data(), request._body.size());
+	//NewFile << request._body;
+	if(!NewFile)
+		throw HttpException(500);
+	NewFile.close();
+}
+
+bool Dispatcher::fileExists(const std::string& target) const
+{
+	struct stat statbuf;
+	if (stat(target.c_str(), &statbuf) == -1)
+		return false;
+
+	return S_ISREG(statbuf.st_mode); // chekc regularfile
+
+}
 
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
 	std::string uploadpath;
+	bool fileExisted;
 	std::cout<< "rootPath:  " << lc->_root << std::endl;
+
 	std::string rootPath = getFullRootPath(lc); // anhaegen 
-	//std::string currentDir = get_current_dir_name();
-
-
 	std::cout<< "rootPath to danceserv:  " << rootPath << std::endl;
 	if (lc->_upload_store.has_value())
 		uploadpath = getFullUploadPath(lc, rootPath);
@@ -340,46 +362,34 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 		std::cout << "now upload path" << std::endl; // or value_or
 		throw HttpException(404);
 	}
-	std::cout << "requst path: " << request._path << std::endl;
-	
 	std::string filename = buildFileName(request);
+	
+	std::cout << "requst path: " << request._path << std::endl;
 	std::cout<< "filename: " <<filename << std::endl;
 	std::cout << "uploadPath: " << uploadpath<< std::endl;
 
-	bool OverWriteFile = true;
+	
 	std::string target = uploadpath + "/" + filename;
 
-	struct stat statbuf;
-	if (stat(target.c_str(), &statbuf) == -1)
-		OverWriteFile = false;
-	//struct stat statbuf; // check if uploadpath/filename exists (only for boolean)
-		// OverWriteFile = true;
-	std::filesystem::create_directories(uploadpath);
+	fileExisted = fileExists(target);
+	createDirAndFile(request, uploadpath,target);
 
-	std::ofstream NewFile(target, std::ios::binary);
-	//std::ofstream NewFile(target);
-	if (!NewFile.is_open())
-		throw HttpException(500);
-	NewFile.write(request._body.data(), request._body.size());
-	//NewFile << request._body;
-	NewFile.close();
-	
-
-	
 	std::cout << "body size: " << request._body.size() << std::endl;
 	std::cout << "body content: " << request._body << std::endl;
 	
 	HttpResponse respond;
-	if (OverWriteFile == true)
+	respond._version = "HTTP/1.1";
+	if (fileExisted == true)
 	{
 		respond._status_code = 200;
-		respond._version = "HTTP/ 1.1 OK"; // overwrites file 204 No Content auch moeglich
+		respond._status_text = "OK"; // overwrites file 204 No Content auch moeglich
 	}
 	else
 	{
 		respond._status_code = 201;
-		respond._version = "HTTP/ 1.1 Created";
+		respond._status_text = "Created";
 	}
+	// differ body content 
 	respond._headers["Content-Length"] = "0";
 	respond._headers["Connection"] = getConnectionMode(request._headers);
 	

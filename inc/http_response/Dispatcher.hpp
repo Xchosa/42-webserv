@@ -34,6 +34,8 @@ class Dispatcher
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
 		std::string		buildFileName(const HttpRequest& request);
+		void			createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target);
+		bool			fileExists(const std::string& target) const;
 
 	public:
 		// OCF
@@ -46,3 +48,4 @@ class Dispatcher
 		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
 };
+
