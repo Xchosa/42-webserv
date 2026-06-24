@@ -51,6 +51,8 @@ class Dispatcher
 
 		// handle cgi
 		std::string		upperString(std::string str) const;
+		void			checkForCgi(const HttpRequest& request, std::string& path, std::vector<std::string>& env, LocationConfig* lc);
+		void			buildEnv(std::vector<std::string>& env, const HttpRequest& request, std::string& path, std::string& script_path, ServerConfig* sc);
 
 	public:
 		// OCF
@@ -63,4 +65,3 @@ class Dispatcher
 		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
 };
-
