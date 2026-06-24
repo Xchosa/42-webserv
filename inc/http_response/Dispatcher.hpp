@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <filesystem>
+#include <vector>
 
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
@@ -30,7 +31,7 @@ class Dispatcher
 		// handler (baut response)
 		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
-		HttpResponse handleCgi(const HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
 
 		// helper
@@ -41,10 +42,15 @@ class Dispatcher
 		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
+
+		// handle upload
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
 		std::string		buildFileName(const HttpRequest& request);
 		void			createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target);
 		bool			fileExists(const std::string& target) const;
+
+		// handle cgi
+		std::string		upperString(std::string str) const;
 
 	public:
 		// OCF

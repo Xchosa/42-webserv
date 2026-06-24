@@ -141,19 +141,34 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	return (r);
 }
 
+// pauls version auskommentiert
+// std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
+// {
+// 	std::string path;
+// 	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? oder wird gehandelt vom executable ausgehend?
+// 	{
+// 		path = lc->_root;
+
+// 	}
+// 	else if (lc->_root[0] == '.' && lc->_root[1] == '/') // relativ to executable 
+// 	{
+// 		std::string rootWithoutDot = lc->_root;
+// 		rootWithoutDot = rootWithoutDot.erase(0,1);
+// 		path = cwd() + rootWithoutDot;
+// 	}
+// 	else						// relativ to executable
+// 	{
+// 		path = cwd() + "/" + lc->_root;
+// 	}
+// 	return (path);
+// }
+
 std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 {
 	std::string path;
-	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? oder wird gehandelt vom executable ausgehend?
+	if (lc->_root[0] == '/')	// relativ to workdir
 	{
 		path = lc->_root;
-
-	}
-	else if (lc->_root[0] == '.' && lc->_root[1] == '/') // relativ to executable 
-	{
-		std::string rootWithoutDot = lc->_root;
-		rootWithoutDot= rootWithoutDot.erase(0,1);
-		path = cwd() + rootWithoutDot;
 	}
 	else						// relativ to executable
 	{
@@ -177,7 +192,7 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 		checkMethodAllowed(request._method, lc->_methods);
 
 		if (lc->_cgi_map.size() > 0)
-			return (handleCgi(request, lc));
+			return (handleCgi(request, sc, lc));
 		else if (lc->_upload_store.has_value())
 		{
 			std::cout << lc->_upload_store.value() << std::endl;
