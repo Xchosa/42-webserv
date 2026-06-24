@@ -2,12 +2,13 @@
 
 std::string Dispatcher::upperString(std::string str) const
 {
-	std::transform(str.begin(), str.end(), str.begin(), 
-		[](unsigned char c)
-		{
-			return std::toupper(c);
-		}
-	);
+	for (char &c : str)
+	{
+		if (c == '-')
+			c = '_';
+		else
+			c = std::toupper(c);
+	}
 	return (str);
 }
 
@@ -36,11 +37,6 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 			env.push_back("PATH_INFO=" + request._path.substr(pos_dot + pos_slash_after_dot));
 			path = request._path.substr(0, pos_dot + pos_slash_after_dot);
 		}
-
-		std::cout << "punkt:" << pos_dot << " slash:" << pos_slash_after_dot << std::endl;
-		std::cout << "ext: " << extension << std::endl;
-		std::cout << "pat: " << path << std::endl;
-		std::cout << "pat: " << request._path << std::endl;
 
 		auto it = lc->_cgi_map.find(extension);
 		if (it == lc->_cgi_map.end())
