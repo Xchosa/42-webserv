@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <filesystem>
 #include <vector>
 
@@ -51,8 +52,9 @@ class Dispatcher
 
 		// handle cgi
 		std::string		upperString(std::string str) const;
-		void			checkForCgi(const HttpRequest& request, std::string& path, std::vector<std::string>& env, LocationConfig* lc);
+		void			checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc);
 		void			buildEnv(std::vector<std::string>& env, const HttpRequest& request, std::string& path, std::string& script_path, ServerConfig* sc);
+		HttpResponse	parseCgiOutput(std::string& cgi_output);
 
 	public:
 		// OCF

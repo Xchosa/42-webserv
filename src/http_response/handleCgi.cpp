@@ -38,7 +38,7 @@ void Dispatcher::buildEnv(std::vector<std::string>& env, const HttpRequest& requ
 	}
 }
 
-void Dispatcher::checkForCgi(const HttpRequest& request, std::string& path, std::vector<std::string>& env, LocationConfig* lc)
+void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc)
 {
 	std::string extension;
 
@@ -65,6 +65,7 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& path, std:
 			std::cout << "extension not found in cgi map\n";
 			throw HttpException(404); // TODO: als static file handeln?
 		}
+		interpreter = it->second;
 	}
 	else // no file given
 	{
@@ -73,15 +74,20 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& path, std:
 	}
 }
 
+// HttpResponse Dispatcher::parseCgiOutput(std::string& cgi_output)
+// {
+
+// }
+
 HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
 {
 	std::cout << "> CGI HANDLER\n";
 
-	std::string					extension;
+	std::string					interpreter;
 	std::string					path;
 	std::vector<std::string>	env;
 	
-	checkForCgi(request, path, env, lc);
+	checkForCgi(request, interpreter, path, env, lc);
 
 	// build path
 	std::string script_path = getFullRootPath(lc) + path;
@@ -92,16 +98,78 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 		throw HttpException(403);
 
 	buildEnv(env, request, path, script_path, sc);
-
-
-
-
-
 	std::cout << "env's:\n";
 	for (auto &s : env)
 	{
 		std::cout << "- " << s << std::endl;
 	}
+
+	// for execve char* array
+	std::vector<char*> envp;
+	for (auto& s : env)
+	{
+		envp.push_back(s.data());
+	}
+	envp.push_back(nullptr);
+
+
+	int in_pipe[2];
+	int out_pipe[2];
+	pid_t pid;
+
+	try
+	{
+		pipe(in_pipe);
+		pipe(out_pipe);
+		pid = fork();
+	}
+	catch(const std::exception& e)
+	{
+		throw HttpException(500);
+	}
+	if (pid == 0) // child
+	{
+		dup2(in_pipe[0], STDIN_FILENO);
+		dup2(out_pipe[1], STDOUT_FILENO);
+		close(in_pipe[0]);
+		close(in_pipe[1]);
+		close(out_pipe[0]);
+		close(out_pipe[1]);
+
+		chdir(getFullRootPath(lc).c_str());
+		char *argv[] = {interpreter.data(), script_path.data(), nullptr};
+		execve(interpreter.c_str(), argv, envp.data());
+		std::exit(1);
+	}
+	
+	// parent:
+	// ########## dummy pumping data from parent to child ##########
+	close(in_pipe[0]);
+	close(out_pipe[1]);
+
+	// body schreiben, danach weite schliessen fuer EOF
+	write(in_pipe[1], request._body.data(), request._body.length());
+	close(in_pipe[1]);
+
+	// output lesen bis eof
+	std::string cgi_output;
+	char buf[1024];
+	ssize_t n;
+	while ((n = read(out_pipe[0], buf, sizeof(buf))) > 0)
+		cgi_output.append(buf, n);
+	close(out_pipe[0]);
+
+	int status;
+	waitpid(pid, &status, 0);
+	// ########## END dummy pumping data from parent to child ##########
+
+
+	std::cout << "cgi_out:\n" << cgi_output << std::endl;
+
+	// HttpResponse r = parseCgiOutput(cgi_output);
+
+
+
 
 	HttpResponse dummy;
 	return (dummy);
