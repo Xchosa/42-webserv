@@ -14,11 +14,34 @@ std::string Dispatcher::upperString(std::string str) const
 HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
 {
 	std::cout << "> CGI HANDLER\n";
+
+	std::string					extension;
+	std::string					path;
+	std::vector<std::string>	env;
+	
 	// get dateiendung und pruefen ob in cgi map vorhanden
-	std::string extension;
 	if (request._path.find(".") != std::string::npos)
 	{
-		extension = request._path.substr(request._path.find_last_of('.'));
+		size_t	pos_dot = request._path.find_last_of('.');
+		size_t	pos_slash_after_dot = request._path.substr(pos_dot).find('/');
+
+		if (pos_slash_after_dot == std::string::npos) // kein path info
+		{
+			extension = request._path.substr(pos_dot);
+			path = request._path;
+		}
+		else // path info vorhanden
+		{
+			extension = request._path.substr(pos_dot, pos_slash_after_dot);
+			env.push_back("PATH_INFO=" + request._path.substr(pos_dot + pos_slash_after_dot));
+			path = request._path.substr(0, pos_dot + pos_slash_after_dot);
+		}
+
+		std::cout << "punkt:" << pos_dot << " slash:" << pos_slash_after_dot << std::endl;
+		std::cout << "ext: " << extension << std::endl;
+		std::cout << "pat: " << path << std::endl;
+		std::cout << "pat: " << request._path << std::endl;
+
 		auto it = lc->_cgi_map.find(extension);
 		if (it == lc->_cgi_map.end())
 		{
@@ -33,7 +56,7 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 	}
 
 	// pfad bauen
-	std::string script_path = getFullRootPath(lc) + request._path;
+	std::string script_path = getFullRootPath(lc) + path;
 	// datei vorhanden und lesbar?
 	if (access(script_path.c_str(), F_OK) == -1)
 		throw HttpException(404);
@@ -43,16 +66,16 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 
 	// env's bauen
 	// env.push_back("=" + );
-	std::vector<std::string> env;
+	
 
 	env.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	env.push_back("SERVER_PROTOCOL=" + request._version);
 	env.push_back("REQUEST_METHOD=" + request._method);
-	env.push_back("SCRIPT_NAME=" + request._path);
+	env.push_back("SCRIPT_NAME=" + path);
 	env.push_back("SCRIPT_FILENAME=" + script_path);
-	env.push_back("SERVER_NAME=" + sc->_listen_host);
 	env.push_back("SERVER_PORT=" + std::to_string(sc->_listen_port));
-
+	if (sc->_listen_host.length() > 0)
+		env.push_back("SERVER_NAME=" + sc->_listen_host);
 	if (request._query.length() > 0)
 		env.push_back("QUERY_STRING=" + request._query);
 	if (request._body.length() > 0)
