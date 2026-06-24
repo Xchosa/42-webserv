@@ -74,14 +74,85 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interprete
 	}
 }
 
-// HttpResponse Dispatcher::parseCgiOutput(std::string& cgi_output)
-// {
+HttpResponse Dispatcher::parseCgiOutput(std::string& output)
+{
+	int skip = 4;
+	size_t header_end = output.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+	{
+		skip = 2;
+		header_end = output.find("\n\n");
+	}
+	if (header_end == std::string::npos)
+		throw HttpException(500);
+	std::string headers = output.substr(0, header_end + (skip / 2));
+	std::string	body = output.substr(header_end + skip);
 
-// }
+	HttpResponse r;
+	r._version = "HTTP/1.1";
+	r._status_code = 200;
+
+	// parse headers
+	std::string	delimiter = skip == 4 ? "\r\n" : "\n";
+	size_t		pos;
+	std::string	line;
+	while ((pos = headers.find(delimiter)) != std::string::npos)
+	{
+		// extract line
+		line = headers.substr(0, pos);
+		headers.erase(0, pos + delimiter.length());
+
+		if (line.empty())
+			continue;
+
+		// parsing
+		size_t p = line.find(":");
+		if (p != std::string::npos)
+		{
+			std::string key = line.substr(0, p);
+			std::string val = line.substr(p + 1);
+
+			// trim optional white space at begin and end of value
+			while (val[0] == ' ')
+				val.erase(0, 1);
+			while (val[val.length() - 1] == ' ')
+				val.erase(val.length() - 1, 1);
+
+			if (key == "Status")
+			{
+				int code;
+				try
+				{
+					code = std::stoi(val);
+				}
+				catch(const std::exception& e)
+				{
+					code = 200;
+				}
+				if (code < 100 || code > 999)
+					code = 200;
+				r._status_code = code;
+			}
+			else
+				r._headers[key] = val;
+		}
+	}
+
+	if (r._headers.find("Content-Type") == r._headers.end())
+	{
+		std::cout << "Error: no Content-Type header received from cgi\n";
+		throw HttpException(500);
+	}
+
+	r._status_text = getStatusText(r._status_code);
+	r._headers["Content-Length"] = std::to_string(body.length());
+	r._body = body;
+	return (r);
+}
 
 HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
 {
-	std::cout << "> CGI HANDLER\n";
+	// std::cout << "> CGI HANDLER\n";
 
 	std::string					interpreter;
 	std::string					path;
@@ -98,11 +169,11 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 		throw HttpException(403);
 
 	buildEnv(env, request, path, script_path, sc);
-	std::cout << "env's:\n";
-	for (auto &s : env)
-	{
-		std::cout << "- " << s << std::endl;
-	}
+	// std::cout << "env's:\n";
+	// for (auto &s : env)
+	// {
+	// 	std::cout << "- " << s << std::endl;
+	// }
 
 	// for execve char* array
 	std::vector<char*> envp;
@@ -164,13 +235,7 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 	// ########## END dummy pumping data from parent to child ##########
 
 
-	std::cout << "cgi_out:\n" << cgi_output << std::endl;
-
-	// HttpResponse r = parseCgiOutput(cgi_output);
-
-
-
-
-	HttpResponse dummy;
-	return (dummy);
+	HttpResponse r = parseCgiOutput(cgi_output);
+	r._headers["Connection"] = getConnectionMode(request._headers);
+	return (r);
 }
