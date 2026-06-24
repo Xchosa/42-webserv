@@ -3,13 +3,6 @@
 #include "HttpStatus.hpp"
 #include "HttpMimeType.hpp"
 
-#include <algorithm>
-#include <fstream>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <filesystem>
-
 LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* sc) const
 {
 	LocationConfig*	lc = nullptr;
@@ -48,27 +41,6 @@ void Dispatcher::checkMethodAllowed(std::string method, std::vector<std::string>
 std::string Dispatcher::cwd() const
 {
 	return (std::filesystem::current_path().string());
-}
-
-std::string Dispatcher::getDefaultBody(int code) const
-{
-	std::string body;
-
-	std::string full_path = cwd() + "/default_pages/" + std::to_string(code) + ".html";
-	try
-	{
-		body = readFile(full_path);
-	}
-	catch(const std::exception& e)
-	{
-		body = "<!DOCTYPE html>\n"
-				"<html>\n"
-				"<body>\n"
-				"    <h1>" + std::to_string(code) + " - " + getStatusText(code) + "</h1>\n"
-				"</body>\n"
-				"</html>\n";
-	}
-	return (body);
 }
 
 std::string Dispatcher::readFile(std::string& filepath) const
@@ -113,6 +85,27 @@ std::string	Dispatcher::getConnectionMode(const std::map<std::string, std::strin
 	return ("keep-alive");
 }
 
+std::string Dispatcher::getDefaultErrorBody(int code) const
+{
+	std::string body;
+
+	std::string full_path = cwd() + "/default_pages/" + std::to_string(code) + ".html";
+	try
+	{
+		body = readFile(full_path);
+	}
+	catch(const std::exception& e)
+	{
+		body = "<!DOCTYPE html>\n"
+				"<html>\n"
+				"<body>\n"
+				"    <h1>" + std::to_string(code) + " - " + getStatusText(code) + "</h1>\n"
+				"</body>\n"
+				"</html>\n";
+	}
+	return (body);
+}
+
 HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request)
 {
 	std::string body;
@@ -130,7 +123,7 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	}
 	catch(const std::exception& e)
 	{
-		body = getDefaultBody(code);
+		body = getDefaultErrorBody(code);
 	}
 
 	HttpResponse r;
@@ -144,37 +137,6 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	else
 		r._headers["Connection"] = "close";
 	r._body = body;
-
-	return (r);
-}
-
-HttpResponse Dispatcher::handleRedirect(LocationConfig* lc, const HttpRequest& request)
-{
-	HttpResponse r;
-	int redirect_code = lc->_redirect_code.value();
-
-	r._version = "HTTP/1.1";
-	r._status_code = redirect_code;
-	r._status_text = getStatusText(redirect_code);
-	r._headers["Connection"] = getConnectionMode(request._headers);
-
-	if (redirect_code >= 300 && redirect_code < 400)
-	{
-		r._headers["Content-Length"] = "0";
-		r._headers["Location"] = lc->_redirect_url.value();
-	}
-	else if (lc->_redirect_url.has_value())
-	{
-		r._headers["Content-Type"] = "text/plain";
-		r._headers["Content-Length"] = std::to_string(lc->_redirect_url.value().length());
-		r._body = lc->_redirect_url.value();
-	}
-	else
-	{
-		r._body = getDefaultBody(redirect_code);
-		r._headers["Content-Type"] = "text/html";
-		r._headers["Content-Length"] = std::to_string(r._body.length());
-	}
 
 	return (r);
 }
@@ -200,214 +162,6 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	return (path);
 }
 
-std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPath)
-{
-	std::string uploadDir;
-	uploadDir= lc->_upload_store.value();
-	
-	if (uploadDir.find("./") == 0 )
-	{
-		uploadDir.erase(0,1);
-		rootPath += uploadDir; 
-	}
-	else if(uploadDir.find('/') == 0)						// absolut to executable
-	{
-		rootPath += uploadDir;
-	}
-	else
-	{
-		rootPath += '/' + uploadDir;
-	}
-	return (rootPath);
-}
-
-HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig* lc)
-{
-	HttpResponse r;
-
-	if (lc == nullptr)
-		throw HttpException(500);
-
-	std::string full_path = getFullRootPath(lc) + request._path;
-
-	// pfad vorhanden?
-	struct stat statbuf;
-	if (stat(full_path.c_str(), &statbuf) == -1)
-		throw HttpException(404);
-
-	std::string body;
-	if (S_ISREG(statbuf.st_mode)) // path is a file
-	{
-		try
-		{
-			body = readFile(full_path);
-			r._headers["Content-Type"] = getMimeTypeFromFile(full_path);
-		}
-		catch(const std::exception& e)
-		{
-			throw HttpException(404);
-		}
-	}
-	else if (S_ISDIR(statbuf.st_mode)) // path is a directory
-	{
-		if (lc->_index.length() > 0) // index file exist
-		{
-			std::string index_path = full_path + "/" + lc->_index;
-
-			try
-			{
-				body = readFile(index_path);
-				r._headers["Content-Type"] = getMimeTypeFromFile(index_path);
-			}
-			catch(const std::exception& e)
-			{
-				if (lc->_autoindex == true)
-				{
-					body = "TODO autoindex\n";
-					r._headers["Content-Type"] = "text/html";
-				}
-				else
-					throw HttpException(404);
-			}
-		}
-		else // no index file
-		{
-			if (lc->_autoindex == true)
-			{
-				body = "TODO autoindex\n";
-				r._headers["Content-Type"] = "text/html";
-			}
-			else
-				throw HttpException(403);
-		}
-	}
-	else
-	{
-		throw HttpException(502);
-	}
-
-	r._version = "HTTP/1.1";
-	r._status_code = 200;
-	r._status_text = getStatusText(200);
-	r._body = body;
-	r._headers["Connection"] = getConnectionMode(request._headers);
-	r._headers["Content-Length"] = std::to_string(r._body.length());
-
-	return (r);
-}
-
-
-std::string Dispatcher::buildFileName(const HttpRequest& request)
-{
-	std::string filename;
-	// handle decoded and encoded URLs 
-	// firs URL decode and regex check 
-	std::regex traversalPattern("(^|/)\\.\\.(/|$)"); // 
-	
-	/*
-		(^|/)    start of string OR slash
-	\\.\\.   exactly two dots
-	(/|$)    slash OR end of string
-
-	So it matches:
-
-	../x
-	/a/../b
-	/a/..
-	..
-	*/
-	
-	size_t filenameStart = request._path.find_last_of('/');
-	if (filenameStart == std::string::npos )
-		throw HttpException(500);
-	filename = request._path.substr(filenameStart + 1);
-	return filename;
-}
-void Dispatcher::createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target)
-{
-	std::filesystem::create_directories(uploadpath);
-	std::ofstream NewFile(target, std::ios::binary);
-	//std::ofstream NewFile(target);
-	if (!NewFile.is_open())
-		throw HttpException(500);
-	NewFile.write(request._body.data(), request._body.size());
-	//NewFile << request._body;
-	if(!NewFile)
-		throw HttpException(500);
-	NewFile.close();
-}
-
-bool Dispatcher::fileExists(const std::string& target) const
-{
-	struct stat statbuf;
-	if (stat(target.c_str(), &statbuf) == -1)
-		return false;
-
-	return S_ISREG(statbuf.st_mode); // chekc regularfile
-
-}
-
-HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
-{
-	std::string uploadpath;
-	bool fileExisted;
-	std::cout<< "rootPath:  " << lc->_root << std::endl;
-
-	std::string rootPath = getFullRootPath(lc); // anhaegen 
-	std::cout<< "rootPath to danceserv:  " << rootPath << std::endl;
-	if (lc->_upload_store.has_value())
-		uploadpath = getFullUploadPath(lc, rootPath);
-	else
-	{
-		std::cout << "now upload path" << std::endl; // or value_or
-		throw HttpException(404);
-	}
-	std::string filename = buildFileName(request);
-	
-	std::cout << "requst path: " << request._path << std::endl;
-	std::cout<< "filename: " <<filename << std::endl;
-	std::cout << "uploadPath: " << uploadpath<< std::endl;
-
-	
-	std::string target = uploadpath + "/" + filename;
-
-	fileExisted = fileExists(target);
-	createDirAndFile(request, uploadpath,target);
-
-	std::cout << "body size: " << request._body.size() << std::endl;
-	std::cout << "body content: " << request._body << std::endl;
-	
-	HttpResponse respond;
-	respond._version = "HTTP/1.1";
-	if (fileExisted == true)
-	{
-		respond._status_code = 200;
-		respond._status_text = "OK"; // overwrites file 204 No Content auch moeglich
-	}
-	else
-	{
-		respond._status_code = 201;
-		respond._status_text = "Created";
-	}
-	// differ body content 
-	respond._headers["Content-Length"] = "0";
-	respond._headers["Connection"] = getConnectionMode(request._headers);
-	
-	return (respond);
-}
-
-
-
-HttpResponse Dispatcher::handleCgi(const HttpRequest& request, LocationConfig* lc)
-{
-	// TODO gha
-
-	(void) request;
-	(void) lc;
-	HttpResponse dummy;
-	return (dummy);
-}
-
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 {
 	try
@@ -421,7 +175,6 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 			return (handleRedirect(lc, request));
 		
 		checkMethodAllowed(request._method, lc->_methods);
-		// reject path traversal .. or /../
 
 		if (lc->_cgi_map.size() > 0)
 			return (handleCgi(request, lc));

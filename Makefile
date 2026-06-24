@@ -34,6 +34,10 @@ SRCS =	main.cpp \
 		ClientInfos.cpp \
 		HttpResponse.cpp \
 		Dispatcher.cpp \
+		handleCgi.cpp \
+		handleRedirect.cpp \
+		handleStatic.cpp \
+		handleUpload.cpp \
 		HttpException.cpp \
 		HttpStatus.cpp \
 		HttpMimeType.cpp

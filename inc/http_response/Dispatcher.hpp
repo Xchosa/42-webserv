@@ -3,11 +3,20 @@
 #include <iostream>
 #include <string>
 #include <regex>
+#include <algorithm>
+#include <fstream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <filesystem>
 
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include "HttpException.hpp"
+#include "HttpStatus.hpp"
+#include "HttpMimeType.hpp"
 
 enum ConnectionMode
 {
@@ -29,7 +38,7 @@ class Dispatcher
 		void			checkMethodAllowed(std::string method, std::vector<std::string> allowed_methods) const;
 		std::string		readFile(std::string& filepath) const;
 		std::string		cwd() const;
-		std::string		getDefaultBody(int code) const;
+		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
