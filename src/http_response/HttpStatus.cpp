@@ -24,6 +24,7 @@ const std::string& getStatusText(int code)
 		{413, "Payload Too Large"},
 		{500, "Internal Server Error"},
 		{502, "Bad Gateway"},
+		{504, "Gateway Timeout"},
 	};
 
 	auto it = texts.find(code);
