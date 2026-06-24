@@ -205,7 +205,7 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 		chdir(getFullRootPath(lc).c_str());
 		char *argv[] = {interpreter.data(), script_path.data(), nullptr};
 		execve(interpreter.c_str(), argv, envp.data());
-		std::exit(1);
+		_exit(1);
 	}
 	
 	// parent:
@@ -227,6 +227,8 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 
 	int status;
 	waitpid(pid, &status, 0);
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
+		throw HttpException(502);
 	// ########## END dummy pumping data from parent to child ##########
 
 
