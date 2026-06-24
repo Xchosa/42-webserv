@@ -91,6 +91,7 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 	HttpResponse r;
 	r._version = "HTTP/1.1";
 	r._status_code = 200;
+	r._headers["Content-Type"] = "application/octet-stream";
 
 	// parse headers
 	std::string	delimiter = skip == 4 ? "\r\n" : "\n";
@@ -136,12 +137,6 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 			else
 				r._headers[key] = val;
 		}
-	}
-
-	if (r._headers.find("Content-Type") == r._headers.end())
-	{
-		std::cout << "Error: no Content-Type header received from cgi\n";
-		throw HttpException(500);
 	}
 
 	r._status_text = getStatusText(r._status_code);
