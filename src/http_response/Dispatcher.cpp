@@ -141,28 +141,6 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	return (r);
 }
 
-// pauls version auskommentiert
-// std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
-// {
-// 	std::string path;
-// 	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? oder wird gehandelt vom executable ausgehend?
-// 	{
-// 		path = lc->_root;
-
-// 	}
-// 	else if (lc->_root[0] == '.' && lc->_root[1] == '/') // relativ to executable 
-// 	{
-// 		std::string rootWithoutDot = lc->_root;
-// 		rootWithoutDot = rootWithoutDot.erase(0,1);
-// 		path = cwd() + rootWithoutDot;
-// 	}
-// 	else						// relativ to executable
-// 	{
-// 		path = cwd() + "/" + lc->_root;
-// 	}
-// 	return (path);
-// }
-
 std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 {
 	std::string path;
