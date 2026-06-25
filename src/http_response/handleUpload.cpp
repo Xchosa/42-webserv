@@ -2,15 +2,9 @@
 
 std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPath)
 {
-	std::string uploadDir;
-	uploadDir= lc->_upload_store.value();
+	std::string uploadDir = lc->_upload_store.value();
 	
-	if (uploadDir.find("./") == 0 )
-	{
-		uploadDir.erase(0,1);
-		rootPath += uploadDir; 
-	}
-	else if(uploadDir.find('/') == 0)						// absolut to executable
+	if(uploadDir.find('/') == 0)						// absolut to executable
 	{
 		rootPath += uploadDir;
 	}
@@ -18,7 +12,10 @@ std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPa
 	{
 		rootPath += '/' + uploadDir;
 	}
-	return (rootPath);
+	
+	std::string normalizedUploadDir = resolvePath(rootPath);
+
+	return normalizedUploadDir;
 }
 
 std::string Dispatcher::buildFileName(const HttpRequest& request)
@@ -26,41 +23,18 @@ std::string Dispatcher::buildFileName(const HttpRequest& request)
 	std::string filename;
 	// handle decoded and encoded URLs 
 	// firs URL decode and regex check 
-	std::regex traversalPattern("(^|/)\\.\\.(/|$)"); // 
-	
-	/*
-		(^|/)    start of string OR slash
-	\\.\\.   exactly two dots
-	(/|$)    slash OR end of string
+	//std::regex traversalPattern("(^|/)\\.\\.(/|$)"); // 
 
-	So it matches:
-
-	../x
-	/a/../b
-	/a/..
-	..
-	*/
-	
 	size_t filenameStart = request._path.find_last_of('/');
 	if (filenameStart == std::string::npos )
 		throw HttpException(500);
 	filename = request._path.substr(filenameStart + 1);
+
+	
 	return filename;
 }
 
-void Dispatcher::createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target)
-{
-	std::filesystem::create_directories(uploadpath);
-	std::ofstream NewFile(target, std::ios::binary);
-	//std::ofstream NewFile(target);
-	if (!NewFile.is_open())
-		throw HttpException(500);
-	NewFile.write(request._body.data(), request._body.size());
-	//NewFile << request._body;
-	if(!NewFile)
-		throw HttpException(500);
-	NewFile.close();
-}
+
 
 bool Dispatcher::fileExists(const std::string& target) const
 {
@@ -69,52 +43,149 @@ bool Dispatcher::fileExists(const std::string& target) const
 		return false;
 
 	return S_ISREG(statbuf.st_mode); // chekc regularfile
-
 }
+
+std::string resolvePath(std::string NewPath)
+{
+	std::string path = std::filesystem::path(NewPath).lexically_normal();
+	return path;
+}
+
+//bool isWithin(std::filesystem::path Base, std::filesystem::path targetPath)
+//{
+//	// durch itereiren 
+//	std::filesystem::path normalizedBase = std::filesystem::absolute(Base).lexically_normal();
+//	std::filesystem::path normalizedTarget = std::filesystem::absolute(targetPath).lexically_normal();
+
+//	auto baseIter = normalizedBase.begin();
+//	auto TargetIter = normalizedBase.begin();
+
+//	for (; baseIter != normalizedBase.end(); ++baseIter, ++TargetIter)
+//	{
+//		if (TargetIter == normalizedTarget.end())
+//	}
+//}
+
+// string rootpath , 
+
+
+
+
+
+// spaeter in Dispatcher.cpp
+bool isWithin(std::string& base_path, std::string& full_path)
+{
+	
+}
+
+// funktion die prueft ob pfad ausserhalb oder innerhalb ist
+// strings als referenz uebergeben und dann gleich normalisiert "zurueckgeben"
+
+// parameter 1: root pfad MIT location (bei upload noch den upload pfad zwischen root und location) 
+// home/poverbec/projects/42-webserv/danceserv/uploads/maus
+
+// parameter 2:
+// parameter 1 + path
+// parameter 1 + /maus/a/test.txt
+
+
+
+
+
+
+bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string uploadpath)
+{
+	// optional do not allow creating files through symlink (std::filesystem::is_symlink())
+	bool fileExisted = false;
+
+	std::string target = resolvePath(uploadpath + request._path);
+	std::cout << "target: " << target<< std::endl;
+	fileExisted = fileExists(target); // 
+
+	std::filesystem::path uploadRoot = std::filesystem::absolute(uploadpath).lexically_normal();
+	std::cout << "uploadRoot " << uploadRoot << std::endl;
+
+	std::filesystem::path requestPath = std::filesystem::relative(request._path);
+	std::cout << "requestPath  " << requestPath  << std::endl;
+
+
+
+	std::string RequestDir = request._path;
+	std::string Filename = buildFileName(request);
+	std::string subDir = request._path.substr(0, request._path.find(Filename));
+	std::string TargetDir = uploadpath + subDir;
+
+	std::cout<< "TargetDir: " <<TargetDir << std::endl;
+
+	std::string checkedTargetDir = resolvePath(TargetDir);
+	// TragetDir muss innerhalb vom uploadpath sein  
+
+
+
+
+
+
+
+	std::filesystem::create_directories(checkedTargetDir);
+	std::ofstream NewFile(target, std::ios::binary);
+	if (!NewFile.is_open())
+	{
+		std::cout << "createdDir" << checkedTargetDir << std::endl ;
+		throw HttpException(500);
+	}
+	NewFile.write(request._body.data(), request._body.size());
+	if(!NewFile)
+		throw HttpException(500);
+	NewFile.close();
+
+	
+
+	return fileExisted ;
+}
+
 
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
+																			// POST /maus/a/a/test.txt
+																			// request._path = /maus/a/a/test.txt 
 	std::string uploadpath;
 	bool fileExisted;
-	std::cout<< "rootPath:  " << lc->_root << std::endl;
+	std::cout<< "rootPath:  " << lc->_root << std::endl; 
 
-	std::string rootPath = getFullRootPath(lc); // anhaegen 
+	std::string rootPath = getFullRootPath(lc); // anhaegen 				// Root webserv/danceserv
+	
 	std::cout<< "rootPath to danceserv:  " << rootPath << std::endl;
 	if (lc->_upload_store.has_value())
-		uploadpath = getFullUploadPath(lc, rootPath);
+		uploadpath = getFullUploadPath(lc, rootPath); 						// webserv/danceserv/upload
 	else
 	{
 		std::cout << "now upload path" << std::endl; // or value_or
 		throw HttpException(404);
 	}
-	std::string filename = buildFileName(request);
-	
+	std::string filename = buildFileName(request);							// test.txt
 	std::cout << "requst path: " << request._path << std::endl;
 	std::cout<< "filename: " <<filename << std::endl;
-	std::cout << "uploadPath: " << uploadpath<< std::endl;
-
+	std::cout << "uploadPath: " << uploadpath<< std::endl;   /// 
 	
-	std::string target = uploadpath + "/" + filename;
 
-	fileExisted = fileExists(target);
-	createDirAndFile(request, uploadpath,target);
 
-	std::cout << "body size: " << request._body.size() << std::endl;
-	std::cout << "body content: " << request._body << std::endl;
+	fileExisted = createDirAndFile(request, uploadpath);
 	
 	HttpResponse respond;
 	respond._version = "HTTP/1.1";
 	if (fileExisted == true)
 	{
 		respond._status_code = 200;
-		respond._status_text = "OK"; // overwrites file 204 No Content auch moeglich
+		respond._status_text = getStatusText(respond._status_code); // overwrites file 204 No Content auch moeglich
 	}
 	else
 	{
 		respond._status_code = 201;
-		respond._status_text = "Created";
+		respond._status_text = getStatusText(respond._status_code);
 	}
 	// differ body content 
+	std::cout << "body size: " << request._body.size() << std::endl;
+	std::cout << "body content: " << request._body << std::endl;
 	respond._headers["Content-Length"] = "0";
 	respond._headers["Connection"] = getConnectionMode(request._headers);
 	

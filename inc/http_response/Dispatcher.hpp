@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <filesystem>
 #include <vector>
+//#include <cassert>
 
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
@@ -47,8 +48,9 @@ class Dispatcher
 		// handle upload
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
 		std::string		buildFileName(const HttpRequest& request);
-		void			createDirAndFile(const HttpRequest& request, std::string uploadpath, std::string target);
+		bool			createDirAndFile(const HttpRequest& request, std::string uploadpath);
 		bool			fileExists(const std::string& target) const;
+		
 
 		// handle cgi
 		std::string		upperString(std::string str) const;
@@ -67,3 +69,5 @@ class Dispatcher
 		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
 };
+
+std::string		resolvePath(std::string NewPath);

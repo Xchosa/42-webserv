@@ -152,7 +152,8 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	{
 		path = cwd() + "/" + lc->_root;
 	}
-	return (path);
+	std::string normalizedPath = resolvePath(path);
+	return (normalizedPath);
 }
 
 HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)

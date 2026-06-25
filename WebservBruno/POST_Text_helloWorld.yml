@@ -1,0 +1,26 @@
+info:
+  name: POST_Text_helloWorld
+  type: http
+  seq: 1
+
+http:
+    method: POST
+    url: http://localhost:8081/maus/test.txt
+    headers:
+      - name: Host
+        value: maus
+      - name: Content-Type
+        value: text/plain
+      - name: Connection
+        value: close
+    body:
+      type: text
+      data: hello World
+    auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 30000
+  followRedirects: false
+  maxRedirects: 5
+
