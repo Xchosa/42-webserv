@@ -20,12 +20,11 @@ void Dispatcher::buildEnv(std::vector<std::string>& env, const HttpRequest& requ
 	env.push_back("SCRIPT_NAME=" + path);
 	env.push_back("SCRIPT_FILENAME=" + script_path);
 	env.push_back("SERVER_PORT=" + std::to_string(sc->_listen_port));
+	env.push_back("QUERY_STRING=" + request._query);
 	if (sc->_listen_host.length() > 0)
 		env.push_back("SERVER_NAME=" + sc->_listen_host);
-	if (request._query.length() > 0)
-		env.push_back("QUERY_STRING=" + request._query);
 	if (request._body.length() > 0)
-		env.push_back("CONTENT-LENGTH=" + std::to_string(request._body.length()));
+		env.push_back("CONTENT_LENGTH=" + std::to_string(request._body.length()));
 	if (upperString(path.substr(path.find_last_of('.'))) == ".PHP")
 		env.push_back("REDIRECT_STATUS=200");
 	if (request._headers.find("content-type") != request._headers.end())
@@ -113,12 +112,6 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 			std::string key = line.substr(0, p);
 			std::string val = line.substr(p + 1);
 
-			// trim optional white space at begin and end of value
-			while (val[0] == ' ')
-				val.erase(0, 1);
-			while (val[val.length() - 1] == ' ')
-				val.erase(val.length() - 1, 1);
-
 			if (key == "Status")
 			{
 				int code;
@@ -181,16 +174,22 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 
 	int in_pipe[2];
 	int out_pipe[2];
-	pid_t pid;
 
-	try
+	if (pipe(in_pipe) == -1)
+		throw HttpException(500);
+	if (pipe(out_pipe) == -1)
 	{
-		pipe(in_pipe);
-		pipe(out_pipe);
-		pid = fork();
+		close(in_pipe[0]);
+		close(in_pipe[1]);
+		throw HttpException(500);
 	}
-	catch(const std::exception& e)
+	pid_t pid = fork();
+	if (pid == -1)
 	{
+		close(in_pipe[0]);
+		close(in_pipe[1]);
+		close(out_pipe[0]);
+		close(out_pipe[1]);
 		throw HttpException(500);
 	}
 	if (pid == 0) // child
