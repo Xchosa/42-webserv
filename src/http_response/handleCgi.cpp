@@ -7,7 +7,7 @@ std::string Dispatcher::upperString(std::string str) const
 		if (c == '-')
 			c = '_';
 		else
-			c = std::toupper(c);
+			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
 	}
 	return (str);
 }
