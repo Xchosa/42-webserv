@@ -73,13 +73,13 @@ std::string resolvePath(std::string NewPath)
 
 
 // spaeter in Dispatcher.cpp
-bool isWithin(std::string& base_path, std::string& full_path)
+bool isWithin(const std::string& base_path, std::string& full_path)
 {
 	
 }
 
 // funktion die prueft ob pfad ausserhalb oder innerhalb ist
-// strings als referenz uebergeben und dann gleich normalisiert "zurueckgeben"
+// strings als referenz uebergeben und dann gleich normalisiert "zurueckgeben", nur full pfad normalisiert zurueck benoetigt
 
 // parameter 1: root pfad MIT location (bei upload noch den upload pfad zwischen root und location) 
 // home/poverbec/projects/42-webserv/danceserv/uploads/maus
