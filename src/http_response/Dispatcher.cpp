@@ -141,28 +141,6 @@ HttpResponse Dispatcher::buildErrorResponse(int code, ServerConfig* sc, Connecti
 	return (r);
 }
 
-// pauls version auskommentiert
-// std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
-// {
-// 	std::string path;
-// 	if (lc->_root[0] == '/')	// relativ to workdir -> forbidden? oder wird gehandelt vom executable ausgehend?
-// 	{
-// 		path = lc->_root;
-
-// 	}
-// 	else if (lc->_root[0] == '.' && lc->_root[1] == '/') // relativ to executable 
-// 	{
-// 		std::string rootWithoutDot = lc->_root;
-// 		rootWithoutDot = rootWithoutDot.erase(0,1);
-// 		path = cwd() + rootWithoutDot;
-// 	}
-// 	else						// relativ to executable
-// 	{
-// 		path = cwd() + "/" + lc->_root;
-// 	}
-// 	return (path);
-// }
-
 std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 {
 	std::string path;
@@ -177,7 +155,7 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	return (path);
 }
 
-HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
+DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out)
 {
 	try
 	{
@@ -187,25 +165,34 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 			throw HttpException(404);
 		
 		if (lc->_redirect_code.has_value())
-			return (handleRedirect(lc, request));
+		{
+			response_out = handleRedirect(lc, request);
+			return (DP_DONE);
+		}
 		
 		checkMethodAllowed(request._method, lc->_methods);
 
 		if (lc->_cgi_map.size() > 0)
-			return (handleCgi(request, sc, lc));
+		{
+			(void) cgi_out;
+			// return (handleCgi(request, sc, lc));
+			return (DP_CGI_PENIDNG);
+		}
 		else if (lc->_upload_store.has_value())
 		{
 			std::cout << lc->_upload_store.value() << std::endl;
-			return (handleUpload(request, lc));
+			response_out = handleUpload(request, lc);
+			return (DP_DONE);
 		}
 		else
-			return(handleStatic(request, lc));
+		{
+			response_out = handleStatic(request, lc);
+			return (DP_DONE);
+		}
 	}
 	catch(const HttpException& e)
 	{
-		return(buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request));
+		response_out = buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request);
+		return (DP_DONE);
 	}
-
-	HttpResponse dummy;
-	return dummy;
 }

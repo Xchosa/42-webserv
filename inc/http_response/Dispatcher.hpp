@@ -19,11 +19,18 @@
 #include "HttpException.hpp"
 #include "HttpStatus.hpp"
 #include "HttpMimeType.hpp"
+#include "CgiSession.hpp"
 
 enum ConnectionMode
 {
 	CON_CLOSE,
 	CON_KEEP_ALIVE
+};
+
+enum DispatchResult
+{
+	DP_DONE,
+	DP_CGI_PENIDNG
 };
 
 class Dispatcher
@@ -64,6 +71,6 @@ class Dispatcher
 		~Dispatcher() = default;
 
 		// member functions
-		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
+		DispatchResult	dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
 };

@@ -94,7 +94,13 @@ void Server::recvClientData(int client_fd)
 				
 				
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
-				_clients[client_fd]._response = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server);
+				
+				CgiSession cgi;
+				DispatchResult dp_result = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, _clients[client_fd]._response, cgi);
+				if (dp_result == DP_CGI_PENIDNG)
+				{
+					_clients[client_fd]._cgi = cgi;
+				}
 				// _clients[client_fd]._response = DUMMY_response_OK();
 
 
