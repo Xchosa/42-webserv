@@ -175,7 +175,7 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		if (lc->_cgi_map.size() > 0)
 		{
 			(void) cgi_out;
-			// return (handleCgi(request, sc, lc));
+			cgi_out = handleCgi(request, sc, lc);
 			return (DP_CGI_PENIDNG);
 		}
 		else if (lc->_upload_store.has_value())

@@ -39,8 +39,8 @@ class Dispatcher
 		// handler (baut response)
 		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
-		HttpResponse handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
+		CgiSession	 handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 
 		// helper
 		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;
@@ -49,7 +49,6 @@ class Dispatcher
 		std::string		cwd() const;
 		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
-		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 
 		// handle upload
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
@@ -61,7 +60,7 @@ class Dispatcher
 		std::string		upperString(std::string str) const;
 		void			checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc);
 		void			buildEnv(std::vector<std::string>& env, const HttpRequest& request, std::string& path, std::string& script_path, ServerConfig* sc);
-		HttpResponse	parseCgiOutput(std::string& output);
+		CgiSession		startCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 
 	public:
 		// OCF
@@ -73,4 +72,6 @@ class Dispatcher
 		// member functions
 		DispatchResult	dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
+		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
+		HttpResponse	parseCgiOutput(std::string& output);
 };

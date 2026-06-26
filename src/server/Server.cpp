@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include <iostream>
 
 extern volatile std::sig_atomic_t gSignalStatus;
 
@@ -66,7 +65,7 @@ void Server::run()
 		}
 		for(int i = 0; i < readyEvents; ++i)
 		{
-			int fd = triggeredEvents[i].data.fd;
+			int fd = triggeredEvents[i].data.fd;;
 			uint32_t event_flag = triggeredEvents[i].events;
 
 			if(event_flag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
@@ -80,8 +79,12 @@ void Server::run()
 			}
 			if (isServerFd(fd))
 			{
-				std::cout << "----------- Connection Attempt --------------- " << std::endl;
+				std::cout << "[INFO]  ServerFd: " << fd << ", accept new client" << std::endl;
 				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
+			}
+			else if (_cgi_fd_client_owner.count(fd)) // cgi handling
+			{
+				handleCgiEvent(fd, event_flag);
 			}
 			else if (event_flag & EPOLLIN)
 			{

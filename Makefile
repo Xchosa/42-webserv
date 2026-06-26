@@ -40,7 +40,8 @@ SRCS =	main.cpp \
 		handleUpload.cpp \
 		HttpException.cpp \
 		HttpStatus.cpp \
-		HttpMimeType.cpp
+		HttpMimeType.cpp \
+		handleCgiEvent.cpp
 
 
 # obejct files

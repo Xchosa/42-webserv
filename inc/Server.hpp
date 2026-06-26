@@ -27,10 +27,12 @@ inline constexpr int KEEP_ALIVE_TIMEOUT = 10;
 class Server
 {
 	private:
-		Config							_config;		// alle server configs
-		int 							_epoll_fd;		// fd von epoll
-		std::map<int, ListenContext>	_socket_fds;	// key = server_fd, value ListenContext*
-		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+		Config							_config;				// alle server configs
+		int 							_epoll_fd;				// fd von epoll
+		std::map<int, ListenContext>	_socket_fds;			// key = server_fd, value ListenContext*
+		std::map<int, ClientInfos>		_clients;				// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+		Dispatcher						_dispatcher;
+		std::map<int, int>				_cgi_fd_client_owner;	// haelt fest welcher pipe fd zu welchem client gehoert, gefuellt in recvClientData()
 	
 		void			setNonBlocking(int server_fd);
 		void			addFdEpoll(int fd, uint32_t events);
@@ -52,6 +54,9 @@ class Server
 		void			checkClientTimeouts();
 		int				checklastActivity(int client_fd);
 
+		// cgi handling
+		void			handleCgiEvent(int pipe_fd, uint32_t event_flag);
+
 	public:
 		// OCF
 		Server() = delete;
@@ -62,6 +67,7 @@ class Server
 
 		void run();
 
-	};
+};
+
 	void signalHandler(int sig);
 	void initSignal(void);

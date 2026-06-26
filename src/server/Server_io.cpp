@@ -66,7 +66,6 @@ int	Server::checklastActivity(int client_fd)
 void Server::recvClientData(int client_fd)
 {
 	char buffer[4096];
-	Dispatcher dpatch;
 
 	while (true)
 	{
@@ -89,17 +88,33 @@ void Server::recvClientData(int client_fd)
 
 			if (parse_status == COMPLETE)
 			{
-				_clients[client_fd]._parser.printRequest();
-				std::cout << "Request complete from client_fd: " << client_fd << std::endl;
+				// _clients[client_fd]._parser.printRequest();
+				std::cout << "[INFO]  Client " << client_fd << ": request complete" << std::endl;
 				
 				
 				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
 				
-				CgiSession cgi;
-				DispatchResult dp_result = dpatch.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, _clients[client_fd]._response, cgi);
+					// HIER WETIERMACHEN MIT REGISTRIEREN EPOLL ETC WENN CGI PENING
+
+				HttpResponse	response;
+				CgiSession		cgi;
+				DispatchResult dp_result = _dispatcher.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, response, cgi);
+				if (dp_result == DP_DONE)
+				{
+					_clients[client_fd]._response = response;
+				}
 				if (dp_result == DP_CGI_PENIDNG)
 				{
 					_clients[client_fd]._cgi = cgi;
+
+					addFdEpoll(cgi._stdout_fd, EPOLLIN);
+					_cgi_fd_client_owner[cgi._stdout_fd] = client_fd;
+
+					if (!cgi._body.empty()) // wenn kein body dann nicht registrieren
+					{
+						addFdEpoll(cgi._stdin_fd, EPOLLOUT);
+						_cgi_fd_client_owner[cgi._stdin_fd] = client_fd;
+					}
 				}
 				// _clients[client_fd]._response = DUMMY_response_OK();
 
@@ -111,14 +126,14 @@ void Server::recvClientData(int client_fd)
 			{
 				// error reponse muss noch raus an den client, nicht direkt schliessen
 				// _clients[client_fd]._response = DUMMY_response_ERR400();
-				_clients[client_fd]._response = dpatch.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
+				_clients[client_fd]._response = _dispatcher.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				// closeClient(client_fd);
 				break;
 			}
 			else if (parse_status == ERROR_413)
 			{
-				_clients[client_fd]._response = dpatch.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
+				_clients[client_fd]._response = _dispatcher.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				break;
 			}
 
