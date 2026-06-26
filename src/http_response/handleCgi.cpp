@@ -203,6 +203,7 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 		_exit(1);
 	}
 
+	std::cout << "[INFO]  CGI started pid " << pid << std::endl;
 	cs._pid = pid;
 	cs._stdin_fd = in_pipe[1];
 	cs._stdout_fd = out_pipe[0];
