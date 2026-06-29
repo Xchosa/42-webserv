@@ -16,7 +16,6 @@ struct CgiSession
 	time_t		_started;
 };
 
-
 // in_pipe (fuer uebertrag von body)
 // 0 -> Leseende, wird zu stdin von child
 // 1 -> Schreibende, Parent schreibt hier Body rein (wenn vorhanden, ansonsten gleich closen)

@@ -3,7 +3,7 @@
 void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 {
 	ClientInfos*	client = &_clients[_cgi_fd_client_owner[pipe_fd]];	// current client
-	CgiSession*		cgi = &client->_cgi.value();					// cgi session from the client
+	CgiSession*		cgi = &client->_cgi.value();						// cgi session from the client
 
 	if (event_flag & (EPOLLERR | EPOLLHUP))
 	{

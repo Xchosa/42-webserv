@@ -84,7 +84,15 @@ void Server::run()
 			}
 			else if (_cgi_fd_client_owner.count(fd)) // cgi handling
 			{
+				int 			client_fd = _cgi_fd_client_owner[fd];
+				ClientInfos*	client = &_clients[client_fd];
 				handleCgiEvent(fd, event_flag);
+				if (client->_cgi.value()._waited == true)
+				{
+					modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+					client->_parser.reset();
+					client->_cgi.reset();
+				}
 			}
 			else if (event_flag & EPOLLIN)
 			{

@@ -98,7 +98,7 @@ void Server::recvClientData(int client_fd)
 
 				HttpResponse	response;
 				CgiSession		cgi;
-				DispatchResult dp_result = _dispatcher.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, response, cgi);
+				DispatchResult	dp_result = _dispatcher.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, response, cgi);
 				if (dp_result == DP_DONE)
 				{
 					_clients[client_fd]._response = response;
