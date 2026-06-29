@@ -215,7 +215,10 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 	if (request._body.empty())
 		close(in_pipe[1]);
 	else
+	{
+		cs._body = request._body;
 		fcntl(in_pipe[1], F_SETFL, O_NONBLOCK);
+	}
 	
 	fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
 
@@ -227,33 +230,5 @@ CgiSession Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, L
 	std::cout << "[INFO]  CGI handler started\n";
 
 	CgiSession cs = startCgi(request, sc, lc);
-
-	// parent:
-	// ########## dummy pumping data from parent to child ##########
-
-
-	// ########## body schreiben, danach weite schliessen fuer EOF
-	write(cs._stdin_fd, request._body.data(), request._body.length());
-	close(cs._stdin_fd);
-	// ########## body schreiben ende
-
-	// ########## output lesen bis eof
-	// std::string cgi_output;
-	// char buf[1024];
-	// ssize_t n;
-	// while ((n = read(out_pipe[0], buf, sizeof(buf))) > 0)
-	// 	cgi_output.append(buf, n);
-	// close(out_pipe[0]);
-
-	// int status;
-	// waitpid(pid, &status, 0);
-	// if (!WIFEXITED(status) || WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
-	// 	throw HttpException(502);
-	// ########## END dummy pumping data from parent to child ##########
-
-
-	// HttpResponse r = parseCgiOutput(cs._output);
-	// r._headers["Connection"] = getConnectionMode(request._headers);
-	
 	return (cs);
 }

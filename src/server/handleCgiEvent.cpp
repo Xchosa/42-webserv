@@ -14,7 +14,29 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 	}
 	else if (pipe_fd == cgi->_stdin_fd && (event_flag & EPOLLOUT)) // body schreiben
 	{
-		// TODO gha
+		std::cout << "[INFO]  CGI write body to cgi stdin\n";
+
+		while (!cgi->_body.empty())
+		{
+			ssize_t n = write(cgi->_stdin_fd, cgi->_body.data(), cgi->_body.length());
+			if (n == -1)
+			{
+        		if (errno == EAGAIN)
+		            break;
+				// wie error hier handeln?
+			}
+			else if (n > 0)
+			{
+				cgi->_body.erase(0, n);
+			}
+		}
+		if (cgi->_body.empty())
+		{
+			removeFdEpoll(cgi->_stdin_fd);
+			close(cgi->_stdin_fd);
+			cgi->_stdin_fd = -1;
+			_cgi_fd_client_owner.erase(pipe_fd);
+		}
 	}
 	else if (pipe_fd == cgi->_stdout_fd && (event_flag & EPOLLIN))// _stdout_fd -> EPOLLIN -> cgi output lesen
 	{
@@ -31,6 +53,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				cgi->_stdout_eof = true;
 				removeFdEpoll(pipe_fd);
 				close(cgi->_stdout_fd);
+				cgi->_stdout_fd = -1;
 				_cgi_fd_client_owner.erase(pipe_fd);
 
 				int status;
@@ -61,10 +84,11 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 
 				break;
 			}
-			// else if (n < 0)
+			// else if (n == -1)
 			// {
-				// if (errno == EAGAIN)
+			// 	if (errno == EAGAIN)
 			// 		break;
+			// 	// wie error hier handeln?
 			// }
 		}
 	}
