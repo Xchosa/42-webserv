@@ -51,7 +51,7 @@ class Server
 		bool			isServerFd(int fd) const;
 		bool			isCgiPipeFd(int fd) const;
 		void 			closeClient(int client_fd);
-		void			killCgi(int pipe_fd);
+		void			killCgi(int client_fd, bool build_error_response);
 
 		void			checkClientTimeouts();
 		int				checklastActivity(int client_fd);

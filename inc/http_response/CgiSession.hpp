@@ -9,7 +9,6 @@ struct CgiSession
 	int			_stdout_fd;				// out_pipe[0]
 	std::string	_body;					// request._body, was noch gesendet werden muss an cgi
 	std::string	_output;				// cgi output aus out_pipe[0], concatinated
-	bool		_stdout_eof = false; // noch benoetigt?
 	bool		_waited = false;		// true wenn child mit waitpid() abgewarted wurde, damit waitpid nur einmal aufgerufen wird
 	int			_exit_status = 0;
 	time_t		_started;

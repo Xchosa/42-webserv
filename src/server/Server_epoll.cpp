@@ -41,15 +41,18 @@ bool Server::isCgiPipeFd(int fd) const
 
 void Server::closeClient(int client_fd)
 {
-	std::cout << "[INFO] Client " << client_fd << " closed" << std::endl;
+	std::cout << "[INFO]  Client " << client_fd << " closed" << std::endl;
+	if (_clients[client_fd]._cgi.has_value())
+	{
+		killCgi(client_fd, false);
+	}
 	removeFdEpoll(client_fd);
 	close(client_fd);
 	_clients.erase(client_fd);
 }
 
-void Server::killCgi(int pipe_fd)
+void Server::killCgi(int client_fd, bool build_error_response)
 {
-	int				client_fd = _cgi_fd_client_owner[pipe_fd];	// fd from current client
 	ClientInfos*	client = &_clients[client_fd];				// current client
 
 	std::cout << "[INFO]  CGI KILL client " << client_fd << std::endl;
@@ -82,8 +85,11 @@ void Server::killCgi(int pipe_fd)
 	}
 	client->_cgi.reset();
 
-	client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
-	modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+	if (build_error_response == true)
+	{
+		client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+		modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+	}
 }
 
 void Server::checkClientTimeouts()

@@ -2,14 +2,23 @@
 
 void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 {
-	ClientInfos*	client = &_clients[_cgi_fd_client_owner[pipe_fd]];	// current client
-	CgiSession*		cgi = &client->_cgi.value();						// cgi session from the client
+	int				client_fd = _cgi_fd_client_owner[pipe_fd];	// fd from current client
+	ClientInfos*	client = &_clients[client_fd];				// current client
+	CgiSession*		cgi;										// cgi session from the client
 
-	std::cout << "[DEBUG] called handleCgiEvent with fd=" << pipe_fd << " flags=" << event_flag << "\n";
+	if (client->_cgi.has_value())
+		cgi = &client->_cgi.value();
+	else
+	{
+		killCgi(client_fd, true);
+		return ;
+	}
+
+	// std::cout << "[DEBUG] called handleCgiEvent with fd=" << pipe_fd << " flags=" << event_flag << "\n";
 
 	if (event_flag & EPOLLERR)
 	{
-		killCgi(pipe_fd);
+		killCgi(client_fd, true);
 	}
 	else if (pipe_fd == cgi->_stdin_fd && (event_flag & EPOLLOUT)) // body schreiben
 	{
@@ -22,7 +31,8 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			{
         		if (errno == EAGAIN)
 		            break;
-				killCgi(pipe_fd);
+				killCgi(client_fd, true);
+				return ;
 			}
 			else if (n > 0)
 			{
@@ -49,7 +59,6 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			else if (n == 0)
 			{
 				std::cout << "[INFO]  CGI output successfully readed" << std::endl;
-				cgi->_stdout_eof = true;
 				removeFdEpoll(pipe_fd);
 				close(cgi->_stdout_fd);
 				cgi->_stdout_fd = -1;
@@ -79,8 +88,8 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				{
 					std::cout << "[INFO]  CGI pid " << cgi->_pid << " ERROR ON WAITPID!!!!" << std::endl;
 					client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+					cgi->_waited = true;
 				}
-
 				break;
 			}
 			else if (n == -1)
@@ -89,7 +98,8 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				{
 					break;
 				}
-				killCgi(pipe_fd);
+				killCgi(client_fd, true);
+				return ;
 			}
 		}
 	}
