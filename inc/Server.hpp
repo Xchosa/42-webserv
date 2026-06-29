@@ -24,6 +24,7 @@ inline constexpr size_t MAXEVENTS = 64;
 inline constexpr int IDLE_TIME = 5;
 inline constexpr int KEEP_ALIVE_TIMEOUT = 10;
 
+
 class Server
 {
 	private:

@@ -44,10 +44,11 @@ class Dispatcher
 		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
+		void			isWithin(const std::string& base_path, std::string& user_path);
 
 		// handle upload
 		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
-		std::string		buildFileName(const HttpRequest& request);
+		std::string 	buildFileName(std::string user_path);
 		bool			createDirAndFile(const HttpRequest& request, std::string uploadpath);
 		bool			fileExists(const std::string& target) const;
 		

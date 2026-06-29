@@ -7,6 +7,7 @@ const std::string& getStatusText(int code)
 	static const std::map<int, std::string> texts = {
 		// ok
 		{200, "OK"},
+		{201, "Created"},
 		{204, "No Content"},
 		// redirection
 		{301, "Moved Permanently"},
