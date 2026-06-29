@@ -14,6 +14,7 @@ std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPa
 	}
 	
 	std::string normalizedUploadDir = resolvePath(rootPath);
+	
 
 	return normalizedUploadDir;
 }
@@ -75,7 +76,10 @@ std::string resolvePath(std::string NewPath)
 // spaeter in Dispatcher.cpp
 bool isWithin(const std::string& base_path, std::string& full_path)
 {
-	
+	std::cout << "base_path: " << base_path<< std::endl;
+	std::cout << "full_path: " << full_path<< std::endl;
+
+	return true;
 }
 
 // funktion die prueft ob pfad ausserhalb oder innerhalb ist
@@ -83,10 +87,11 @@ bool isWithin(const std::string& base_path, std::string& full_path)
 
 // parameter 1: root pfad MIT location (bei upload noch den upload pfad zwischen root und location) 
 // home/poverbec/projects/42-webserv/danceserv/uploads/maus
+// home/poverbec/projects/42-webserv/danceserv/uploads/maus 
 
 // parameter 2:
 // parameter 1 + path
-// parameter 1 + /maus/a/test.txt
+// parameter 1 + /maus/a/random/test.txt
 
 
 
@@ -96,19 +101,28 @@ bool isWithin(const std::string& base_path, std::string& full_path)
 bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string uploadpath)
 {
 	// optional do not allow creating files through symlink (std::filesystem::is_symlink())
-	bool fileExisted = false;
-
-	std::string target = resolvePath(uploadpath + request._path);
-	std::cout << "target: " << target<< std::endl;
-	fileExisted = fileExists(target); // 
+	bool fileExisted = false; // overrites a exiting file 
+	bool allowed =false; // traveling behind root/uploads/maus +> only until maus 
 
 	std::filesystem::path uploadRoot = std::filesystem::absolute(uploadpath).lexically_normal();
 	std::cout << "uploadRoot " << uploadRoot << std::endl;
 
-	std::filesystem::path requestPath = std::filesystem::relative(request._path);
-	std::cout << "requestPath  " << requestPath  << std::endl;
+	
+	//std::string requestPath = std::filesystem::relative(request._path);
+	std::string requestPath = request._path;
+	std::cout << "requestPath  " << request._path  << std::endl;
+
+	allowed = isWithin(uploadRoot, requestPath);
+
+	if(allowed)
+		std::cout << " is within " << "true" <<std::endl;
+	else
+		std::cout << " is within " << "false" <<std::endl;
 
 
+	std::string target = resolvePath(uploadpath + request._path);
+	std::cout << "target: " << target<< std::endl;
+	fileExisted = fileExists(target); // 
 
 	std::string RequestDir = request._path;
 	std::string Filename = buildFileName(request);
@@ -122,7 +136,7 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string upload
 
 
 
-
+	//bool filetravel = isWithin(request.)
 
 
 
@@ -150,8 +164,9 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 																			// request._path = /maus/a/a/test.txt 
 	std::string uploadpath;
 	bool fileExisted;
-	std::cout<< "rootPath:  " << lc->_root << std::endl; 
+	//std::cout<< "rootPath:  " << lc->_root << std::endl; 
 
+	
 	std::string rootPath = getFullRootPath(lc); // anhaegen 				// Root webserv/danceserv
 	
 	std::cout<< "rootPath to danceserv:  " << rootPath << std::endl;
@@ -162,10 +177,14 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 		std::cout << "now upload path" << std::endl; // or value_or
 		throw HttpException(404);
 	}
+	std::cout << "uploadPath: " << uploadpath<< std::endl;   /// 
+
+
+
+
 	std::string filename = buildFileName(request);							// test.txt
 	std::cout << "requst path: " << request._path << std::endl;
 	std::cout<< "filename: " <<filename << std::endl;
-	std::cout << "uploadPath: " << uploadpath<< std::endl;   /// 
 	
 
 
