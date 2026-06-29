@@ -22,27 +22,69 @@ void Server::modifyFdEpoll(int fd, uint32_t events)
 		throw std::runtime_error("epoll_ctl MOD failed");
 
 }
+
 void Server::removeFdEpoll(int fd)
 {
     if (epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("epoll_ctl DEL failed (fd invalid,notRegistered,closed)");
 }
 
-
-
 bool Server::isServerFd(int fd) const
 {
 	return (this->_socket_fds.find(fd) != _socket_fds.end());
 }
 
+bool Server::isCgiPipeFd(int fd) const
+{
+	return (this->_cgi_fd_client_owner.find(fd) != this->_cgi_fd_client_owner.end());
+}
+
 void Server::closeClient(int client_fd)
 {
-	std::cout << "close client fd: " << client_fd << std::endl;
+	std::cout << "[INFO] Client " << client_fd << " closed" << std::endl;
 	removeFdEpoll(client_fd);
 	close(client_fd);
 	_clients.erase(client_fd);
 }
 
+void Server::killCgi(int pipe_fd)
+{
+	int				client_fd = _cgi_fd_client_owner[pipe_fd];	// fd from current client
+	ClientInfos*	client = &_clients[client_fd];				// current client
+
+	std::cout << "[INFO]  CGI KILL client " << client_fd << std::endl;
+
+	if (client->_cgi.has_value())
+	{
+		CgiSession* cgi = &client->_cgi.value(); // cgi session from the client
+
+		// kill cgi child process
+		int status;
+		kill(cgi->_pid, SIGKILL);
+		waitpid(cgi->_pid, &status, 0);
+		cgi->_pid = -1;
+
+		// close FDs and remove from owner map
+		if (cgi->_stdin_fd != -1)
+		{
+			removeFdEpoll(cgi->_stdin_fd);
+			close(cgi->_stdin_fd);
+			_cgi_fd_client_owner.erase(cgi->_stdin_fd);
+			cgi->_stdin_fd = -1;
+		}
+		if (cgi->_stdout_fd != -1)
+		{
+			removeFdEpoll(cgi->_stdout_fd);
+			close(cgi->_stdout_fd);
+			_cgi_fd_client_owner.erase(cgi->_stdout_fd);
+			cgi->_stdout_fd = -1;
+		}
+	}
+	client->_cgi.reset();
+
+	client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+	modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+}
 
 void Server::checkClientTimeouts()
 {

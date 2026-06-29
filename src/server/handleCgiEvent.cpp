@@ -5,12 +5,11 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 	ClientInfos*	client = &_clients[_cgi_fd_client_owner[pipe_fd]];	// current client
 	CgiSession*		cgi = &client->_cgi.value();						// cgi session from the client
 
-	if (event_flag & (EPOLLERR | EPOLLHUP))
+	std::cout << "[DEBUG] called handleCgiEvent with fd=" << pipe_fd << " flags=" << event_flag << "\n";
+
+	if (event_flag & EPOLLERR)
 	{
-		// error 502 und aufraeumen
-		// aufraumen = epoll remove, closen, aus map entfernen -> fuer beide pipe fds
-		// kind killen
-		// noch was?
+		killCgi(pipe_fd);
 	}
 	else if (pipe_fd == cgi->_stdin_fd && (event_flag & EPOLLOUT)) // body schreiben
 	{
@@ -23,7 +22,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			{
         		if (errno == EAGAIN)
 		            break;
-				// wie error hier handeln?
+				killCgi(pipe_fd);
 			}
 			else if (n > 0)
 			{
@@ -38,7 +37,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			_cgi_fd_client_owner.erase(pipe_fd);
 		}
 	}
-	else if (pipe_fd == cgi->_stdout_fd && (event_flag & EPOLLIN))// _stdout_fd -> EPOLLIN -> cgi output lesen
+	else if (pipe_fd == cgi->_stdout_fd && (event_flag & (EPOLLIN | EPOLLHUP)))// _stdout_fd -> EPOLLIN -> cgi output lesen
 	{
 		char	buffer[1024];
 		ssize_t	n;
@@ -49,7 +48,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				cgi->_output.append(buffer, n);
 			else if (n == 0)
 			{
-				std::cout << "[INFO]  CGI output successfully readed\n";
+				std::cout << "[INFO]  CGI output successfully readed" << std::endl;
 				cgi->_stdout_eof = true;
 				removeFdEpoll(pipe_fd);
 				close(cgi->_stdout_fd);
@@ -84,12 +83,14 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 
 				break;
 			}
-			// else if (n == -1)
-			// {
-			// 	if (errno == EAGAIN)
-			// 		break;
-			// 	// wie error hier handeln?
-			// }
+			else if (n == -1)
+			{
+				if (errno == EAGAIN)
+				{
+					break;
+				}
+				killCgi(pipe_fd);
+			}
 		}
 	}
 }

@@ -74,20 +74,23 @@ void Server::run()
 				{
 					throw std::runtime_error("listening socket error");
 				}
-				closeClient(fd);
-				continue;
+				else if (!isCgiPipeFd(fd))
+				{
+					closeClient(fd);
+					continue;
+				}
 			}
 			if (isServerFd(fd))
 			{
 				std::cout << "[INFO]  ServerFd: " << fd << ", accept new client" << std::endl;
 				acceptClient(fd); // fd = serverfd add new client // new cliend_fd lifes
 			}
-			else if (_cgi_fd_client_owner.count(fd)) // cgi handling
+			else if (isCgiPipeFd(fd))
 			{
 				int 			client_fd = _cgi_fd_client_owner[fd];
 				ClientInfos*	client = &_clients[client_fd];
 				handleCgiEvent(fd, event_flag);
-				if (client->_cgi.value()._waited == true)
+				if (client->_cgi.has_value() && client->_cgi.value()._waited == true)
 				{
 					modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 					client->_parser.reset();
@@ -98,7 +101,7 @@ void Server::run()
 			{
 				recvClientData(fd);
 				ParseStatus status = _clients[fd]._parser.getStatus();
-				if (status == COMPLETE || status == ERROR_400 || status == ERROR_413) // nur senden wenn response ready
+				if ((status == COMPLETE || status == ERROR_400 || status == ERROR_413) && !_clients[fd]._cgi.has_value()) // nur senden wenn response ready und kein cgi
 				{
 					modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
 					_clients[fd]._parser.reset();

@@ -49,7 +49,9 @@ class Server
 		void 			checkHostWithSamePort(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);
 		
 		bool			isServerFd(int fd) const;
+		bool			isCgiPipeFd(int fd) const;
 		void 			closeClient(int client_fd);
+		void			killCgi(int pipe_fd);
 
 		void			checkClientTimeouts();
 		int				checklastActivity(int client_fd);

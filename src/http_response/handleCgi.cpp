@@ -207,13 +207,18 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 	cs._pid = pid;
 	cs._stdin_fd = in_pipe[1];
 	cs._stdout_fd = out_pipe[0];
+	std::cout << "[INFO]  CGI pipe stdin_fd " << cs._stdin_fd << std::endl;
+	std::cout << "[INFO]  CGI pipe stdout_fd " << cs._stdout_fd << std::endl;
 	cs._started = time(nullptr);
 	close(in_pipe[0]);
 	close(out_pipe[1]);
 
 	// wenn kein body vorhanden dann gleich schliessen
 	if (request._body.empty())
+	{
 		close(in_pipe[1]);
+		cs._stdin_fd = -1;
+	}
 	else
 	{
 		cs._body = request._body;
