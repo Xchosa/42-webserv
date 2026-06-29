@@ -97,10 +97,11 @@ void Parser::parseLocationSetting(LocationConfig& lc)
 	expectType(SEMICOLIN, ";");
 }
 
-LocationConfig Parser::parseLocationBlock()
+LocationConfig Parser::parseLocationBlock(std::string& location_name)
 {
 	LocationConfig lc;
 
+	lc._name = location_name;
 	expectType(LBRACE, "{");
 	while (current().type != RBRACE)
 	{
@@ -171,7 +172,7 @@ ServerConfig Parser::parseServerBlock()
 			validateLocationPath(location_path);
 			
 			// if location double -> error
-			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock());
+			auto [it, inserted] = sc._locations.emplace(location_path.value, parseLocationBlock(location_path.value));
 			if (!inserted)
 				throw std::runtime_error(getFileLine(location_path) + "Doubled location '" + location_path.value + "'");
 		}
