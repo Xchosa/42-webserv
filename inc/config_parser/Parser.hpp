@@ -32,7 +32,7 @@ class Parser
 
 		// parse tokens
 		ServerConfig	parseServerBlock();
-		LocationConfig	parseLocationBlock();
+		LocationConfig	parseLocationBlock(std::string& location_name);
 		void			validateLocationPath(const Token& t);
 		void			setLocationDefaultSettings(ServerConfig& sc);
 		
