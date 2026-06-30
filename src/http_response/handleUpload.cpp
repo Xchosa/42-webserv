@@ -39,9 +39,9 @@ bool Dispatcher::fileExists(const std::string& target) const
 	return S_ISREG(statbuf.st_mode); // check regularfile
 }
 
-std::string resolvePath(std::string NewPath)
+std::string resolvePath(std::string new_path)
 {
-	std::string path = std::filesystem::path(NewPath).lexically_normal();
+	std::string path = std::filesystem::path(new_path).lexically_normal();
 	return path;
 }
 

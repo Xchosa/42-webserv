@@ -65,6 +65,9 @@ class Dispatcher
 		void			buildEnv(std::vector<std::string>& env, const HttpRequest& request, std::string& path, std::string& script_path, ServerConfig* sc);
 		CgiSession		startCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 
+		//handle autoindex
+		std::string		autoIndexBody(const std::string& dir_path, const std::string& request_path);
+
 	public:
 		// OCF
 		Dispatcher() = default;
@@ -79,4 +82,5 @@ class Dispatcher
 		HttpResponse	parseCgiOutput(std::string& output);
 };
 
-std::string		resolvePath(std::string NewPath);
+
+std::string resolvePath(std::string new_path);
