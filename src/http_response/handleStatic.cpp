@@ -80,8 +80,6 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 
 std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::string& request_path)
 {
-
-	// directory von dem user loopen 
 	std::string body;
 	std::string normalized_dir = resolvePath(dir_path);
 	std::string normalized_request_path = resolvePath(request_path);
@@ -92,19 +90,15 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 
 	body += "<!DOCTYPE html>\n";
   	body += "<html>\n";
-	//body += "<head><titel>Index of " + normalized_request_path + " </titel> \n";
 	body += "</body>"; 
 	body += "<h1>Index of " + normalized_request_path + "</h1>\n";
   	body += "<ul>\n";
-	//body += "<li><a href="+ normalized_request_path + "/<a></li>\n" ; 
 
 	//isWithin(normalized_dir, normalized_request_path);
 	
 
 	for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(normalized_dir))
 	{
-		//std::cout << "dir path: " <<dir_entry.path().filename().string() << '\n';
-		
 		if(dir_entry.is_directory() )
 		{
 			std::string sub_dir_name = dir_entry.path().filename().string();
