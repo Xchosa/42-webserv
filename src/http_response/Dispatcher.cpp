@@ -155,16 +155,13 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	return (path);
 }
 
-
 void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 {
-	//std::cout << "[DEBUG] base_path: " << base_path<< std::endl;
-	//std::cout << "[DEBUG] request_pth: " << user_path<< std::endl;
-
+	//std::cout << "[DEBUG] base_path: " << base_path << std::endl;
+	//std::cout << "[DEBUG] user_path: " << user_path << std::endl;
 
 	std::filesystem::path fs_base_path = std::filesystem::absolute(base_path).lexically_normal();
 	std::filesystem::path fs_user_path = std::filesystem::absolute(user_path).lexically_normal();
-
 	
 	user_path = fs_user_path.string();
 	std::string base_path_norm = fs_base_path.string() + "/" ; 
@@ -172,12 +169,9 @@ void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 	size_t n = user_path.find(base_path_norm);
 	if (n != 0 || n == std::string::npos)
 		throw HttpException(403);
-
 }
 
-
-
-HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
+DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out)
 {
 	try
 	{
@@ -187,25 +181,46 @@ HttpResponse Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc)
 			throw HttpException(404);
 		
 		if (lc->_redirect_code.has_value())
-			return (handleRedirect(lc, request));
+		{
+			response_out = handleRedirect(lc, request);
+			return (DP_DONE);
+		}
 		
 		checkMethodAllowed(request._method, lc->_methods);
 
-		if (lc->_cgi_map.size() > 0)
-			return (handleCgi(request, sc, lc));
-		else if (lc->_upload_store.has_value())
+		// choose which handler will be called
+		if (request._method == "DELETE")
 		{
-			std::cout << lc->_upload_store.value() << std::endl;
-			return (handleUpload(request, lc));
+			// TODO handle delete
 		}
+		// check for cgi (GET AND POST)
+		else if (lc->_cgi_map.size() > 0)
+		{
+			try
+			{
+				cgi_out = handleCgi(request, sc, lc);
+				return (DP_CGI_PENIDNG);
+			}
+			catch(const std::exception& e) // throws when we should handle it as a static file
+			{
+				if (request._method == "POST" && lc->_upload_store.has_value())
+					response_out = handleUpload(request, lc);
+				else if (request._method == "GET")
+					response_out = handleStatic(request, lc);
+			}
+		}
+		// check for upload (upload_path and POST)
+		else if (request._method == "POST" && lc->_upload_store.has_value())
+			response_out = handleUpload(request, lc);
+		// static handler (GET)
+		else if (request._method == "GET")
+			response_out = handleStatic(request, lc);
 		else
-			return(handleStatic(request, lc));
+			response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
 	}
 	catch(const HttpException& e)
 	{
-		return(buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request));
+		response_out = buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request);
 	}
-
-	HttpResponse dummy;
-	return dummy;
+	return (DP_DONE);
 }

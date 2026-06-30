@@ -19,19 +19,21 @@
 
 
 inline constexpr size_t MAXEVENTS = 64;
-// seconds 
-//inline constexpr int TIMEOUT = 5;
+
 inline constexpr int IDLE_TIME = 5;
-inline constexpr int KEEP_ALIVE_TIMEOUT = 10;
+inline constexpr int KEEP_ALIVE_TIMEOUT = 15;
+inline constexpr int CGI_TIMEOUT = 10;
 
 
 class Server
 {
 	private:
-		Config							_config;		// alle server configs
-		int 							_epoll_fd;		// fd von epoll
-		std::map<int, ListenContext>	_socket_fds;	// key = server_fd, value ListenContext*
-		std::map<int, ClientInfos>		_clients;		// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+		Config							_config;				// alle server configs
+		int 							_epoll_fd;				// fd von epoll
+		std::map<int, ListenContext>	_socket_fds;			// key = server_fd, value ListenContext*
+		std::map<int, ClientInfos>		_clients;				// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+		Dispatcher						_dispatcher;
+		std::map<int, int>				_cgi_fd_client_owner;	// haelt fest welcher pipe fd zu welchem client gehoert, gefuellt in recvClientData()
 	
 		void			setNonBlocking(int server_fd);
 		void			addFdEpoll(int fd, uint32_t events);
@@ -48,10 +50,18 @@ class Server
 		void 			checkHostWithSamePort(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);
 		
 		bool			isServerFd(int fd) const;
+		bool			isCgiPipeFd(int fd) const;
 		void 			closeClient(int client_fd);
+		void			killCgi(int client_fd, int error_code);
 
 		void			checkClientTimeouts();
 		int				checklastActivity(int client_fd);
+		void			checkCgiTimeouts();
+
+		// cgi handling
+		void			handleCgiEvent(int pipe_fd, uint32_t event_flag);
+		void			cgiWriteBody(int pipe_fd, int client_fd, CgiSession* cgi);
+		void			cgiReadOutput(int pipe_fd, int client_fd, ClientInfos* client, CgiSession* cgi);
 
 	public:
 		// OCF
@@ -63,6 +73,7 @@ class Server
 
 		void run();
 
-	};
+};
+
 	void signalHandler(int sig);
 	void initSignal(void);

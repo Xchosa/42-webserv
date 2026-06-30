@@ -7,7 +7,7 @@ std::string Dispatcher::upperString(std::string str) const
 		if (c == '-')
 			c = '_';
 		else
-			c = std::toupper(c);
+			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
 	}
 	return (str);
 }
@@ -20,12 +20,11 @@ void Dispatcher::buildEnv(std::vector<std::string>& env, const HttpRequest& requ
 	env.push_back("SCRIPT_NAME=" + path);
 	env.push_back("SCRIPT_FILENAME=" + script_path);
 	env.push_back("SERVER_PORT=" + std::to_string(sc->_listen_port));
+	env.push_back("QUERY_STRING=" + request._query);
 	if (sc->_listen_host.length() > 0)
 		env.push_back("SERVER_NAME=" + sc->_listen_host);
-	if (request._query.length() > 0)
-		env.push_back("QUERY_STRING=" + request._query);
 	if (request._body.length() > 0)
-		env.push_back("CONTENT-LENGTH=" + std::to_string(request._body.length()));
+		env.push_back("CONTENT_LENGTH=" + std::to_string(request._body.length()));
 	if (upperString(path.substr(path.find_last_of('.'))) == ".PHP")
 		env.push_back("REDIRECT_STATUS=200");
 	if (request._headers.find("content-type") != request._headers.end())
@@ -35,42 +34,6 @@ void Dispatcher::buildEnv(std::vector<std::string>& env, const HttpRequest& requ
 	for (auto &h : request._headers)
 	{
 		env.push_back("HTTP_" + upperString(h.first) + "=" + h.second);
-	}
-}
-
-void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc)
-{
-	std::string extension;
-
-	if (request._path.find(".") != std::string::npos)
-	{
-		size_t	pos_dot = request._path.find_last_of('.');
-		size_t	pos_slash_after_dot = request._path.substr(pos_dot).find('/');
-
-		if (pos_slash_after_dot == std::string::npos) // no path info
-		{
-			extension = request._path.substr(pos_dot);
-			path = request._path;
-		}
-		else // path info given
-		{
-			extension = request._path.substr(pos_dot, pos_slash_after_dot);
-			env.push_back("PATH_INFO=" + request._path.substr(pos_dot + pos_slash_after_dot));
-			path = request._path.substr(0, pos_dot + pos_slash_after_dot);
-		}
-
-		auto it = lc->_cgi_map.find(extension);
-		if (it == lc->_cgi_map.end())
-		{
-			std::cout << "extension not found in cgi map\n";
-			throw HttpException(404); // TODO: als static file handeln?
-		}
-		interpreter = it->second;
-	}
-	else // no file given
-	{
-		std::cout << "no file given\n";
-		throw HttpException(404); // TODO: als static file handeln?
 	}
 }
 
@@ -113,12 +76,6 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 			std::string key = line.substr(0, p);
 			std::string val = line.substr(p + 1);
 
-			// trim optional white space at begin and end of value
-			while (val[0] == ' ')
-				val.erase(0, 1);
-			while (val[val.length() - 1] == ' ')
-				val.erase(val.length() - 1, 1);
-
 			if (key == "Status")
 			{
 				int code;
@@ -145,9 +102,46 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 	return (r);
 }
 
-HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
+void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc)
 {
-	// std::cout << "> CGI HANDLER\n";
+	std::string extension;
+
+	if (request._path.find(".") != std::string::npos)
+	{
+		size_t	pos_dot = request._path.find_last_of('.');
+		size_t	pos_slash_after_dot = request._path.substr(pos_dot).find('/');
+
+		if (pos_slash_after_dot == std::string::npos) // no path info
+		{
+			extension = request._path.substr(pos_dot);
+			path = request._path;
+		}
+		else // path info given
+		{
+			extension = request._path.substr(pos_dot, pos_slash_after_dot);
+			env.push_back("PATH_INFO=" + request._path.substr(pos_dot + pos_slash_after_dot));
+			path = request._path.substr(0, pos_dot + pos_slash_after_dot);
+		}
+
+		auto it = lc->_cgi_map.find(extension);
+		if (it == lc->_cgi_map.end())
+		{
+			std::cout << "[INFO]  CGI extension not in cgi map, handle as static page" << std::endl;
+			// throw HttpException(404); // TODO: als static file handeln?
+			throw std::runtime_error("handle as static file");
+		}
+		interpreter = it->second;
+	}
+	else // no file given
+	{
+		std::cout << "[INFO]  CGI no file given, handle as static page" << std::endl;
+		throw HttpException(404); // TODO: als static file handeln?
+	}
+}
+
+CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
+{
+	CgiSession cs;
 
 	std::string					interpreter;
 	std::string					path;
@@ -157,6 +151,8 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 
 	// build path
 	std::string script_path = getFullRootPath(lc) + path;
+	this->isWithin(getFullRootPath(lc) + lc->_name, script_path);
+
 	// file exist and readable?
 	if (access(script_path.c_str(), F_OK) == -1)
 		throw HttpException(404);
@@ -164,13 +160,8 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 		throw HttpException(403);
 
 	buildEnv(env, request, path, script_path, sc);
-	// std::cout << "env's:\n";
-	// for (auto &s : env)
-	// {
-	// 	std::cout << "- " << s << std::endl;
-	// }
 
-	// for execve char* array
+	// execve needs char* array
 	std::vector<char*> envp;
 	for (auto& s : env)
 	{
@@ -178,19 +169,24 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 	}
 	envp.push_back(nullptr);
 
-
+	// create pipes and start cgi process
 	int in_pipe[2];
 	int out_pipe[2];
-	pid_t pid;
-
-	try
+	if (pipe(in_pipe) == -1)
+		throw HttpException(500);
+	if (pipe(out_pipe) == -1)
 	{
-		pipe(in_pipe);
-		pipe(out_pipe);
-		pid = fork();
+		close(in_pipe[0]);
+		close(in_pipe[1]);
+		throw HttpException(500);
 	}
-	catch(const std::exception& e)
+	pid_t pid = fork();
+	if (pid == -1)
 	{
+		close(in_pipe[0]);
+		close(in_pipe[1]);
+		close(out_pipe[0]);
+		close(out_pipe[1]);
 		throw HttpException(500);
 	}
 	if (pid == 0) // child
@@ -207,32 +203,38 @@ HttpResponse Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc,
 		execve(interpreter.c_str(), argv, envp.data());
 		_exit(1);
 	}
-	
-	// parent:
-	// ########## dummy pumping data from parent to child ##########
+
+	std::cout << "[INFO]  CGI started pid " << pid << std::endl;
+	cs._pid = pid;
+	cs._stdin_fd = in_pipe[1];
+	cs._stdout_fd = out_pipe[0];
+	// std::cout << "[DEBUG] CGI pipe stdin_fd " << cs._stdin_fd << std::endl;
+	// std::cout << "[DEBUG] CGI pipe stdout_fd " << cs._stdout_fd << std::endl;
+	cs._started = time(nullptr);
 	close(in_pipe[0]);
 	close(out_pipe[1]);
 
-	// body schreiben, danach weite schliessen fuer EOF
-	write(in_pipe[1], request._body.data(), request._body.length());
-	close(in_pipe[1]);
+	// wenn kein body vorhanden dann gleich schliessen
+	if (request._body.empty())
+	{
+		close(in_pipe[1]);
+		cs._stdin_fd = -1;
+	}
+	else
+	{
+		cs._body = request._body;
+		fcntl(in_pipe[1], F_SETFL, O_NONBLOCK);
+	}
+	
+	fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
 
-	// output lesen bis eof
-	std::string cgi_output;
-	char buf[1024];
-	ssize_t n;
-	while ((n = read(out_pipe[0], buf, sizeof(buf))) > 0)
-		cgi_output.append(buf, n);
-	close(out_pipe[0]);
+	return (cs);
+}
 
-	int status;
-	waitpid(pid, &status, 0);
-	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
-		throw HttpException(502);
-	// ########## END dummy pumping data from parent to child ##########
+CgiSession Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
+{
+	std::cout << "[INFO]  CGI handler started\n";
 
-
-	HttpResponse r = parseCgiOutput(cgi_output);
-	r._headers["Connection"] = getConnectionMode(request._headers);
-	return (r);
+	CgiSession cs = startCgi(request, sc, lc);
+	return (cs);
 }

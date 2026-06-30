@@ -6,6 +6,7 @@
 #include "ServerConfig.hpp"
 #include "ListenContext.hpp"
 #include "HttpResponse.hpp"
+#include "CgiSession.hpp"
 
 struct ClientInfos
 {
@@ -16,6 +17,8 @@ struct ClientInfos
     
 	HttpResponse	_response;
 	std::string		_response_buffer;				// ganzer response, inkl header
+
+	std::optional<CgiSession>	_cgi;
 
     void	selectVirtualHost();
 };

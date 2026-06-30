@@ -20,11 +20,18 @@
 #include "HttpException.hpp"
 #include "HttpStatus.hpp"
 #include "HttpMimeType.hpp"
+#include "CgiSession.hpp"
 
 enum ConnectionMode
 {
 	CON_CLOSE,
 	CON_KEEP_ALIVE
+};
+
+enum DispatchResult
+{
+	DP_DONE,
+	DP_CGI_PENIDNG
 };
 
 class Dispatcher
@@ -33,9 +40,9 @@ class Dispatcher
 		// handler (baut response)
 		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
-		HttpResponse handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
 		HttpResponse handleDelete(const HttpRequest& request, LocationConfig* lc);
+		CgiSession	 handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 
 		// helper
 		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;
@@ -44,7 +51,6 @@ class Dispatcher
 		std::string		cwd() const;
 		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
-		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 		void			isWithin(const std::string& base_path, std::string& user_path);
 
 		// handle upload
@@ -58,7 +64,7 @@ class Dispatcher
 		std::string		upperString(std::string str) const;
 		void			checkForCgi(const HttpRequest& request, std::string& interpreter, std::string& path, std::vector<std::string>& env, LocationConfig* lc);
 		void			buildEnv(std::vector<std::string>& env, const HttpRequest& request, std::string& path, std::string& script_path, ServerConfig* sc);
-		HttpResponse	parseCgiOutput(std::string& output);
+		CgiSession		startCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 
 		//handle autoindex
 		std::string		autoIndexBody(const std::string& dir_path, const std::string& request_path);
@@ -71,8 +77,10 @@ class Dispatcher
 		~Dispatcher() = default;
 
 		// member functions
-		HttpResponse	dispatch(const HttpRequest& request, ServerConfig* sc); // sucht richtigen handler und passende location_config
+		DispatchResult	dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out); // sucht richtigen handler und passende location_config
 		HttpResponse 	buildErrorResponse(int code, ServerConfig* sc, ConnectionMode cm, const HttpRequest& request);
+		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
+		HttpResponse	parseCgiOutput(std::string& output);
 };
 
 
