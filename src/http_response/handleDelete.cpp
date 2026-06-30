@@ -14,7 +14,8 @@ HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig
 	bool is_deletable = false;
 	// config files, source files, or arbitrary filesystem paths are forbidden 
 
-
+	// config error pages 500, 404 409 403
+	// decode request 
 	HttpResponse respond;
 	respond._version = "HTTP/1.1";
 	if (file_existed && is_deletable== true)
