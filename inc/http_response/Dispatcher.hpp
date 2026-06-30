@@ -50,7 +50,6 @@ class Dispatcher
 		std::string		cwd() const;
 		std::string		getDefaultErrorBody(int code) const;
 		std::string		getFullRootPath(LocationConfig* lc) const;
-		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 		void			isWithin(const std::string& base_path, std::string& user_path);
 
 		// handle upload

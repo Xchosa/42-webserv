@@ -126,14 +126,15 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interprete
 		auto it = lc->_cgi_map.find(extension);
 		if (it == lc->_cgi_map.end())
 		{
-			std::cout << "extension not found in cgi map\n";
-			throw HttpException(404); // TODO: als static file handeln?
+			std::cout << "[INFO]  CGI extension not in cgi map, handle as static page" << std::endl;
+			// throw HttpException(404); // TODO: als static file handeln?
+			throw std::runtime_error("handle as static file");
 		}
 		interpreter = it->second;
 	}
 	else // no file given
 	{
-		std::cout << "no file given\n";
+		std::cout << "[INFO]  CGI no file given, handle as static page" << std::endl;
 		throw HttpException(404); // TODO: als static file handeln?
 	}
 }
@@ -150,7 +151,7 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 
 	// build path
 	std::string script_path = getFullRootPath(lc) + path;
-	// TODO: check for path allowed?
+	this->isWithin(getFullRootPath(lc) + lc->_name, script_path);
 
 	// file exist and readable?
 	if (access(script_path.c_str(), F_OK) == -1)

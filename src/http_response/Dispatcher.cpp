@@ -188,27 +188,39 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		
 		checkMethodAllowed(request._method, lc->_methods);
 
-		if (lc->_cgi_map.size() > 0)
+		// choose which handler will be called
+		if (request._method == "DELETE")
 		{
-			(void) cgi_out;
-			cgi_out = handleCgi(request, sc, lc);
-			return (DP_CGI_PENIDNG);
+			// TODO handle delete
 		}
-		else if (lc->_upload_store.has_value())
+		// check for cgi (GET AND POST)
+		else if (lc->_cgi_map.size() > 0)
 		{
-			std::cout << lc->_upload_store.value() << std::endl;
+			try
+			{
+				cgi_out = handleCgi(request, sc, lc);
+				return (DP_CGI_PENIDNG);
+			}
+			catch(const std::exception& e) // throws when we should handle it as a static file
+			{
+				if (request._method == "POST" && lc->_upload_store.has_value())
+					response_out = handleUpload(request, lc);
+				else if (request._method == "GET")
+					response_out = handleStatic(request, lc);
+			}
+		}
+		// check for upload (upload_path and POST)
+		else if (request._method == "POST" && lc->_upload_store.has_value())
 			response_out = handleUpload(request, lc);
-			return (DP_DONE);
-		}
-		else
-		{
+		// static handler (GET)
+		else if (request._method == "GET")
 			response_out = handleStatic(request, lc);
-			return (DP_DONE);
-		}
+		else
+			response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
 	}
 	catch(const HttpException& e)
 	{
 		response_out = buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request);
-		return (DP_DONE);
 	}
+	return (DP_DONE);
 }
