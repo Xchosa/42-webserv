@@ -44,14 +44,14 @@ void Server::closeClient(int client_fd)
 	std::cout << "[INFO]  Client " << client_fd << " closed" << std::endl;
 	if (_clients[client_fd]._cgi.has_value())
 	{
-		killCgi(client_fd, false);
+		killCgi(client_fd, 0);
 	}
 	removeFdEpoll(client_fd);
 	close(client_fd);
 	_clients.erase(client_fd);
 }
 
-void Server::killCgi(int client_fd, bool build_error_response)
+void Server::killCgi(int client_fd, int error_code)
 {
 	ClientInfos*	client = &_clients[client_fd];				// current client
 
@@ -85,9 +85,9 @@ void Server::killCgi(int client_fd, bool build_error_response)
 	}
 	client->_cgi.reset();
 
-	if (build_error_response == true)
+	if (error_code > 0)
 	{
-		client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+		client->_response = _dispatcher.buildErrorResponse(error_code, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
 		modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 	}
 }
@@ -98,12 +98,70 @@ void Server::checkClientTimeouts()
 
 	for (const auto& [client_fd, client] : _clients)
 	{
-		if (checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
+		if (!client._cgi.has_value() && checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
 			timed_out_clients.emplace_back(client_fd);
 	}
 
 	for (int client_fd : timed_out_clients)
 	{
+		std::cout << "[INFO]  Client " << client_fd << " timed out" << std::endl;
 		closeClient(client_fd);
 	}
-  }
+}
+
+void Server::checkCgiTimeouts()
+{
+	std::vector<int> timed_out_cgis;
+	std::vector<int> cgi_finished_but_running;
+
+	for (const auto& [client_fd, client] : _clients)
+	{
+		if (client._cgi.has_value() && !client._cgi.value()._waited)
+		{
+			const CgiSession *cgi = &client._cgi.value();
+			if (cgi->_stdout_fd != -1) // cgi still running
+			{
+				if ((time(NULL) - cgi->_started) > CGI_TIMEOUT)
+					timed_out_cgis.emplace_back(client_fd);
+			}
+			else if (cgi->_stdout_fd == -1) // cgi finished but child still running
+				cgi_finished_but_running.emplace_back(client_fd);
+		}
+	}
+
+	for (int client_fd : cgi_finished_but_running)
+	{
+		ClientInfos* 	client = &_clients[client_fd];
+		CgiSession*		cgi = &client->_cgi.value();
+
+		int status;
+		pid_t r = waitpid(cgi->_pid, &status, WNOHANG);
+		if (r == cgi->_pid) // child finished now
+		{
+			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+				client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+			else
+				client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+			modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+			client->_parser.reset();
+			client->_cgi.reset();
+			cgi = nullptr;
+		}
+		else if (r == 0) // child still running, check for timeout
+		{
+			if ((time(NULL) - cgi->_started) > CGI_TIMEOUT)
+			{
+				std::cout << "[INFO]  CGI of client " << client_fd << " timed out" << std::endl;
+				killCgi(client_fd, 504);
+			}
+		}
+		else // waitpid error
+			killCgi(client_fd, 502);
+	}
+
+	for (int client_fd : timed_out_cgis)
+	{
+		std::cout << "[INFO]  CGI of client " << client_fd << " timed out" << std::endl;
+		killCgi(client_fd, 504);
+	}
+}

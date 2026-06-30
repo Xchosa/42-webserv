@@ -19,10 +19,10 @@
 
 
 inline constexpr size_t MAXEVENTS = 64;
-// seconds 
-//inline constexpr int TIMEOUT = 5;
+
 inline constexpr int IDLE_TIME = 5;
-inline constexpr int KEEP_ALIVE_TIMEOUT = 10;
+inline constexpr int KEEP_ALIVE_TIMEOUT = 15;
+inline constexpr int CGI_TIMEOUT = 10;
 
 class Server
 {
@@ -51,10 +51,11 @@ class Server
 		bool			isServerFd(int fd) const;
 		bool			isCgiPipeFd(int fd) const;
 		void 			closeClient(int client_fd);
-		void			killCgi(int client_fd, bool build_error_response);
+		void			killCgi(int client_fd, int error_code);
 
 		void			checkClientTimeouts();
 		int				checklastActivity(int client_fd);
+		void			checkCgiTimeouts();
 
 		// cgi handling
 		void			handleCgiEvent(int pipe_fd, uint32_t event_flag);

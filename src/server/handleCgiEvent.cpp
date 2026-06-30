@@ -10,7 +10,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 		cgi = &client->_cgi.value();
 	else
 	{
-		killCgi(client_fd, true);
+		killCgi(client_fd, 502);
 		return ;
 	}
 
@@ -18,7 +18,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 
 	if (event_flag & EPOLLERR)
 	{
-		killCgi(client_fd, true);
+		killCgi(client_fd, 502);
 	}
 	else if (pipe_fd == cgi->_stdin_fd && (event_flag & EPOLLOUT)) // body schreiben
 	{
@@ -31,7 +31,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			{
         		if (errno == EAGAIN)
 		            break;
-				killCgi(client_fd, true);
+				killCgi(client_fd, 502);
 				return ;
 			}
 			else if (n > 0)
@@ -86,7 +86,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				}
 				else
 				{
-					std::cout << "[INFO]  CGI pid " << cgi->_pid << " ERROR ON WAITPID!!!!" << std::endl;
+					std::cout << "[INFO]  CGI pid " << cgi->_pid << " error on waitpid" << std::endl;
 					client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
 					cgi->_waited = true;
 				}
@@ -98,7 +98,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 				{
 					break;
 				}
-				killCgi(client_fd, true);
+				killCgi(client_fd, 502);
 				return ;
 			}
 		}
