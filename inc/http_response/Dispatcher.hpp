@@ -35,6 +35,7 @@ class Dispatcher
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
 		HttpResponse handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc);
 		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
+		HttpResponse handleDelete(const HttpRequest& request, LocationConfig* lc);
 
 		// helper
 		LocationConfig*	findLocation(const std::string& path, ServerConfig* sc) const;
