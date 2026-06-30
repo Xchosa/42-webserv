@@ -191,7 +191,7 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		// choose which handler will be called
 		if (request._method == "DELETE")
 		{
-			// TODO handle delete
+			response_out = handleDelete(request, lc);
 		}
 		// check for cgi (GET AND POST)
 		else if (lc->_cgi_map.size() > 0)
