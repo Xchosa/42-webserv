@@ -24,6 +24,7 @@ inline constexpr int IDLE_TIME = 5;
 inline constexpr int KEEP_ALIVE_TIMEOUT = 15;
 inline constexpr int CGI_TIMEOUT = 10;
 
+
 class Server
 {
 	private:

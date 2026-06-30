@@ -9,6 +9,8 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 
 	std::string full_path = getFullRootPath(lc) + request._path;
 
+	isWithin(getFullRootPath(lc) + "/" + lc->_name, full_path);
+
 	// pfad vorhanden?
 	struct stat statbuf;
 	if (stat(full_path.c_str(), &statbuf) == -1)

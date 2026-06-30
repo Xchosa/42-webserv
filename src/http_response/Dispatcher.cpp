@@ -155,6 +155,22 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	return (path);
 }
 
+void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
+{
+	//std::cout << "[DEBUG] base_path: " << base_path << std::endl;
+	//std::cout << "[DEBUG] user_path: " << user_path << std::endl;
+
+	std::filesystem::path fs_base_path = std::filesystem::absolute(base_path).lexically_normal();
+	std::filesystem::path fs_user_path = std::filesystem::absolute(user_path).lexically_normal();
+	
+	user_path = fs_user_path.string();
+	std::string base_path_norm = fs_base_path.string() + "/" ; 
+
+	size_t n = user_path.find(base_path_norm);
+	if (n != 0 || n == std::string::npos)
+		throw HttpException(403);
+}
+
 DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out)
 {
 	try
