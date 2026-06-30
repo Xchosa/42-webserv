@@ -9,7 +9,8 @@ HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig
 	bool file_existed; 
 
 	std::string full_request_path = getFullRootPath(lc)+ request._path;
-	//bool is_deletable = isWithin(lc->_name,);
+	isWithin(lc->_root, full_request_path); // webserv/danceserv/maus  und webserv/danceserv/maus/file1
+
 	bool is_deletable = false;
 	// config files, source files, or arbitrary filesystem paths are forbidden 
 
