@@ -88,28 +88,35 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 
 	std::cout << " [DEBUG] normalized Dir" << normalized_dir << std::endl;
 	
-	std::cout << "[INFO] Request path: " << request_path << std::endl;
+	std::cout << "[INFO] Request path: " << normalized_request_path << std::endl;
 
 	body += "<!DOCTYPE html>\n";
   	body += "<html>\n";
-	body += "<head><titel>Index of " + request_path + " </titel> \n";
+	//body += "<head><titel>Index of " + normalized_request_path + " </titel> \n";
 	body += "</body>"; 
-	body += "<h1>Index of " + request_path + "</h1>\n";
+	body += "<h1>Index of " + normalized_request_path + "</h1>\n";
   	body += "<ul>\n";
+	//body += "<li><a href="+ normalized_request_path + "/<a></li>\n" ; 
 
 	//isWithin(normalized_dir, normalized_request_path);
 	
 
-	for (const std::filesystem::directory_entry& dir_iter : std::filesystem::directory_iterator(normalized_dir))
+	for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(normalized_dir))
 	{
-		//std::cout << "dir path" <<dir_iter.path().filename().string() << '\n';
-		auto dir_item = dir_iter.path().parent_path().filename().string();
-		if(dir_iter.is_directory() )
-			body += dir_iter.path().parent_path().filename().string();
+		//std::cout << "dir path: " <<dir_entry.path().filename().string() << '\n';
+		
+		if(dir_entry.is_directory() )
+		{
+			std::string sub_dir_name = dir_entry.path().filename().string();
+			std::string href = normalized_request_path;
+  			href += sub_dir_name + "/";
+			
+			//body  += "<li><a href=" + href +"/>" + sub_dir_name+ "/</a></li>\n";
+			body += "<li><a href=\"" + href + "\">" + sub_dir_name + "/</a></li>\n";
+		}	
 	}
-
-	
-	
-	std::cout << "body" << body << std::endl;
+	body += "<ul>\n";
+	body += "</body\n>";
+	body += "</html>\n";
 	return body ;
 }
