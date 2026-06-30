@@ -59,6 +59,8 @@ class Server
 
 		// cgi handling
 		void			handleCgiEvent(int pipe_fd, uint32_t event_flag);
+		void			cgiWriteBody(int pipe_fd, int client_fd, CgiSession* cgi);
+		void			cgiReadOutput(int pipe_fd, int client_fd, ClientInfos* client, CgiSession* cgi);
 
 	public:
 		// OCF
