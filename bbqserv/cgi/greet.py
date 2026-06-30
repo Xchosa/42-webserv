@@ -18,7 +18,7 @@ else:
 
 body_html = f"<html><body><h1>Hallo {name}!</h1></body></html>"
 
-time.sleep(16)
+# time.sleep(5)
 
 print("Content-Type: text/html")
 print("Status: a204 No content")

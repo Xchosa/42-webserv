@@ -87,6 +87,7 @@ void Server::killCgi(int client_fd, int error_code)
 
 	if (error_code > 0)
 	{
+		client->_last_activity = time(NULL);
 		client->_response = _dispatcher.buildErrorResponse(error_code, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
 		modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 	}
@@ -142,6 +143,7 @@ void Server::checkCgiTimeouts()
 				client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
 			else
 				client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+			client->_last_activity = time(NULL);
 			modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 			client->_parser.reset();
 			client->_cgi.reset();

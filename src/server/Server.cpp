@@ -116,8 +116,8 @@ void Server::run()
 		}
 		if(readyEvents == 0)
 		{
-			checkCgiTimeouts();
 			checkClientTimeouts();
+			checkCgiTimeouts();
 		}
 	}
 }
