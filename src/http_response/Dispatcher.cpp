@@ -150,15 +150,12 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 	}
 	else						// relativ to executable
 	{
-		//std::string executable = std::filesystem::path(lc->_root).lexically_normal();
-		//path = cwd() + "/" + executable;
 		path = cwd() + "/" + lc->_root;
 	}
-	//std::string normalizedPath = resolvePath(path);
 	return (path);
 }
 
-// spaeter in Dispatcher.cpp
+
 void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 {
 	//std::cout << "[DEBUG] base_path: " << base_path<< std::endl;

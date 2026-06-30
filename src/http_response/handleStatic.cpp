@@ -9,7 +9,7 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 
 	std::string full_path = getFullRootPath(lc) + request._path;
 
-	isWithin(getFullRootPath(lc) + "/" + lc->_name, full_path);
+	//isWithin(getFullRootPath(lc) + "/" + lc->_name, full_path);
 
 	// pfad vorhanden?
 	struct stat statbuf;
@@ -44,7 +44,7 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 			{
 				if (lc->_autoindex == true)
 				{
-					body = "TODO autoindex\n";
+					body = autoIndexBody(full_path, request._path);
 					r._headers["Content-Type"] = "text/html";
 				}
 				else
@@ -55,7 +55,7 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		{
 			if (lc->_autoindex == true)
 			{
-				body = "TODO autoindex\n";
+				body = autoIndexBody(full_path, request._path);
 				r._headers["Content-Type"] = "text/html";
 			}
 			else
@@ -75,4 +75,41 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	r._headers["Content-Length"] = std::to_string(r._body.length());
 
 	return (r);
+}
+
+
+std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::string& request_path)
+{
+
+	// directory von dem user loopen 
+	std::string body;
+	std::string normalized_dir = resolvePath(dir_path);
+	std::string normalized_request_path = resolvePath(request_path);
+
+	std::cout << " [DEBUG] normalized Dir" << normalized_dir << std::endl;
+	
+	std::cout << "[INFO] Request path: " << request_path << std::endl;
+
+	body += "<!DOCTYPE html>\n";
+  	body += "<html>\n";
+	body += "<head><titel>Index of " + request_path + " </titel> \n";
+	body += "</body>"; 
+	body += "<h1>Index of " + request_path + "</h1>\n";
+  	body += "<ul>\n";
+
+	//isWithin(normalized_dir, normalized_request_path);
+	
+
+	for (const std::filesystem::directory_entry& dir_iter : std::filesystem::directory_iterator(normalized_dir))
+	{
+		//std::cout << "dir path" <<dir_iter.path().filename().string() << '\n';
+		auto dir_item = dir_iter.path().parent_path().filename().string();
+		if(dir_iter.is_directory() )
+			body += dir_iter.path().parent_path().filename().string();
+	}
+
+	
+	
+	std::cout << "body" << body << std::endl;
+	return body ;
 }
