@@ -34,17 +34,24 @@ void Dispatcher::validateUploadTarget(const std::string& target) const
 
 	if(target.empty())
 		throw HttpException(400);
+
 	if(target[target.length() -1] == '/')
 		throw HttpException(400);
 	if(lstat(target.c_str(), &statbuf) == -1)
+	{
+		if (errno == ENOENT)
+  			return; // pass
+		throw HttpException(500);
+	}
 	//if (stat(target.c_str(), &statbuf) == -1) // follows symlinks
 	//		return false;
-	if (S_ISLNK(statbuf.st_mode) != 0) // check for symlink 
+	if (S_ISLNK(statbuf.st_mode)) // check for symlink 
 		throw  HttpException(400);
-	if (S_ISDIR(statbuf.st_mode) != 0 )
+	if (S_ISDIR(statbuf.st_mode))
 		throw HttpException(400);
-	if(S_ISREG(statbuf.st_mode) != 0) // check regularfile / got permissions
-		throw HttpException(400);
+	if(S_ISREG(statbuf.st_mode)) // check regularfile / got permissions / overwrite
+		return ;
+	throw HttpException(400);
 }
 
 
