@@ -54,6 +54,7 @@ void Server::run()
 	epoll_event triggeredEvents[MAXEVENTS];
 	initSignal();
 	
+	_last_timeout_check = time(nullptr);
 	while(gSignalStatus)
 	{
 		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, IDLE_TIME * 1000);
@@ -63,6 +64,15 @@ void Server::run()
 				continue;
 			throw std::runtime_error("epoll_wait failed");
 		}
+
+		time_t now = time(nullptr);
+		if ((now - _last_timeout_check) >= CHECK_FOR_TIMEOUTS)
+		{
+			checkClientTimeouts();
+			checkCgiTimeouts();
+			_last_timeout_check = now;
+		}
+
 		for(int i = 0; i < readyEvents; ++i)
 		{
 			int fd = triggeredEvents[i].data.fd;;
@@ -120,11 +130,6 @@ void Server::run()
 				if(_clients.count(fd))
 					modifyFdEpoll(fd, EPOLLIN | EPOLLRDHUP);
 			}
-		}
-		if(readyEvents == 0)
-		{
-			checkClientTimeouts();
-			checkCgiTimeouts();
 		}
 	}
 }

@@ -20,9 +20,10 @@
 
 inline constexpr size_t MAXEVENTS = 64;
 
-inline constexpr int IDLE_TIME = 5;
-inline constexpr int KEEP_ALIVE_TIMEOUT = 15;
-inline constexpr int CGI_TIMEOUT = 10;
+inline constexpr int IDLE_TIME = 5;				// how long epoll_wait blocks until it go further
+inline constexpr int KEEP_ALIVE_TIMEOUT = 45;
+inline constexpr int CGI_TIMEOUT = 30;
+inline constexpr int CHECK_FOR_TIMEOUTS = 5;
 
 
 class Server
@@ -34,6 +35,7 @@ class Server
 		std::map<int, ClientInfos>		_clients;				// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
 		Dispatcher						_dispatcher;
 		std::map<int, int>				_cgi_fd_client_owner;	// haelt fest welcher pipe fd zu welchem client gehoert, gefuellt in recvClientData()
+		time_t							_last_timeout_check;
 	
 		void			setNonBlocking(int server_fd);
 		void			addFdEpoll(int fd, uint32_t events);
