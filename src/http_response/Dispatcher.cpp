@@ -157,16 +157,17 @@ std::string Dispatcher::getFullRootPath(LocationConfig* lc) const
 
 void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 {
-	//std::cout << "[DEBUG] base_path: " << base_path << std::endl;
-	//std::cout << "[DEBUG] user_path: " << user_path << std::endl;
-
 	std::filesystem::path fs_base_path = std::filesystem::absolute(base_path).lexically_normal();
 	std::filesystem::path fs_user_path = std::filesystem::absolute(user_path).lexically_normal();
 	
 	user_path = fs_user_path.string();
 	std::string base_path_norm = fs_base_path.string() + "/" ; 
+	std::string user_path_for_check = user_path + "/";
 
-	size_t n = user_path.find(base_path_norm);
+	// std::cout << "[DEBUG] base_path: " << base_path_norm << std::endl;
+	// std::cout << "[DEBUG] user_path: " << user_path_for_check << std::endl;
+
+	size_t n = user_path_for_check.find(base_path_norm);
 	if (n != 0 || n == std::string::npos)
 	{
 		std::cout << "[INFO]  user_path is not in base_path, throw error" << std::endl;

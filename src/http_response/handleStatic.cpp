@@ -8,8 +8,9 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 		throw HttpException(500);
 
 	std::string full_path = getFullRootPath(lc) + request._path;
+	isWithin(getFullRootPath(lc) + "/" + lc->_name, full_path);
 
-	//isWithin(getFullRootPath(lc) + "/" + lc->_name, full_path);
+
 
 	// pfad vorhanden?
 	struct stat statbuf;
@@ -84,9 +85,9 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 	std::string normalized_dir = resolvePath(dir_path);
 	std::string normalized_request_path = resolvePath(request_path);
 
-	std::cout << " [DEBUG] normalized Dir" << normalized_dir << std::endl;
+	// std::cout << "[DEBUG]  normalized Dir" << normalized_dir << std::endl;
 	
-	std::cout << "[INFO] Request path: " << normalized_request_path << std::endl;
+	// std::cout << "[INFO] Request path: " << normalized_request_path << std::endl;
 
 	body += "<!DOCTYPE html>\n";
   	body += "<html>\n";

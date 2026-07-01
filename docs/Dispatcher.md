@@ -1,74 +1,74 @@
-# Dispatcher – Regeln
+# Dispatcher – Rules
 
-Hier sind die Routing- und Verarbeitungsregeln des Dispatchers beschrieben.
+This describes the routing and processing rules of the Dispatcher.
 
 ## TODO
 - handleDelete
-- autoindex listet nur Verzeichnisse, keine Dateien
+- autoindex only lists directories, not files
 
-## 1. Überblick
+## 1. Overview
 
-`dispatch()` ist der zentrale Einstiegspunkt. Er bekommt einen fertig geparsten `HttpRequest`
-und den passenden `ServerConfig*` und gibt entweder `DP_DONE` (Response fertig) oder
-`DP_CGI_PENDING` (CGI-Prozess läuft noch) zurück.
+`dispatch()` is the central entry point. It receives a fully parsed `HttpRequest`
+and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) or
+`DP_CGI_PENDING` (CGI process still running).
 
-## 2. Location-Matching (`findLocation`)
+## 2. Location matching (`findLocation`)
 
-- Durchsucht alle Locations in `ServerConfig._locations` nach dem längsten Präfix-Match.
-- Kein Treffer → `404`.
+- Searches all locations in `ServerConfig._locations` for the longest prefix match.
+- No match → `404`.
 
-## 3. Dispatch-Reihenfolge
+## 3. Dispatch order
 
-| Reihenfolge | Bedingung | Handler |
+| Order | Condition | Handler |
 |---|---|---|
-| 1 | Location hat `_redirect_code` | `handleRedirect` |
-| 2 | Methode nicht in `_methods` | `405` |
-| 3 | Methode ist `DELETE` | `handleDelete` |
-| 4 | `_cgi_map` nicht leer → Erweiterung gefunden | `handleCgi` |
-| 4a | CGI greift nicht (kein Match), POST + `_upload_store` | `handleUpload` |
-| 4b | CGI greift nicht (kein Match), GET | `handleStatic` |
-| 5 | POST + `_upload_store` (keine CGI-Map) | `handleUpload` |
-| 6 | GET (keine CGI-Map, kein Upload) | `handleStatic` |
-| 7 | Alles andere | `405` |
+| 1 | Location has `_redirect_code` | `handleRedirect` |
+| 2 | Method not in `_methods` | `405` |
+| 3 | Method is `DELETE` | `handleDelete` |
+| 4 | `_cgi_map` not empty → extension matched | `handleCgi` |
+| 4a | CGI no match, POST + `_upload_store` | `handleUpload` |
+| 4b | CGI no match, GET | `handleStatic` |
+| 5 | POST + `_upload_store` (no CGI map) | `handleUpload` |
+| 6 | GET (no CGI map, no upload) | `handleStatic` |
+| 7 | Anything else | `405` |
 
 ## 4. `handleRedirect`
 
-- `3xx` → `Location`-Header mit `_redirect_url`, `Content-Length: 0`, kein Body.
-- `2xx`/`4xx`/`5xx` mit optionaler `_redirect_url` → Wert als Plaintext-Body.
-- Ohne `_redirect_url` → Default-Error-HTML als Body.
+- `3xx` → `Location` header with `_redirect_url`, `Content-Length: 0`, no body.
+- `2xx`/`4xx`/`5xx` with optional `_redirect_url` → value as plaintext body.
+- No `_redirect_url` → default error HTML as body.
 
 ## 5. `handleStatic`
 
-### Pfadauflösung
+### Path resolution
 
-- Root beginnt mit '/'` → absolut zum Dateisystem, ansonsten relativ zur executable
+- Root starts with `/` → absolute filesystem path, otherwise relative to the executable.
 
-### Datei-Logik
+### File logic
 
-| Ergebnis von `stat()` | Verhalten |
+| `stat()` result | Behaviour |
 |---|---|
-| Fehler | `404` |
-| Reguläre Datei | Inhalt lesen, MIME-Typ per Dateiendung |
-| Verzeichnis mit `_index` | Index lesen |
-| Verzeichnis + Index schlägt fehl + `_autoindex` | Autoindex-HTML |
-| Verzeichnis + kein Index + kein `_autoindex` | `403` |
-| Verzeichnis + kein Index + `_autoindex` | Autoindex-HTML |
-| Sonstiger Dateityp | `502` |
+| Error | `404` |
+| Regular file | Read content, Content-Type by file extension |
+| Directory with `_index` | Read index file |
+| Directory + index fails + `_autoindex` | Autoindex HTML |
+| Directory + no index + no `_autoindex` | `403` |
+| Directory + no index + `_autoindex` | Autoindex HTML |
+| Other file type | `502` |
 
 ### Autoindex
 
-- Erzeugt ein HTML-Verzeichnis-Listing mit klickbaren Links.
+- Generates an HTML directory listing with clickable links.
 
 ## 6. `handleUpload`
 
-- Erfordert `_upload_store` in `LocationConfig`.
-- Upload-Basis: `getFullRootPath(lc) + "/" + upload_store`.
-- Upload-Zielpfad: Upload-Basis + `request._path`.
-- Fehlende Verzeichnisse werden automatisch angelegt.
-- Datei wird binär geschrieben
-- Antwort:
-  - Datei existierte bereits → `200 OK`
-  - Neue Datei → `201 Created`
+- Requires `_upload_store` in `LocationConfig`.
+- Upload base: `getFullRootPath(lc) + "/" + upload_store`.
+- Upload target path: upload base + `request._path`.
+- Missing directories are created automatically.
+- File is written in binary mode.
+- Response:
+  - File already existed → `200 OK`
+  - New file → `201 Created`
 
 ## 7. `handleDelete`
 
@@ -76,54 +76,54 @@ und den passenden `ServerConfig*` und gibt entweder `DP_DONE` (Response fertig) 
 
 ## 8. `handleCgi`
 
-### Extension-Erkennung
+### Extension detection
 
-- Kein `.` im Request-Pfad → als statische Seite behandeln
-- Letzte Erweiterung pruefen gegen `_cgi_map`.
-- Kein Eintrag in `_cgi_map` → als statische Seite behandeln.
-- `PATH_INFO`: Wenn nach der Erweiterung noch ein `/...` folgt, wird dieser Teil als
-  `PATH_INFO`-Umgebungsvariable gesetzt
+- No `.` in request path → handle as static page.
+- Check last extension against `_cgi_map`.
+- No entry in `_cgi_map` → handle as static page.
+- `PATH_INFO`: if a `/...` follows after the extension, that part is set as the
+  `PATH_INFO` environment variable.
 
-### Prozess-Start
+### Process start
 
-- `fork()` + zwei Pipes:
-  - `in_pipe`: Parent schreibt Request-Body → CGI `stdin`.
-  - `out_pipe`: CGI `stdout` → Parent liest Response.
-- Child: `dup2` für stdin/stdout, alle übrigen Pipe-Enden schließen,
-  `chdir` in Location-Root, dann `execve`.
-- Parent: nicht benötigte Pipe-Enden schließen; `out_pipe[0]` immer non-blocking.
-  - Kein Request-Body → `in_pipe[1]` sofort schließen (`stdin_fd = -1`).
-  - Mit Body → `in_pipe[1]` non-blocking, Body in `CgiSession._body` zwischenspeichern.
+- `fork()` + two pipes:
+  - `in_pipe`: parent writes request body → CGI `stdin`.
+  - `out_pipe`: CGI `stdout` → parent reads response.
+- Child: `dup2` for stdin/stdout, close all remaining pipe ends,
+  `chdir` into location root, then `execve`.
+- Parent: close unused pipe ends; `out_pipe[0]` always non-blocking.
+  - No request body → close `in_pipe[1]` immediately (`stdin_fd = -1`).
+  - With body → `in_pipe[1]` non-blocking, body stored in `CgiSession._body`.
 
-### CGI-Umgebungsvariablen
+### CGI environment variables
 
-| Variable | Quelle |
+| Variable | Source |
 |---|---|
-| `GATEWAY_INTERFACE` | `CGI/1.1` (fix) |
+| `GATEWAY_INTERFACE` | `CGI/1.1` (fixed) |
 | `SERVER_PROTOCOL` | `request._version` |
 | `REQUEST_METHOD` | `request._method` |
-| `SCRIPT_NAME` | Request-Pfad (ohne PATH_INFO) |
-| `SCRIPT_FILENAME` | Absoluter Dateipfad des Scripts |
+| `SCRIPT_NAME` | Request path (without PATH_INFO) |
+| `SCRIPT_FILENAME` | Absolute file path of the script |
 | `SERVER_PORT` | `sc->_listen_port` |
 | `QUERY_STRING` | `request._query` |
-| `SERVER_NAME` | `sc->_listen_host` (nur wenn gesetzt) |
-| `CONTENT_LENGTH` | Länge von `request._body` (nur wenn vorhanden) |
-| `CONTENT_TYPE` | `content-type`-Header (nur wenn vorhanden) |
-| `REDIRECT_STATUS=200` | Nur bei PHP (Erweiterung `.php`) |
-| `HTTP_<HEADERNAME>` | Alle Request-Header (Key uppercased, `-` → `_`) |
+| `SERVER_NAME` | `sc->_listen_host` (only if set) |
+| `CONTENT_LENGTH` | Length of `request._body` (only if present) |
+| `CONTENT_TYPE` | `content-type` header (only if present) |
+| `REDIRECT_STATUS=200` | PHP only (extension `.php`) |
+| `HTTP_<HEADERNAME>` | All request headers (key uppercased, `-` → `_`) |
 
-### CGI-Output-Parsing
+### CGI output parsing
 
-- Akzeptiert sowohl `\r\n\r\n` als auch `\n\n` als Trennzeichen zwischen Headers und Body.
-- `Status: NNN` → setzt HTTP-Statuscode der Response; alles andere → Response-Header.
-- Kein gültiger Trennzeichen gefunden → `502`.
-- Fehlender `Status`-Header → Standardmäßig `200 OK`.
-- Default `Content-Type: application/octet-stream`, wird durch CGI-eigenen `Content-Type`-Header überschrieben.
+- Accepts both `\r\n\r\n` and `\n\n` as separator between headers and body.
+- `Status: NNN` → sets HTTP status code of the response; everything else → response headers.
+- No valid separator found → `502`.
+- Missing `Status` header → defaults to `200 OK`.
+- Default `Content-Type: application/octet-stream`, overridden by CGI-provided `Content-Type` header.
 
-## 9. Fehlerbehandlung (`buildErrorResponse`)
+## 9. Error handling (`buildErrorResponse`)
 
-1. `ServerConfig._error_pages[code]` vorhanden → versuche zu lesen
-2. Schlägt fehl → `default_pages/<code>.html` im `cwd` lesen.
-3. Schlägt auch fehl → minimales Inline-HTML mit Statuscode und -text.
+1. `ServerConfig._error_pages[code]` present → attempt to read it.
+2. Fails → read `default_pages/<code>.html` from `cwd`.
+3. Also fails → minimal inline HTML with status code and text.
 
-Response enthält immer `Content-Type: text/html` und korrekten `Content-Length`.
+Response always contains `Content-Type: text/html` and a correct `Content-Length`.
