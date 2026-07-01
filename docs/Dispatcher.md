@@ -1,144 +1,129 @@
 # Dispatcher – Rules
 
-This describes how the Dispatcher works.
+This describes the routing and processing rules of the Dispatcher.
 
 ## TODO
+- handleDelete
+- autoindex only lists directories, not files
 
-- ...
+## 1. Overview
 
-One function die Pfade auflost 
+`dispatch()` is the central entry point. It receives a fully parsed `HttpRequest`
+and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) or
+`DP_CGI_PENDING` (CGI process still running).
+
+## 2. Location matching (`findLocation`)
+
+- Searches all locations in `ServerConfig._locations` for the longest prefix match.
+- No match → `404`.
+
+## 3. Dispatch order
+
+| Order | Condition | Handler |
+|---|---|---|
+| 1 | Location has `_redirect_code` | `handleRedirect` |
+| 2 | Method not in `_methods` | `405` |
+| 3 | Method is `DELETE` | `handleDelete` |
+| 4 | `_cgi_map` not empty → extension matched | `handleCgi` |
+| 4a | CGI no match, POST + `_upload_store` | `handleUpload` |
+| 4b | CGI no match, GET | `handleStatic` |
+| 5 | POST + `_upload_store` (no CGI map) | `handleUpload` |
+| 6 | GET (no CGI map, no upload) | `handleStatic` |
+| 7 | Anything else | `405` |
 
-/maus/a/a/a/a/a/test.txt
+## 4. `handleRedirect`
 
+- `3xx` → `Location` header with `_redirect_url`, `Content-Length: 0`, no body.
+- `2xx`/`4xx`/`5xx` with optional `_redirect_url` → value as plaintext body.
+- No `_redirect_url` → default error HTML as body.
 
+## 5. `handleStatic`
 
-root            ./danceserv;
+### Path resolution
 
-    index           index.html;
+- Root starts with `/` → absolute filesystem path, otherwise relative to the executable.
 
-    methods         GET POST;
+### File logic
 
-    upload_store    ./uploads;
+| `stat()` result | Behaviour |
+|---|---|
+| Error | `404` |
+| Regular file | Read content, Content-Type by file extension |
+| Directory with `_index` | Read index file |
+| Directory + index fails + `_autoindex` | Autoindex HTML |
+| Directory + no index + no `_autoindex` | `403` |
+| Directory + no index + `_autoindex` | Autoindex HTML |
+| Other file type | `502` |
 
+### Autoindex
 
+- Generates an HTML directory listing with clickable links.
 
+## 6. `handleUpload`
 
-POST /maus/hund/futter.txt
+- Requires `_upload_store` in `LocationConfig`.
+- Upload base: `getFullRootPath(lc) + "/" + upload_store`.
+- Upload target path: upload base + `request._path`.
+- Missing directories are created automatically.
+- File is written in binary mode.
+- Response:
+  - File already existed → `200 OK`
+  - New file → `201 Created`
 
-root: ./danceserv
+## 7. `handleDelete`
 
-upload: uploads
+- TODO @PAUL
 
-pfad: maus/hund/futter.txt
+## 8. `handleCgi`
 
---> ./danceserv/uploads/maus/hund/futter.txt
+### Extension detection
 
+- No `.` in request path → handle as static page.
+- Check last extension against `_cgi_map`.
+- No entry in `_cgi_map` → handle as static page.
+- `PATH_INFO`: if a `/...` follows after the extension, that part is set as the
+  `PATH_INFO` environment variable.
 
-funktion die pfade aufloest mit lexically_nomal()
+### Process start
 
-(optional upload pfad +) request pfad an den root pfad
+- `fork()` + two pipes:
+  - `in_pipe`: parent writes request body → CGI `stdin`.
+  - `out_pipe`: CGI `stdout` → parent reads response.
+- Child: `dup2` for stdin/stdout, close all remaining pipe ends,
+  `chdir` into location root, then `execve`.
+- Parent: close unused pipe ends; `out_pipe[0]` always non-blocking.
+  - No request body → close `in_pipe[1]` immediately (`stdin_fd = -1`).
+  - With body → `in_pipe[1]` non-blocking, body stored in `CgiSession._body`.
 
-./danceserv/uploads/maus/hund/futter.txt
+### CGI environment variables
 
-
-=> pruefung noch in location maus 
-
-
-POST /maus/../vogel/uploads/pwd.txt
-
-root: ./danceserv
-
-upload: uploads
-
-pfad: maus/hund/futter.txt
-
---> ./danceserv/uploads/maus/hund/futter.txt
-
-
-
-Path traversal: reject request paths containing .. as a path segment.
-      - Use 403 Forbidden, not "404 Forbidden".
-      - 404 = Not Found.
-      - 403 = Forbidden.
-
-// reject traversal
-
-Encoded traversal: after URL decoding, reject %2e%2e, %2E%2E, etc.?? ../ /../
-
-detect this and throw "404 Forbidden"?
-
-where should a absolut path be saved? -> injection, it should only be possible in the root eg. ./danceserv
-
-/danceserv should not be possible? or just handle it as relativ?
-
-printf 'POST /maus/%2e%2e/test2.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World' | nc localhost 8081
-
-    - Allow: danceserv, ./danceserv, uploads, ./uploads
-
-    - Reject: /danceserv, /uploads, ../uploads
-
-### Upload Files
-
-POST
-
-#### upload target rule:
-
-* root danceserv;
-* upload_store uploads
-* POST /maus/test2.txt
-* saves to danceserv/uploads/test2.txt
-
-#### Overwrite behavior:
-
-POST request is not a idempotent request like PUT
-
-the server creates a file and subdirectorys for e.g. POST /maus/test2.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World
-
-- new file -> 201 Created
-- existing file overwritten -> 200 OK
-
-and gives back:  HTTP/ 1.1 201 Created
-
-calling the same request again or changing the content of the text2.txt to e.g. hello Worp would overwrite the file
-
-and gives back: HTTP/ 1.1 200 Ok
-
-binary files are accepted e.g. POST /maus/upload/file.bin HTTP/1.1\r\nHost: maus\r\nContent-Type: application/octet-
-
-  stream\r\nContent-Length: 6\r\nConnection: close\r\n\r\n\x00\xffAB\x0a\x00'
-
-xxd -p danceserv/uploads/file.bin should print in hex: 00ff41420a00
-
-#### Upload Safety Rules
-
-Reject path traversal in request paths:
-
-  /maus/../test2.txt
-
-  /maus/%2e%2e/test2.txt
-
-  Return: 403 Forbidden
-
-  Config paths must stay inside the project-controlled root.
-
-  Allowed:
-
-  root danceserv;
-
-  root ./danceserv;
-
-  upload_store uploads;
-
-  upload_store ./uploads;
-
-  Rejected:
-
-  root /danceserv;
-
-  root ../danceserv;
-
-  upload_store /uploads;
-
-  upload_store ../uploads;
-
-Config safety: decide that root and upload_store must be relative.
+| Variable | Source |
+|---|---|
+| `GATEWAY_INTERFACE` | `CGI/1.1` (fixed) |
+| `SERVER_PROTOCOL` | `request._version` |
+| `REQUEST_METHOD` | `request._method` |
+| `SCRIPT_NAME` | Request path (without PATH_INFO) |
+| `SCRIPT_FILENAME` | Absolute file path of the script |
+| `SERVER_PORT` | `sc->_listen_port` |
+| `QUERY_STRING` | `request._query` |
+| `SERVER_NAME` | `sc->_listen_host` (only if set) |
+| `CONTENT_LENGTH` | Length of `request._body` (only if present) |
+| `CONTENT_TYPE` | `content-type` header (only if present) |
+| `REDIRECT_STATUS=200` | PHP only (extension `.php`) |
+| `HTTP_<HEADERNAME>` | All request headers (key uppercased, `-` → `_`) |
+
+### CGI output parsing
+
+- Accepts both `\r\n\r\n` and `\n\n` as separator between headers and body.
+- `Status: NNN` → sets HTTP status code of the response; everything else → response headers.
+- No valid separator found → `502`.
+- Missing `Status` header → defaults to `200 OK`.
+- Default `Content-Type: application/octet-stream`, overridden by CGI-provided `Content-Type` header.
+
+## 9. Error handling (`buildErrorResponse`)
+
+1. `ServerConfig._error_pages[code]` present → attempt to read it.
+2. Fails → read `default_pages/<code>.html` from `cwd`.
+3. Also fails → minimal inline HTML with status code and text.
+
+Response always contains `Content-Type: text/html` and a correct `Content-Length`.
