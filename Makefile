@@ -80,6 +80,6 @@ run2: $(NAME)
 	./$(NAME) conf/pov.conf
 
 valgrind: fclean debug
-	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME)
+	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME) conf/gha.conf
 
 .PHONY: all clean fclean re run debug valgrind
