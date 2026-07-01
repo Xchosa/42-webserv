@@ -7,10 +7,6 @@ Server::Server(const Config &config) : _config(config) , _epoll_fd(epoll_create1
 {
 	if (_epoll_fd == -1)
 		throw std::runtime_error("Failed to create epoll file descriptor");
-	
-	// alle server configs
-	
-
 }
 Server::~Server()
 {
@@ -19,6 +15,7 @@ Server::~Server()
 	{
 		close(_epoll_fd);
 	}
+
 	// ListenContext close
 	for(const auto &[fd ,ListenContext] : _socket_fds)
 	{
@@ -34,18 +31,6 @@ Server::~Server()
 
 }
 
-//brower connect
-
-//browser connects
-//server accepts
-//server receives raw HTTP request
-//server prints request
-//server sends fixed dummy HTTP response
-//browser displays page
-
-
-
-
 void Server::run()
 {
 	setupListeningSockets();
@@ -54,6 +39,7 @@ void Server::run()
 	epoll_event triggeredEvents[MAXEVENTS];
 	initSignal();
 	
+	_last_timeout_check = time(nullptr);
 	while(gSignalStatus)
 	{
 		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, IDLE_TIME * 1000);
@@ -63,6 +49,15 @@ void Server::run()
 				continue;
 			throw std::runtime_error("epoll_wait failed");
 		}
+
+		time_t now = time(nullptr);
+		if ((now - _last_timeout_check) >= CHECK_FOR_TIMEOUTS)
+		{
+			checkClientTimeouts();
+			checkCgiTimeouts();
+			_last_timeout_check = now;
+		}
+
 		for(int i = 0; i < readyEvents; ++i)
 		{
 			int fd = triggeredEvents[i].data.fd;;
@@ -94,6 +89,14 @@ void Server::run()
 				{
 					modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 					client->_parser.reset();
+					if (client->_cgi.value()._stdin_fd != -1)
+					{
+						int stdin_fd = client->_cgi.value()._stdin_fd;
+						removeFdEpoll(stdin_fd);
+						close(stdin_fd);
+						client->_cgi.value()._stdin_fd = -1;
+						_cgi_fd_client_owner.erase(stdin_fd);
+					}
 					client->_cgi.reset();
 				}
 			}
@@ -113,11 +116,6 @@ void Server::run()
 				if(_clients.count(fd))
 					modifyFdEpoll(fd, EPOLLIN | EPOLLRDHUP);
 			}
-		}
-		if(readyEvents == 0)
-		{
-			checkClientTimeouts();
-			checkCgiTimeouts();
 		}
 	}
 }

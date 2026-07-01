@@ -47,7 +47,7 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 		header_end = output.find("\n\n");
 	}
 	if (header_end == std::string::npos)
-		throw HttpException(500);
+		throw HttpException(502);
 	std::string headers = output.substr(0, header_end + (skip / 2));
 	std::string	body = output.substr(header_end + skip);
 
@@ -135,7 +135,7 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interprete
 	else // no file given
 	{
 		std::cout << "[INFO]  CGI no file given, handle as static page" << std::endl;
-		throw HttpException(404); // TODO: als static file handeln?
+		throw std::runtime_error("handle as static file");
 	}
 }
 

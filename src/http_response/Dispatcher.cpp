@@ -168,7 +168,10 @@ void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 
 	size_t n = user_path.find(base_path_norm);
 	if (n != 0 || n == std::string::npos)
+	{
+		std::cout << "[INFO]  user_path is not in base_path, throw error" << std::endl;
 		throw HttpException(403);
+	}
 }
 
 DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc, HttpResponse& response_out, CgiSession& cgi_out)
@@ -201,7 +204,7 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 				cgi_out = handleCgi(request, sc, lc);
 				return (DP_CGI_PENIDNG);
 			}
-			catch(const std::exception& e) // throws when we should handle it as a static file
+			catch(const std::runtime_error& e) // throws when we should handle it as a static file
 			{
 				if (request._method == "POST" && lc->_upload_store.has_value())
 					response_out = handleUpload(request, lc);

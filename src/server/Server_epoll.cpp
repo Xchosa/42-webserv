@@ -142,7 +142,18 @@ void Server::checkCgiTimeouts()
 			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 				client->_response = _dispatcher.buildErrorResponse(502, client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
 			else
-				client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+			{
+				try
+				{
+					client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+					std::cout << "[INFO]  CGI pid " << r << " ended good" << std::endl;
+				}
+				catch(const HttpException& e)
+				{
+					std::cout << "[INFO]  CGI pid " << r << " ended good but invalid cgi response" << std::endl;
+					client->_response = _dispatcher.buildErrorResponse(e.code(), client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+				}
+			}
 			client->_last_activity = time(NULL);
 			modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 			client->_parser.reset();
