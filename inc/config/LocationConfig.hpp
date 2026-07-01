@@ -11,7 +11,7 @@ struct LocationConfig
 
 	std::string 						_root;
 	std::string							_index;
-	std::vector<std::string> 			_methods; 
+	std::vector<std::string> 			_methods;
 	bool								_autoindex		= false;
 
 	std::optional<int>					_redirect_code;

@@ -4,11 +4,8 @@ This describes the syntax and validation rules applied when reading a `.conf` fi
 
 ## TODO
 - Validate the config at the end (mandatory settings, etc.)
-	- listen
+	
 	- root/index in LocationConfig
-	- multiple default servers
-	- minimum 1 location block existent
-	- more?
 
 ## 1. Lexer (Tokenizer)
 

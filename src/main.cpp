@@ -9,7 +9,6 @@ Config startParseConfig(const std::string& conf_file_path)
 
 	Lexer l(conf_file_path);
 	std::vector<Token> tokens = l.buildTokens();
-	// l.printTokens(tokens);
 
 	Parser p(tokens, conf_file_path);
 	config = p.parseConfig();
