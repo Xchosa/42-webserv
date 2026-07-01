@@ -2,11 +2,6 @@
 
 This describes the syntax and validation rules applied when reading a `.conf` file.
 
-## TODO
-- Validate the config at the end (mandatory settings, etc.)
-	
-	- root/index in LocationConfig
-
 ## 1. Lexer (Tokenizer)
 
 - Recognizes 5 token types: `WORD`, `SEMICOLON`, `LBRACE`, `RBRACE`, `END_OF_FILE`.
