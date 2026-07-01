@@ -1,1 +1,3 @@
 printf 'DELETE /uploads/maus/file.txt HTTP/1.1\r\nHost: maus\r\n\r\n' | nc localhost 8081
+
+printf 'DELETE /maus/tssexst.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World' | nc localhost 8081 
