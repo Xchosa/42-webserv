@@ -207,7 +207,7 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 			}
 			catch(const std::runtime_error& e) // throws when we should handle it as a static file
 			{
-				if (request._method == "POST" && lc->_upload_store.has_value())
+				if (request._method == "POST" && lc->_upload == true)
 					response_out = handleUpload(request, lc);
 				else if (request._method == "GET")
 					response_out = handleStatic(request, lc);
@@ -219,7 +219,7 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 			}
 		}
 		// check for upload (upload_path and POST)
-		else if (request._method == "POST" && lc->_upload_store.has_value())
+		else if (request._method == "POST" && lc->_upload == true)
 			response_out = handleUpload(request, lc);
 		// static handler (GET)
 		else if (request._method == "GET")
