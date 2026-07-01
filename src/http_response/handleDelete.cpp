@@ -5,6 +5,7 @@
 
 HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig* lc)
 {
+	std::cout << "[INFO]  entered delete handler" << std::endl;
 
 	bool file_existed = false;
 
