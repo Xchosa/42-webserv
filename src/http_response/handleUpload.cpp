@@ -76,6 +76,8 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_p
 
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
+	std::cout << "[INFO]  entered upload handler" << std::endl;
+
 	std::string uploadpath;
 	bool fileExisted;
 	

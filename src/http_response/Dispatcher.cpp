@@ -211,6 +211,11 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 					response_out = handleUpload(request, lc);
 				else if (request._method == "GET")
 					response_out = handleStatic(request, lc);
+				else
+				{
+					std::cout << "[INFO]  no matching handler found after cgi, throw 405" << std::endl;
+					response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
+				}
 			}
 		}
 		// check for upload (upload_path and POST)
@@ -220,10 +225,14 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		else if (request._method == "GET")
 			response_out = handleStatic(request, lc);
 		else
+		{
+			std::cout << "[INFO]  no matching handler found, throw 405" << std::endl;
 			response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
+		}
 	}
 	catch(const HttpException& e)
 	{
+		std::cout << "[INFO]  error in handler, throw " << e.code() << std::endl;
 		response_out = buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request);
 	}
 	return (DP_DONE);

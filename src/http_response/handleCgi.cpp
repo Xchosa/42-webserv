@@ -233,7 +233,7 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 
 CgiSession Dispatcher::handleCgi(const HttpRequest& request, ServerConfig* sc, LocationConfig* lc)
 {
-	std::cout << "[INFO]  CGI handler started\n";
+	std::cout << "[INFO]  entered cgi handler" << std::endl;
 
 	CgiSession cs = startCgi(request, sc, lc);
 	return (cs);
