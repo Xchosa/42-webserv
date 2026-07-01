@@ -7,10 +7,6 @@ Server::Server(const Config &config) : _config(config) , _epoll_fd(epoll_create1
 {
 	if (_epoll_fd == -1)
 		throw std::runtime_error("Failed to create epoll file descriptor");
-	
-	// alle server configs
-	
-
 }
 Server::~Server()
 {
@@ -19,6 +15,7 @@ Server::~Server()
 	{
 		close(_epoll_fd);
 	}
+
 	// ListenContext close
 	for(const auto &[fd ,ListenContext] : _socket_fds)
 	{
@@ -33,18 +30,6 @@ Server::~Server()
 	std::cout<< "Sockets and epoll Instance cleaned" <<std::endl;
 
 }
-
-//brower connect
-
-//browser connects
-//server accepts
-//server receives raw HTTP request
-//server prints request
-//server sends fixed dummy HTTP response
-//browser displays page
-
-
-
 
 void Server::run()
 {
