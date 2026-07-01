@@ -47,7 +47,7 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 		header_end = output.find("\n\n");
 	}
 	if (header_end == std::string::npos)
-		throw HttpException(500);
+		throw HttpException(502);
 	std::string headers = output.substr(0, header_end + (skip / 2));
 	std::string	body = output.substr(header_end + skip);
 

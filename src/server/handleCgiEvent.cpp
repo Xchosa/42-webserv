@@ -55,8 +55,16 @@ void Server::cgiReadOutput(int pipe_fd, int client_fd, ClientInfos* client, CgiS
 				}
 				else
 				{
-					std::cout << "[INFO]  CGI pid " << result << " ended good" << std::endl;
-					client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+					try
+					{
+						client->_response = _dispatcher.parseCgiOutput(cgi->_output);
+						std::cout << "[INFO]  CGI pid " << result << " ended good" << std::endl;
+					}
+					catch(const HttpException& e)
+					{
+						std::cout << "[INFO]  CGI pid " << result << " ended good but invalid cgi response" << std::endl;
+						client->_response = _dispatcher.buildErrorResponse(e.code(), client->_selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+					}
 				}
 			}
 			else if (result == 0)
