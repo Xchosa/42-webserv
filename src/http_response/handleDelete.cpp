@@ -6,7 +6,7 @@
 HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig* lc)
 {
 
-	bool file_existed; 
+	bool file_existed = false;
 
 	std::string full_request_path = getFullRootPath(lc)+ request._path;
 	isWithin(lc->_root, full_request_path); // webserv/danceserv/maus  und webserv/danceserv/maus/file1

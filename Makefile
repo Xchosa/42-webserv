@@ -38,6 +38,7 @@ SRCS =	main.cpp \
 		handleRedirect.cpp \
 		handleStatic.cpp \
 		handleUpload.cpp \
+		handleDelete.cpp \
 		HttpException.cpp \
 		HttpStatus.cpp \
 		HttpMimeType.cpp \
