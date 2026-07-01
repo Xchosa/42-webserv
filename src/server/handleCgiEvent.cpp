@@ -111,8 +111,16 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 	{
 		killCgi(client_fd, 502);
 	}
-	else if (pipe_fd == cgi->_stdin_fd && (event_flag & EPOLLOUT))
+	else if (pipe_fd == cgi->_stdin_fd && (event_flag & (EPOLLOUT | EPOLLHUP)))
 	{
+		if (event_flag & EPOLLHUP)
+		{
+			std::cout << "[INFO]  CGI writing done, close stdin" << std::endl;
+			removeFdEpoll(pipe_fd);
+			close(pipe_fd);
+			cgi->_stdin_fd = -1;
+			return ;
+		}
 		std::cout << "[INFO]  CGI write body to cgi stdin" << std::endl;
 		cgiWriteBody(pipe_fd, client_fd, cgi);
 	}

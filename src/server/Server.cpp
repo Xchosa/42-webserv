@@ -109,6 +109,7 @@ void Server::run()
 						int stdin_fd = client->_cgi.value()._stdin_fd;
 						removeFdEpoll(stdin_fd);
 						close(stdin_fd);
+						client->_cgi.value()._stdin_fd = -1;
 						_cgi_fd_client_owner.erase(stdin_fd);
 					}
 					client->_cgi.reset();
