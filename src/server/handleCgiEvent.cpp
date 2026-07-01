@@ -119,6 +119,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 			removeFdEpoll(pipe_fd);
 			close(pipe_fd);
 			cgi->_stdin_fd = -1;
+			_cgi_fd_client_owner.erase(pipe_fd);
 			return ;
 		}
 		std::cout << "[INFO]  CGI write body to cgi stdin" << std::endl;
