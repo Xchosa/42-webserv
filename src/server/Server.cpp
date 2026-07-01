@@ -94,6 +94,13 @@ void Server::run()
 				{
 					modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 					client->_parser.reset();
+					if (client->_cgi.value()._stdin_fd != -1)
+					{
+						int stdin_fd = client->_cgi.value()._stdin_fd;
+						removeFdEpoll(stdin_fd);
+						close(stdin_fd);
+						_cgi_fd_client_owner.erase(stdin_fd);
+					}
 					client->_cgi.reset();
 				}
 			}
