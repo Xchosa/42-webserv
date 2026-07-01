@@ -22,21 +22,46 @@ std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPa
 std::string Dispatcher::buildFileName(std::string user_path)
 {
 	size_t filename_start = user_path.find_last_of('/');
-	if (filename_start == std::string::npos )
-		throw HttpException(500);
+	if (filename_start == std::string::npos || filename_start == (std::string::npos -1))
+		throw HttpException(400);
 	std::string filename = user_path.substr(filename_start + 1);	
 	return filename;
 }
 
+void Dispatcher::validateUploadTarget(const std::string& target) const
+{
+	struct stat statbuf;
+
+	if(target.empty())
+		throw HttpException(400);
+	if(target[target.length() -1] == '/')
+		throw HttpException(400);
+	if(lstat(target.c_str(), &statbuf) == -1)
+	//if (stat(target.c_str(), &statbuf) == -1) // follows symlinks
+	//		return false;
+	if (S_ISLNK(statbuf.st_mode) != 0) // check for symlink 
+		throw  HttpException(400);
+	if (S_ISDIR(statbuf.st_mode) != 0 )
+		throw HttpException(400);
+	if(S_ISREG(statbuf.st_mode) != 0) // check regularfile / got permissions
+		throw HttpException(400);
+}
 
 
 bool Dispatcher::fileExists(const std::string& target) const
 {
 	struct stat statbuf;
-	if (stat(target.c_str(), &statbuf) == -1)
-		return false;
+	if(lstat(target.c_str(), &statbuf) == -1) // does not follow symliks 
+	{
+		if(errno == ENOENT )
+			return false;
+		throw HttpException(500);
+	}
+	if(S_ISREG(statbuf.st_mode) == 0) // check regularfile / got permissions
+		return true;
+	
+	return false;
 
-	return S_ISREG(statbuf.st_mode); // check regularfile
 }
 
 std::string resolvePath(std::string new_path)
@@ -68,8 +93,6 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_p
 		throw HttpException(500);
 	NewFile.close();
 
-	
-
 	return fileExisted ;
 }
 
@@ -89,6 +112,7 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 		throw HttpException(500);
 	}	
 	std::string user_path = uploadpath + request._path;
+	validateUploadTarget(user_path);
 	isWithin(uploadpath + lc->_name, user_path);
 	fileExisted = createDirAndFile(request, user_path);
 	
