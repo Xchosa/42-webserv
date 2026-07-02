@@ -10,7 +10,7 @@ const std::string& getMimeType(std::string& suffix)
 		{".css", "text/css"},
 		{".json", "application/json"},
 		{".png", "image/png"},
-		{".jpg", "image/jpg"},
+		{".jpg", "image/jpeg"},
 		{".jpeg", "image/jpeg"},
 		{".gif", "image/gif"},
 		{".pdf", "application/pdf"},
