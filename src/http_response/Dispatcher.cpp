@@ -207,23 +207,32 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 			}
 			catch(const std::runtime_error& e) // throws when we should handle it as a static file
 			{
-				if (request._method == "POST" && lc->_upload_store.has_value())
+				if (request._method == "POST" && lc->_upload == true)
 					response_out = handleUpload(request, lc);
 				else if (request._method == "GET")
 					response_out = handleStatic(request, lc);
+				else
+				{
+					std::cout << "[INFO]  no matching handler found after cgi, throw 405" << std::endl;
+					response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
+				}
 			}
 		}
 		// check for upload (upload_path and POST)
-		else if (request._method == "POST" && lc->_upload_store.has_value())
+		else if (request._method == "POST" && lc->_upload == true)
 			response_out = handleUpload(request, lc);
 		// static handler (GET)
 		else if (request._method == "GET")
 			response_out = handleStatic(request, lc);
 		else
+		{
+			std::cout << "[INFO]  no matching handler found, throw 405" << std::endl;
 			response_out = buildErrorResponse(405, sc, CON_KEEP_ALIVE, request);
+		}
 	}
 	catch(const HttpException& e)
 	{
+		std::cout << "[INFO]  error in handler, throw " << e.code() << std::endl;
 		response_out = buildErrorResponse(e.code(), sc, CON_KEEP_ALIVE, request);
 	}
 	return (DP_DONE);

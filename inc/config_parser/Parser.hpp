@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <set>
 #include <string>
+#include <algorithm>
 
 #include "Token.hpp"
 #include "Config.hpp"
@@ -57,8 +58,11 @@ class Parser
 		void	plsMethods(LocationConfig& lc);
 		void	plsAutoindex(LocationConfig& lc);
 		void	plsReturn(LocationConfig& lc);
-		void	plsUploadStore(LocationConfig& lc);
+		void	plsUpload(LocationConfig& lc);
 		void	plsCgi(LocationConfig& lc);
+
+		// config validation
+		void	validateConfig(Config& c);
 
 	public:
 		// OCF

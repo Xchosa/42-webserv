@@ -87,8 +87,8 @@ void Parser::parseLocationSetting(LocationConfig& lc)
 		plsAutoindex(lc);
 	else if (setting_name.value == "return")
 		plsReturn(lc);
-	else if (setting_name.value == "upload_store")
-		plsUploadStore(lc);
+	else if (setting_name.value == "upload")
+		plsUpload(lc);
 	else if (setting_name.value == "cgi_ext")
 		plsCgi(lc);
 	else
@@ -189,6 +189,45 @@ ServerConfig Parser::parseServerBlock()
 	return (sc);
 }
 
+void Parser::validateConfig(Config& c)
+{
+	// pro server block
+	for (ServerConfig& sc : c._servers)
+	{
+		size_t count_default_server = 0;
+
+		if (sc._listen_port == 0)
+			throw std::runtime_error("ServerConfig: Detected Server without listen port!");
+		
+		if (sc._is_default_server == true)
+			count_default_server++;
+		if (count_default_server > 1)
+			throw std::runtime_error("ServerConfig: Detected more than one default server!");
+
+		if (sc._locations.size() == 0)
+			throw std::runtime_error("ServerConfig: No location found");
+		
+		// pro location block
+		for (auto& it : sc._locations)
+		{
+			auto& lc = it.second;
+
+			if (lc._root.length() <= 0)
+				throw std::runtime_error("LocationConfig: Detected Location without a root directory!");
+
+			if (!lc._redirect_code.has_value() && lc._methods.size() == 0)
+				throw std::runtime_error("LocationConfig: Detected a non return location with no method allowed!");
+
+			// post only allowed when cgi or upload exist
+			if (std::find(lc._methods.begin(), lc._methods.end(), "POST") != lc._methods.end())
+			{
+				if (lc._upload == false && lc._cgi_map.size() == 0)
+					throw std::runtime_error("LocationConfig: Detected allowed 'POST' method without active upload or cgi settings!");
+			}
+		}
+	}
+}
+
 Config Parser::parseConfig()
 {
 	Config config;
@@ -197,5 +236,6 @@ Config Parser::parseConfig()
 	{
 		config._servers.push_back(parseServerBlock());
 	}
+	validateConfig(config);
 	return (config);
 }

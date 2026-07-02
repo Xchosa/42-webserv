@@ -2,6 +2,8 @@
 
 HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig* lc)
 {
+	std::cout << "[INFO]  entered static handler" << std::endl;
+
 	HttpResponse r;
 
 	if (lc == nullptr)
