@@ -8,6 +8,12 @@ const std::string& getMimeType(std::string& suffix)
 		{".txt", "text/plain"},
 		{".html", "text/html"},
 		{".css", "text/css"},
+		{".json", "application/json"},
+		{".png", "image/png"},
+		{".jpg", "image/jpg"},
+		{".jpeg", "image/jpeg"},
+		{".gif", "image/gif"},
+		{".pdf", "application/pdf"},
 	};
 
 	auto it = mime_types.find(suffix);
