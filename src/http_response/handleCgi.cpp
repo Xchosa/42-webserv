@@ -127,7 +127,6 @@ void Dispatcher::checkForCgi(const HttpRequest& request, std::string& interprete
 		if (it == lc->_cgi_map.end())
 		{
 			std::cout << "[INFO]  CGI extension not in cgi map, handle as static page" << std::endl;
-			// throw HttpException(404); // TODO: als static file handeln?
 			throw std::runtime_error("handle as static file");
 		}
 		interpreter = it->second;

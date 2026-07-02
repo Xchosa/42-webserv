@@ -2,10 +2,6 @@
 
 This describes the routing and processing rules of the Dispatcher.
 
-## TODO
-- handleDelete
-- autoindex only lists directories, not files
-
 ## 1. Overview
 
 `dispatch()` is the central entry point. It receives a fully parsed `HttpRequest`
