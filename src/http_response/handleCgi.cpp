@@ -198,7 +198,8 @@ CgiSession Dispatcher::startCgi(const HttpRequest& request, ServerConfig* sc, Lo
 		close(out_pipe[0]);
 		close(out_pipe[1]);
 
-		chdir(getFullRootPath(lc).c_str());
+		if (chdir(getFullRootPath(lc).c_str()) == -1)
+			_exit(1);
 		char *argv[] = {interpreter.data(), script_path.data(), nullptr};
 		execve(interpreter.c_str(), argv, envp.data());
 		_exit(1);

@@ -29,10 +29,14 @@ HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig
 	if(!S_ISREG(statbuf.st_mode)) // check regularfile / got permissions / overwrite
 		throw HttpException(403);
 
-	if(!unlink(user_path.c_str()))
+	if(unlink(user_path.c_str()) == -1 )
 	{
 		if(errno == ENOENT)
-			throw HttpException(403);
+			throw HttpException(404); // path des not exist
+		if(errno == EACCES || errno == EPERM)
+			throw HttpException(403); // permission
+		if(errno == EBUSY)
+			throw HttpException(409); // used by another process
 		throw HttpException(500);
 	}
 

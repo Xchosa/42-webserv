@@ -1,24 +1,5 @@
 #include "Dispatcher.hpp"
 
-//std::string Dispatcher::getFullUploadPath(LocationConfig* lc, std::string rootPath)
-//{
-//	std::string uploadDir = lc->_upload_store.value();
-	
-//	if(uploadDir.find('/') == 0)						// absolut to executable
-//	{
-//		rootPath += uploadDir;
-//	}
-//	else
-//	{
-//		rootPath += '/' + uploadDir;
-//	}
-//	std::string selectedLocationUploadDir = rootPath += lc->_name;
-//	std::string normalizedUploadDir = resolvePath(selectedLocationUploadDir);
-	
-
-//	return normalizedUploadDir;
-//}
-
 std::string Dispatcher::buildFileName(std::string user_path)
 {
 	size_t filename_start = user_path.find_last_of('/');
@@ -107,20 +88,9 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 {
 	std::cout << "[INFO]  entered upload handler" << std::endl;
 
-	std::string uploadpath;
 	bool fileExisted;
-	
-	//if lc.upload == on ; 
 
-	//if (lc->_upload_store.has_value())
-	//{
-	//	uploadpath = getFullRootPath(lc) + "/" + lc->_upload_store.value();
-	//}
-	//else
-	//{
-	//	std::cout << "[INFO] upload_path not given" << std::endl;
-	//	throw HttpException(500);
-	//}	
+	std::string uploadpath = getFullRootPath(lc);
 	std::string user_path = uploadpath + request._path;
 	validateUploadTarget(user_path);
 	isWithin(uploadpath + lc->_name, user_path);// normal .danceserv/maus/x/x 
