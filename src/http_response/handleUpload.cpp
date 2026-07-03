@@ -45,10 +45,7 @@ bool Dispatcher::fileExists(const std::string& target) const
 			return false;
 		throw HttpException(500);
 	}
-	if(S_ISREG(statbuf.st_mode) == 0) // check regularfile / got permissions
-		return true;
-	
-	return false;
+	return(S_ISREG(statbuf.st_mode)); // check regularfile / got permissions
 }
 
 std::string resolvePath(std::string new_path)
@@ -63,7 +60,9 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_p
 {
 	bool fileExisted;
 
+	//std::cout << "[DEGUG] Location file: " << user_path << std::endl;
 	fileExisted = fileExists(user_path); // 
+	//std::cout << "[DEBUG] Location file boolean : " << fileExisted << std::endl;
 	std::string filename = buildFileName(user_path);
 	std::string subDir = user_path.substr(0, user_path.find(filename));
 	std::string checkedTargetDir = resolvePath(subDir);
@@ -100,7 +99,7 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 
 	HttpResponse respond;
 	respond._version = "HTTP/1.1";
-	if (fileExisted == true)
+	if (fileExisted)
 	{
 		respond._status_code = 200;
 		respond._status_text = getStatusText(respond._status_code); // overwrites file 204 No Content auch moeglich
