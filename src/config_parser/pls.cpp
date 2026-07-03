@@ -80,17 +80,18 @@ void Parser::plsReturn(LocationConfig& lc)
 		throw std::runtime_error(getFileLine(t) + "Redirect URL/path required for 3xx redirect code");
 }
 
-void Parser::plsUploadStore(LocationConfig& lc)
+void Parser::plsUpload(LocationConfig& lc)
 {
 	Token t = consume();
-	auto pos = t.value.find_first_of(FORBIDDEN_PATH_CHARS);
-	if (pos != std::string::npos)
-	{
-		char invalid_char = t.value[pos];
-		throw std::runtime_error(getFileLine(t) + "Invalid upload_store path '" + t.value + "'! Invalid char: '" + invalid_char + "'");
-	}
+	bool flag;
 
-	lc._upload_store = t.value;
+	if (t.value == "on")
+		flag = true;
+	else if (t.value == "off")
+		flag = false;
+	else
+		throw std::runtime_error(getFileLine(t) + "Invalid upload '" + t.value + "'! Expected: 'on' or 'off'");
+	lc._upload = flag;
 }
 
 void Parser::plsCgi(LocationConfig& lc)

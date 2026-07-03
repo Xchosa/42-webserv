@@ -87,8 +87,8 @@ void Parser::parseLocationSetting(LocationConfig& lc)
 		plsAutoindex(lc);
 	else if (setting_name.value == "return")
 		plsReturn(lc);
-	else if (setting_name.value == "upload_store")
-		plsUploadStore(lc);
+	else if (setting_name.value == "upload")
+		plsUpload(lc);
 	else if (setting_name.value == "cgi_ext")
 		plsCgi(lc);
 	else
@@ -221,8 +221,8 @@ void Parser::validateConfig(Config& c)
 			// post only allowed when cgi or upload exist
 			if (std::find(lc._methods.begin(), lc._methods.end(), "POST") != lc._methods.end())
 			{
-				if (!lc._upload_store.has_value() && lc._cgi_map.size() == 0)
-					throw std::runtime_error("LocationConfig: Detected allowed 'POST' method without upload_store or cgi settings!");
+				if (lc._upload == false && lc._cgi_map.size() == 0)
+					throw std::runtime_error("LocationConfig: Detected allowed 'POST' method without active upload or cgi settings!");
 			}
 		}
 	}
