@@ -54,7 +54,6 @@ class Dispatcher
 		void			isWithin(const std::string& base_path, std::string& user_path);
 
 		// handle upload
-		std::string		getFullUploadPath(LocationConfig* lc, std::string rootPath);
 		std::string 	buildFileName(std::string user_path);
 		bool			createDirAndFile(const HttpRequest& request, std::string uploadpath);
 		bool			fileExists(const std::string& target) const;

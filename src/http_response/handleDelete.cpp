@@ -18,7 +18,7 @@ HttpResponse Dispatcher::handleDelete(const HttpRequest& request, LocationConfig
 	if(lstat(user_path.c_str(), &statbuf) == -1)
 	{
 		if (errno == ENOENT)
-  			throw HttpException (400);
+  			throw HttpException (404);
 		throw HttpException(500);
 	}
 

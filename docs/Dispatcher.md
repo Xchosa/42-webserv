@@ -15,17 +15,17 @@ and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) o
 
 ## 3. Dispatch order
 
-| Order | Condition | Handler |
-|---|---|---|
-| 1 | Location has `_redirect_code` | `handleRedirect` |
-| 2 | Method not in `_methods` | `405` |
-| 3 | Method is `DELETE` | `handleDelete` |
-| 4 | `_cgi_map` not empty → extension matched | `handleCgi` |
-| 4a | CGI no match, POST + `_upload_store` | `handleUpload` |
-| 4b | CGI no match, GET | `handleStatic` |
-| 5 | POST + `_upload_store` (no CGI map) | `handleUpload` |
-| 6 | GET (no CGI map, no upload) | `handleStatic` |
-| 7 | Anything else | `405` |
+| Order | Condition                                   | Handler            |
+| ----- | ------------------------------------------- | ------------------ |
+| 1     | Location has `_redirect_code`             | `handleRedirect` |
+| 2     | Method not in `_methods`                  | `405`            |
+| 3     | Method is `DELETE`                        | `handleDelete`   |
+| 4     | `_cgi_map` not empty → extension matched | `handleCgi`      |
+| 4a    | CGI no match, POST +`_upload_store`       | `handleUpload`   |
+| 4b    | CGI no match, GET                           | `handleStatic`   |
+| 5     | POST +`_upload_store` (no CGI map)        | `handleUpload`   |
+| 6     | GET (no CGI map, no upload)                 | `handleStatic`   |
+| 7     | Anything else                               | `405`            |
 
 ## 4. `handleRedirect`
 
@@ -41,34 +41,66 @@ and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) o
 
 ### File logic
 
-| `stat()` result | Behaviour |
-|---|---|
-| Error | `404` |
-| Regular file | Read content, Content-Type by file extension |
-| Directory with `_index` | Read index file |
-| Directory + index fails + `_autoindex` | Autoindex HTML |
-| Directory + no index + no `_autoindex` | `403` |
-| Directory + no index + `_autoindex` | Autoindex HTML |
-| Other file type | `502` |
+| `stat()` result                        | Behaviour                                    |
+| ---------------------------------------- | -------------------------------------------- |
+| Error                                    | `404`                                      |
+| Regular file                             | Read content, Content-Type by file extension |
+| Directory with `_index`                | Read index file                              |
+| Directory + index fails +`_autoindex`  | Autoindex HTML                               |
+| Directory + no index + no `_autoindex` | `403`                                      |
+| Directory + no index +`_autoindex`     | Autoindex HTML                               |
+| Other file type                          | `502`                                      |
 
 ### Autoindex
 
 - Generates an HTML directory listing with clickable links.
+- for `GET` Request to a directory 
+- if index file is configured and exists, index file gets served
+- if index file is not given and `autoindex` is `on` generate directory listing.
+- if `autoindex` is off, throws `403 Forbidden`
 
 ## 6. `handleUpload`
 
-- Requires `_upload_store` in `LocationConfig`.
-- Upload base: `getFullRootPath(lc) + "/" + upload_store`.
+- Requires boolean `_upload` in `LocationConfig` set to `on`.
+- Upload base: `getFullRootPath(lc)`.
 - Upload target path: upload base + `request._path`.
+- Target path must stay inside `upload base + lc->_name`.
 - Missing directories are created automatically.
-- File is written in binary mode.
+- Files can be written in binary mode.
+- If the target file already exists, it gets overwritten.
+- If the target file does not exist, it gets created.
+- If no filename is given and the target is only a directory, throws `400 Bad Request`.
+- If the target is a symlink, throws `400 Bad Request`.
+- If the target exists and is a directory, throws `400 Bad Request`.
+- If the target exists but is not a regular file, throws `400 Bad Request`.
+- If directory creation or file writing fails, throws `500 Internal Server Error`.
 - Response:
-  - File already existed → `200 OK`
-  - New file → `201 Created`
+  - File already existed -> `200 OK`
+  - New file -> `201 Created`
+
 
 ## 7. `handleDelete`
 
-- TODO @PAUL
+- Requires method `DELETE` in `LocationConfig`.
+- Builds target path as `getFullRootPath(lc) + request._path`.
+- Target path must stay inside `getFullRootPath(lc) + lc->_name`.
+- Prevents path traversal outside the location, e.g. `DELETE /auto/../passwd` cannot delete `./webserv/danceserv/passwd`.
+
+
+- If the target file does not exist it throws `404 Not Found`
+- If the target is only a directory, throws `403 Forbidden`.
+- If the target is a symlink, throws `403 Forbidden`.
+- If the target exists but is not a regular file, throws `403 Forbidden`.
+- If the file cannot be deleted because it is busy/in conflict, throws `409 Conflict`.
+- If deleting fails for another server-side reason, throws `500 Internal Server Error`.
+
+- Response on success:
+    - `204 No Content`
+    - Empty body
+    - `Content-Length: 0`
+    - `Connection` follows the request connection mode
+
+
 
 ## 8. `handleCgi`
 
@@ -93,20 +125,20 @@ and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) o
 
 ### CGI environment variables
 
-| Variable | Source |
-|---|---|
-| `GATEWAY_INTERFACE` | `CGI/1.1` (fixed) |
-| `SERVER_PROTOCOL` | `request._version` |
-| `REQUEST_METHOD` | `request._method` |
-| `SCRIPT_NAME` | Request path (without PATH_INFO) |
-| `SCRIPT_FILENAME` | Absolute file path of the script |
-| `SERVER_PORT` | `sc->_listen_port` |
-| `QUERY_STRING` | `request._query` |
-| `SERVER_NAME` | `sc->_listen_host` (only if set) |
-| `CONTENT_LENGTH` | Length of `request._body` (only if present) |
-| `CONTENT_TYPE` | `content-type` header (only if present) |
-| `REDIRECT_STATUS=200` | PHP only (extension `.php`) |
-| `HTTP_<HEADERNAME>` | All request headers (key uppercased, `-` → `_`) |
+| Variable                | Source                                              |
+| ----------------------- | --------------------------------------------------- |
+| `GATEWAY_INTERFACE`   | `CGI/1.1` (fixed)                                 |
+| `SERVER_PROTOCOL`     | `request._version`                                |
+| `REQUEST_METHOD`      | `request._method`                                 |
+| `SCRIPT_NAME`         | Request path (without PATH_INFO)                    |
+| `SCRIPT_FILENAME`     | Absolute file path of the script                    |
+| `SERVER_PORT`         | `sc->_listen_port`                                |
+| `QUERY_STRING`        | `request._query`                                  |
+| `SERVER_NAME`         | `sc->_listen_host` (only if set)                  |
+| `CONTENT_LENGTH`      | Length of `request._body` (only if present)       |
+| `CONTENT_TYPE`        | `content-type` header (only if present)           |
+| `REDIRECT_STATUS=200` | PHP only (extension `.php`)                       |
+| `HTTP_<HEADERNAME>`   | All request headers (key uppercased,`-` → `_`) |
 
 ### CGI output parsing
 

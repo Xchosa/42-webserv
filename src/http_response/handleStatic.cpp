@@ -91,6 +91,8 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 	
 	// std::cout << "[INFO] Request path: " << normalized_request_path << std::endl;
 
+	// 
+
 	body += "<!DOCTYPE html>\n";
   	body += "<html>\n";
 	body += "</body>"; 
@@ -112,7 +114,7 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 			body += "<li><a href=\"" + href + "\">" + sub_dir_name + "/</a></li>\n";
 		}	
 	}
-	body += "<ul>\n";
+	body += "</ul>\n";
 	body += "</body\n>";
 	body += "</html>\n";
 	return body ;
