@@ -53,11 +53,21 @@ and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) o
 
 ### Autoindex
 
+- In general a fallback for the index file.
 - Generates an HTML directory listing with clickable links.
-- for `GET` Request to a directory 
-- if index file is configured and exists, index file gets served
-- if index file is not given and `autoindex` is `on` generate directory listing.
-- if `autoindex` is off, throws `403 Forbidden`
+- for `GET` Request to a directory
+- If an index file is configured and exists/readable, the index file is served instead.
+- If no index file is served and `autoindex` is `on`, the server generates an HTML directory listing with clickable links.
+- If no index file is served and `autoindex` is `off`, throws `403 Forbidden`.
+- The requested path must stay inside the configured location root.
+- Directory links end with `/`, file links do not.
+- If the directory cannot be opened/read by `std::filesystem::directory_iterator`, throws `403 Forbidden`.
+
+Test for unreadable directory:
+e.g. private directory 
+mkdir -p danceserv/auto/private
+chmod 000 danceserv/auto/private
+
 
 ## 6. `handleUpload`
 
@@ -78,29 +88,23 @@ and the matching `ServerConfig*` and returns either `DP_DONE` (response ready) o
   - File already existed -> `200 OK`
   - New file -> `201 Created`
 
-
 ## 7. `handleDelete`
 
 - Requires method `DELETE` in `LocationConfig`.
 - Builds target path as `getFullRootPath(lc) + request._path`.
 - Target path must stay inside `getFullRootPath(lc) + lc->_name`.
 - Prevents path traversal outside the location, e.g. `DELETE /auto/../passwd` cannot delete `./webserv/danceserv/passwd`.
-
-
 - If the target file does not exist it throws `404 Not Found`
 - If the target is only a directory, throws `403 Forbidden`.
 - If the target is a symlink, throws `403 Forbidden`.
 - If the target exists but is not a regular file, throws `403 Forbidden`.
 - If the file cannot be deleted because it is busy/in conflict, throws `409 Conflict`.
 - If deleting fails for another server-side reason, throws `500 Internal Server Error`.
-
 - Response on success:
-    - `204 No Content`
-    - Empty body
-    - `Content-Length: 0`
-    - `Connection` follows the request connection mode
-
-
+  - `204 No Content`
+  - Empty body
+  - `Content-Length: 0`
+  - `Connection` follows the request connection mode
 
 ## 8. `handleCgi`
 

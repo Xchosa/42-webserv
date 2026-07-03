@@ -83,39 +83,60 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 
 std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::string& request_path)
 {
+	// only enters, if path is a directory, and within the location , and got permissions
+	std::cout << "[INFO]  entered autoIndex " << std::endl;
 	std::string body;
 	std::string normalized_dir = resolvePath(dir_path);
 	std::string normalized_request_path = resolvePath(request_path);
 
-	// std::cout << "[DEBUG]  normalized Dir" << normalized_dir << std::endl;
+	//std::cout << "[DEBUG]  normalized Dir" << normalized_dir << std::endl;
 	
-	// std::cout << "[INFO] Request path: " << normalized_request_path << std::endl;
-
-	// 
+	//std::cout << "[DEBUG] Request path: " << normalized_request_path << std::endl;
 
 	body += "<!DOCTYPE html>\n";
   	body += "<html>\n";
-	body += "</body>"; 
+	body += "<body>\n"; 
 	body += "<h1>Index of " + normalized_request_path + "</h1>\n";
   	body += "<ul>\n";
 
-	//isWithin(normalized_dir, normalized_request_path);
+	try
+	{
+		for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(normalized_dir))
+		{
+		std::string name = dir_entry.path().filename().string();
+		std::string href = normalized_request_path;
+		//std::cout << "[DEBUG]  entered href " << href << std::endl;
+		if(!href.empty() && href[href.length()-1] != '/')
+			href += '/';
+		if(dir_entry.is_directory())
+		{
+			href += name + "/";
+			body += "<li><a href=\"" + href + "\">" + name + "/</a></li>\n";
+		}
+		else
+		{
+			href += name;
+			body += "<li><a href=\"" + href + "\">" + name + "</a></li>\n";
+		}
+		}
+	}
+	catch (const std::filesystem::filesystem_error& e)
+  	{
+  		std::cerr << e.what() << '\n';
+  		throw HttpException(403);
+  	}
+
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		throw HttpException(500);
+	}
 	
 
-	for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(normalized_dir))
-	{
-		if(dir_entry.is_directory() )
-		{
-			std::string sub_dir_name = dir_entry.path().filename().string();
-			std::string href = normalized_request_path;
-  			href += sub_dir_name + "/";
-			
-			//body  += "<li><a href=" + href +"/>" + sub_dir_name+ "/</a></li>\n";
-			body += "<li><a href=\"" + href + "\">" + sub_dir_name + "/</a></li>\n";
-		}	
-	}
+	
+	
 	body += "</ul>\n";
-	body += "</body\n>";
+	body += "</body>\n";
 	body += "</html>\n";
 	return body ;
 }
