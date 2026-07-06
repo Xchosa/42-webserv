@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>302 - Found</title>
+	<style>
+		*, *::before, *::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background-color: #0f0f0f;
+			color: #e0e0e0;
+			font-family: 'Courier New', Courier, monospace;
+		}
+
+		.container {
+			text-align: center;
+			padding: 2rem;
+		}
+
+		.code {
+			font-size: 8rem;
+			font-weight: 700;
+			color: #ffffff;
+			letter-spacing: -4px;
+			line-height: 1;
+		}
+
+		.divider {
+			width: 48px;
+			height: 2px;
+			background: #c0392b;
+			margin: 1.5rem auto;
+		}
+
+		.title {
+			font-size: 1rem;
+			letter-spacing: 0.25em;
+			text-transform: uppercase;
+			color: #888;
+		}
+
+		.message {
+			margin-top: 1rem;
+			font-size: 0.85rem;
+			color: #555;
+		}
+
+		.back {
+			display: inline-block;
+			margin-top: 2.5rem;
+			padding: 0.6rem 1.6rem;
+			border: 1px solid #333;
+			color: #888;
+			text-decoration: none;
+			font-size: 0.8rem;
+			letter-spacing: 0.1em;
+			transition: border-color 0.2s, color 0.2s;
+		}
+
+		.back:hover {
+			border-color: #888;
+			color: #e0e0e0;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="code">302</div>
+		<div class="divider"></div>
+		<div class="title">Found</div>
+		<div class="message">The requested resource was found at another location.</div>
+		<a class="back" href="/">← Back to Home</a>
+	</div>
+</body>
+</html>
