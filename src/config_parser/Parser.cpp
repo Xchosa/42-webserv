@@ -212,10 +212,13 @@ void Parser::validateConfig(Config& c)
 		{
 			auto& lc = it.second;
 
+			if (lc._redirect_code.has_value()) // redirect locations -> no need for methods
+				continue;
+
 			if (lc._root.length() <= 0)
 				throw std::runtime_error("LocationConfig: Detected Location without a root directory!");
 
-			if (!lc._redirect_code.has_value() && lc._methods.size() == 0)
+			if (lc._methods.size() == 0)
 				throw std::runtime_error("LocationConfig: Detected a non return location with no method allowed!");
 
 			// post only allowed when cgi or upload exist
