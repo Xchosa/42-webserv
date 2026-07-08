@@ -218,7 +218,7 @@ ParseStatus HttpParser::parseChunkedBody()
         }
 		if (ChunkSizeDez == 0)
 		{
-			if (_request._body.size() > _client_server_config->_client_max_body_size)
+			if (_client_server_config->_client_max_body_size != 0 && _request._body.size() > _client_server_config->_client_max_body_size)
 			{
 				_status = ERROR_413;
 				return(this->getStatus());
@@ -249,7 +249,7 @@ ParseStatus HttpParser::parseChunkedBody()
 			_status = ERROR_400;
 			return(this->getStatus());
 		}
-		if(_client_server_config->_client_max_body_size <= 0 || _request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
+		if(_client_server_config->_client_max_body_size != 0 && _request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
 			return(this->getStatus());
@@ -329,7 +329,7 @@ ParseStatus HttpParser::parseBuffer()
 			_status = ERROR_400;
 			return (this->getStatus());
 		}
-		if (_content_len_expected > _client_server_config->_client_max_body_size)
+		if (_client_server_config->_client_max_body_size != 0 && _content_len_expected > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
 			return (this->getStatus());
