@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 $body = <<<'HTML'
 <!doctype html>
@@ -34,15 +33,21 @@ $body = <<<'HTML'
     }
 
     button {
-      border: 2px solid #202124;
+      border: 2px solid black;
       padding: 12px 18px;
       font-size: 16px;
       cursor: pointer;
       background: white;
+      color: white;
+      font-weight: 700;
+      min-width: 96px;
+      border-radius: 999px;
+      transition: transform 120ms ease, filter 120ms ease;
     }
 
     button:hover {
-      background: #f1f3f4;
+      filter: brightness(1.05);
+      transform: translateY(-1px);
     }
   </style>
 </head>
@@ -60,6 +65,8 @@ $body = <<<'HTML'
     const buttons = document.querySelectorAll("button[data-color]");
 
     buttons.forEach((button) => {
+      button.style.backgroundColor = button.dataset.color;
+
       button.addEventListener("click", () => {
         document.body.style.background = button.dataset.color;
       });
@@ -69,8 +76,6 @@ $body = <<<'HTML'
 </html>
 HTML;
 
-echo "Content-Type: text/html; charset=utf-8\r\n";
-echo "Content-Length: " . strlen($body) . "\r\n";
-echo "\r\n";
+header("Content-Type: text/html; charset=utf-8");
 echo $body;
 ?>
