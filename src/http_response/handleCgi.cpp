@@ -75,6 +75,17 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 		{
 			std::string key = line.substr(0, p);
 			std::string val = line.substr(p + 1);
+			std::cout << "[DEBUG] CGI key-value: " << key << "[" << val << "]" << std::endl;
+
+			// trim whitespaces
+			while (!val.empty() && val.back() == ' ')
+				val.pop_back();
+			while (!val.empty() && val.front() == ' ')
+				val.erase(0, 1);
+
+			// skip if value empty
+			if (val.empty())
+				continue;
 
 			if (key == "Status")
 			{

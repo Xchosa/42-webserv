@@ -113,11 +113,11 @@ void HttpParser::parseHeader(const std::string& line)
 		c = std::tolower(c);
 	}
 
-	// trim optional white space at begin and end of value
-	while (val[0] == ' ')
+	// trim whitespaces
+	while (!val.empty() && val.back() == ' ')
+		val.pop_back();
+	while (!val.empty() && val.front() == ' ')
 		val.erase(0, 1);
-	while (val[val.length() - 1] == ' ')
-		val.erase(val.length() - 1, 1);
 
 	// validate important headers
 	if (key == "host")
