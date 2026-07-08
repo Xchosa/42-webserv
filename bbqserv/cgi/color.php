@@ -37,18 +37,10 @@ $body = <<<'HTML'
       padding: 12px 18px;
       font-size: 16px;
       cursor: pointer;
-      background: white;
       color: white;
       font-weight: 700;
-      min-width: 96px;
-      border-radius: 999px;
-      transition: transform 120ms ease, filter 120ms ease;
     }
 
-    button:hover {
-      filter: brightness(1.05);
-      transform: translateY(-1px);
-    }
   </style>
 </head>
 <body>
