@@ -5,6 +5,7 @@
 #include <sstream>
 #include <regex>
 #include <cctype>
+#include <charconv>
 
 #include "HttpRequest.hpp"
 #include "ServerConfig.hpp"
@@ -45,6 +46,7 @@ class HttpParser
 		bool			extractLine(std::string& buffer, std::string &line);
 		void			parseRequestLine(const std::string& line);
 		void			parseHeader(const std::string& line);
+		bool			decodePath(std::string& path);							// true on success, false on error
 
 		// validation
 		void			validateRequest();

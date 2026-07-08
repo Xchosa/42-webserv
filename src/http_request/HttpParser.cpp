@@ -74,6 +74,39 @@ void HttpParser::validateHeaderContentLen(const std::string& value)
 		_status = ERROR_400;
 }
 
+// true on success, false on error
+bool HttpParser::decodePath(std::string& path)
+{
+	if (path.find("%") == std::string::npos) // no encoded chars found, nothing to do here
+		return (true);
+
+	std::string decoded;
+	decoded.reserve(path.size());
+
+	for (size_t i = 0; i < path.size(); i++)
+	{
+		if (path[i] != '%')
+		{
+			decoded += path[i];
+			continue;
+		}
+		if (i + 2 >= path.size()) // not enough chars left
+			return (false);
+		
+		unsigned char byte;
+		auto result = std::from_chars(path.data() + i + 1, path.data() + i + 3, byte, 16);
+		if (result.ec != std::errc() || result.ptr != path.data() + i + 3)	// not two valid hex chars
+			return (false);
+		if (byte == 0)
+			return (false);	// reject null byte \0
+		
+		decoded += static_cast<char>(byte);
+		i += 2;
+	}
+	path = decoded;
+	return (true);
+}
+
 void HttpParser::parseRequestLine(const std::string& line)
 {
 	if (!std::regex_match(line, REGEX_REQUEST_LINE))
@@ -97,6 +130,9 @@ void HttpParser::parseRequestLine(const std::string& line)
 		_request._path = raw_path.substr(0, pos);
 		_request._query = raw_path.substr(pos + 1);
 	}
+
+	if (decodePath(_request._path) == false)
+		_status = ERROR_400;
 }
 
 static std::string lowercase(std::string str)
@@ -182,7 +218,7 @@ ParseStatus HttpParser::parseChunkedBody()
         }
 		if (ChunkSizeDez == 0)
 		{
-			if (_request._body.size() > _client_server_config->_client_max_body_size)
+			if (_client_server_config->_client_max_body_size != 0 && _request._body.size() > _client_server_config->_client_max_body_size)
 			{
 				_status = ERROR_413;
 				return(this->getStatus());
@@ -213,7 +249,7 @@ ParseStatus HttpParser::parseChunkedBody()
 			_status = ERROR_400;
 			return(this->getStatus());
 		}
-		if(_client_server_config->_client_max_body_size <= 0 || _request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
+		if(_client_server_config->_client_max_body_size != 0 && _request._body.length() + ChunkSizeDez > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
 			return(this->getStatus());
@@ -293,7 +329,7 @@ ParseStatus HttpParser::parseBuffer()
 			_status = ERROR_400;
 			return (this->getStatus());
 		}
-		if (_content_len_expected > _client_server_config->_client_max_body_size)
+		if (_client_server_config->_client_max_body_size != 0 && _content_len_expected > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
 			return (this->getStatus());

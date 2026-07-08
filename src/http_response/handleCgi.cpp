@@ -75,7 +75,7 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 		{
 			std::string key = line.substr(0, p);
 			std::string val = line.substr(p + 1);
-			std::cout << "[DEBUG] CGI key-value: " << key << "[" << val << "]" << std::endl;
+			// std::cout << "[DEBUG] CGI key-value: " << key << "[" << val << "]" << std::endl;
 
 			// trim whitespaces
 			while (!val.empty() && val.back() == ' ')
