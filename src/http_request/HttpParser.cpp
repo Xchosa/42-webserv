@@ -274,12 +274,21 @@ ParseStatus HttpParser::parseBuffer()
 	}
 	if (_state == BODY_CHUNKED)
 	{
+		if (_client_server_config == nullptr)
+		{
+			_status = ERROR_400;
+			return (this->getStatus());
+		}
 		_status = parseChunkedBody();
 	}
-
 	
-	if (_state == BODY_CONTENT_LEN) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
+	if (_state == BODY_CONTENT_LEN)
 	{
+		if (_client_server_config == nullptr)
+		{
+			_status = ERROR_400;
+			return (this->getStatus());
+		}
 		if (_content_len_expected > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
