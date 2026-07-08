@@ -12,6 +12,7 @@ void HttpParser::reset()
 	_state = REQUEST_LINE;
 	_content_len_expected = 0;
 	_client_server_config = nullptr;
+	_total_header_size = 0;
 	
 	_request._method.clear();
 	_request._path.clear();
@@ -227,6 +228,9 @@ ParseStatus HttpParser::parseBuffer()
 {
 	std::string line;
 
+	if (_status == ERROR_400 || _status == ERROR_413)
+		return (this->getStatus());
+
 	if (_state == REQUEST_LINE)
 	{
 		if (!extractLine(_raw_buffer, line))
@@ -311,13 +315,13 @@ void HttpParser::feedBuffer(const char *data, size_t n)
 {
 	_raw_buffer.append(data, n);
 	
-	// printRawBuffer();
-
-	// this->parseBuffer();
-
-	// printRequest();
-
-	// return (this->getStatus());
+	// count and check total header size
+	if (_state == REQUEST_LINE || _state == HEADERS)
+	{
+		_total_header_size += n;
+		if (_total_header_size > MAX_HEADER_SIZE)
+			_status = ERROR_400;
+	}
 }
 
 void HttpParser::printRawBuffer() const
