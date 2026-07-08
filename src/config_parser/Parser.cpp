@@ -227,6 +227,10 @@ void Parser::validateConfig(Config& c)
 				if (lc._upload == false && lc._cgi_map.size() == 0)
 					throw std::runtime_error("LocationConfig: Detected allowed 'POST' method without active upload or cgi settings!");
 			}
+
+			// upload "on" not allowed without post method
+			if (lc._upload == true && std::find(lc._methods.begin(), lc._methods.end(), "POST") == lc._methods.end())
+				throw std::runtime_error("LocationConfig: Detected Upload \"ON\" but POST is not an allowed method");
 		}
 	}
 }
