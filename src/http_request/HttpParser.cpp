@@ -128,7 +128,8 @@ void HttpParser::parseHeader(const std::string& line)
 	if (_status == ERROR_400)
 		return ;
 	
-	_request._headers[key] = val;
+	if (!val.empty())
+		_request._headers[key] = val;
 }
 
 
