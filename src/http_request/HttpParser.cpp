@@ -74,6 +74,39 @@ void HttpParser::validateHeaderContentLen(const std::string& value)
 		_status = ERROR_400;
 }
 
+// true on success, false on error
+bool HttpParser::decodePath(std::string& path)
+{
+	if (path.find("%") == std::string::npos) // no encoded chars found, nothing to do here
+		return (true);
+
+	std::string decoded;
+	decoded.reserve(path.size());
+
+	for (size_t i = 0; i < path.size(); i++)
+	{
+		if (path[i] != '%')
+		{
+			decoded += path[i];
+			continue;
+		}
+		if (i + 2 >= path.size()) // not enough chars left
+			return (false);
+		
+		unsigned char byte;
+		auto result = std::from_chars(path.data() + i + 1, path.data() + i + 3, byte, 16);
+		if (result.ec != std::errc() || result.ptr != path.data() + i + 3)	// not two valid hex chars
+			return (false);
+		if (byte == 0)
+			return (false);	// reject null byte \0
+		
+		decoded += static_cast<char>(byte);
+		i += 2;
+	}
+	path = decoded;
+	return (true);
+}
+
 void HttpParser::parseRequestLine(const std::string& line)
 {
 	if (!std::regex_match(line, REGEX_REQUEST_LINE))
@@ -97,6 +130,9 @@ void HttpParser::parseRequestLine(const std::string& line)
 		_request._path = raw_path.substr(0, pos);
 		_request._query = raw_path.substr(pos + 1);
 	}
+
+	if (decodePath(_request._path) == false)
+		_status = ERROR_400;
 }
 
 static std::string lowercase(std::string str)
