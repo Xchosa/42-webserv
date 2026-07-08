@@ -12,19 +12,19 @@ LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* 
 	{
 		const std::string&	cur_location = it.first;
 		size_t				cur_location_len = cur_location.length();
-		// std::cout << "search for: '" << cur_location << "' in '" << path << "'\n";
+		// std::cout << "[DEBUG] findLocation: search for: '" << cur_location << "' in '" << path << "'\n";
 
 		if (path.rfind(cur_location, 0) != 0)
 			continue;
 
-		if (path.length() > cur_location_len && path[cur_location_len] != '/')
+		if (path.length() > cur_location_len && cur_location[cur_location_len - 1] != '/' && path.length() > cur_location_len && path[cur_location_len] != '/')
 			continue;
 
 		if (cur_location_len > longest_match)
 		{
 			longest_match = cur_location_len;
 			lc = &it.second;
-			// std::cout << "'" << cur_location << "' ist neue location\n";
+			// std::cout << "[DEBUG] findLocation: '" << cur_location << "' ist neue location\n";
 		}
 	}
 	return (lc);
@@ -182,7 +182,10 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		// find location with longest path match
 		LocationConfig*	lc = this->findLocation(request._path, sc);
 		if (lc == nullptr)
+		{
+			std::cout << "[DEBUG] no path found " << std::endl;
 			throw HttpException(404);
+		}
 		
 		if (lc->_redirect_code.has_value())
 		{
