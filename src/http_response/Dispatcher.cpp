@@ -12,19 +12,19 @@ LocationConfig* Dispatcher::findLocation(const std::string& path, ServerConfig* 
 	{
 		const std::string&	cur_location = it.first;
 		size_t				cur_location_len = cur_location.length();
-		// std::cout << "search for: '" << cur_location << "' in '" << path << "'\n";
+		// std::cout << "[DEBUG] findLocation: search for: '" << cur_location << "' in '" << path << "'\n";
 
 		if (path.rfind(cur_location, 0) != 0)
 			continue;
 
-		if (path.length() > cur_location_len && path[cur_location_len] != '/')
+		if (path.length() > cur_location_len && cur_location[cur_location_len - 1] != '/' && path.length() > cur_location_len && path[cur_location_len] != '/')
 			continue;
 
 		if (cur_location_len > longest_match)
 		{
 			longest_match = cur_location_len;
 			lc = &it.second;
-			// std::cout << "'" << cur_location << "' ist neue location\n";
+			// std::cout << "[DEBUG] findLocation: '" << cur_location << "' ist neue location\n";
 		}
 	}
 	return (lc);
@@ -161,13 +161,20 @@ void Dispatcher::isWithin(const std::string& base_path, std::string& user_path)
 	std::filesystem::path fs_user_path = std::filesystem::absolute(user_path).lexically_normal();
 	
 	user_path = fs_user_path.string();
-	std::string base_path_norm = fs_base_path.string() + "/" ; 
-	std::string user_path_for_check = user_path + "/";
 
-	// std::cout << "[DEBUG] base_path: " << base_path_norm << std::endl;
-	// std::cout << "[DEBUG] user_path: " << user_path_for_check << std::endl;
+	// protection for paths with same prefix
+	std::string base_path_compare = fs_base_path.string();
+	if (!base_path_compare.empty() && base_path_compare.back() != '/')
+		base_path_compare.append("/");
+	
+	std::string user_path_compare = fs_user_path.string();
+	if (!user_path_compare.empty() && user_path_compare.back() != '/')
+		user_path_compare.append("/");
 
-	size_t n = user_path_for_check.find(base_path_norm);
+	// std::cout << "[DEBUG] base_path to compare: " << base_path_compare << std::endl;
+	// std::cout << "[DEBUG] user_path to compare: " << user_path_compare << std::endl;
+
+	size_t n = user_path_compare.find(base_path_compare);
 	if (n != 0 || n == std::string::npos)
 	{
 		std::cout << "[INFO]  user_path is not in base_path, throw error" << std::endl;
@@ -182,7 +189,10 @@ DispatchResult Dispatcher::dispatch(const HttpRequest& request, ServerConfig* sc
 		// find location with longest path match
 		LocationConfig*	lc = this->findLocation(request._path, sc);
 		if (lc == nullptr)
+		{
+			std::cout << "[DEBUG] no path found " << std::endl;
 			throw HttpException(404);
+		}
 		
 		if (lc->_redirect_code.has_value())
 		{
