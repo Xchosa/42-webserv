@@ -115,13 +115,14 @@ void Server::recvClientData(int client_fd)
 
 void Server::sendToClient(int client_fd)
 {
+	ClientInfos& client = _clients[client_fd];
 
-	std::string response = _clients[client_fd]._response.serialize();
-	while (!response.empty())
+	if (client._response_buffer.empty())
+			client._response_buffer = _clients[client_fd]._response.serialize();
+	//std::string response = _clients[client_fd]._response.serialize();
+	while (!client._response_buffer.empty())
 	{
-		int i = 0;
-		i++;
-		ssize_t bytes = send(client_fd, response.c_str(), response.length(), 0 );
+		ssize_t bytes = send(client_fd, client._response_buffer.c_str(), client._response_buffer.length(), 0 );
 		if (bytes < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -129,9 +130,18 @@ void Server::sendToClient(int client_fd)
 			closeClient(client_fd);
 			return;
 		}
-		response.erase(0, bytes);
+		if(bytes == 0)
+			return;
+
+		client._response_buffer.erase(0, bytes);
 	}
 
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
+	{
 		closeClient(client_fd);
+		return;
+	}
+
+	client._response = HttpResponse();
+	client._response_buffer.clear();
 }
