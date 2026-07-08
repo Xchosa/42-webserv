@@ -98,6 +98,13 @@ void HttpParser::parseRequestLine(const std::string& line)
 	}
 }
 
+static std::string lowercase(std::string str)
+{
+	for (auto& c : str)
+		c = std::tolower(static_cast<unsigned char>(c));
+	return (str);
+}
+
 void HttpParser::parseHeader(const std::string& line)
 {
 	size_t pos = line.find(":");
@@ -108,10 +115,7 @@ void HttpParser::parseHeader(const std::string& line)
 	std::string key = line.substr(0, pos);
 	std::string val = line.substr(pos + 1);
 
-	for (char& c : key)
-	{
-		c = std::tolower(c);
-	}
+	key = lowercase(key);
 
 	// trim whitespaces
 	while (!val.empty() && val.back() == ' ')
@@ -243,7 +247,7 @@ ParseStatus HttpParser::parseBuffer()
 				_status = HEADER_COMPLETE;
 
 				// choose what happens next
-				if (_request._headers.count("transfer-encoding") && _request._headers["transfer-encoding"] == "chunked")
+				if (_request._headers.count("transfer-encoding") && lowercase(_request._headers["transfer-encoding"]) == "chunked")
 				{
 					_state = BODY_CHUNKED;
 					return (this->getStatus());
