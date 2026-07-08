@@ -12,6 +12,7 @@ void HttpParser::reset()
 	_state = REQUEST_LINE;
 	_content_len_expected = 0;
 	_client_server_config = nullptr;
+	_total_header_size = 0;
 	
 	_request._method.clear();
 	_request._path.clear();
@@ -98,6 +99,13 @@ void HttpParser::parseRequestLine(const std::string& line)
 	}
 }
 
+static std::string lowercase(std::string str)
+{
+	for (auto& c : str)
+		c = std::tolower(static_cast<unsigned char>(c));
+	return (str);
+}
+
 void HttpParser::parseHeader(const std::string& line)
 {
 	size_t pos = line.find(":");
@@ -108,16 +116,13 @@ void HttpParser::parseHeader(const std::string& line)
 	std::string key = line.substr(0, pos);
 	std::string val = line.substr(pos + 1);
 
-	for (char& c : key)
-	{
-		c = std::tolower(c);
-	}
+	key = lowercase(key);
 
-	// trim optional white space at begin and end of value
-	while (val[0] == ' ')
+	// trim whitespaces
+	while (!val.empty() && val.back() == ' ')
+		val.pop_back();
+	while (!val.empty() && val.front() == ' ')
 		val.erase(0, 1);
-	while (val[val.length() - 1] == ' ')
-		val.erase(val.length() - 1, 1);
 
 	// validate important headers
 	if (key == "host")
@@ -128,7 +133,8 @@ void HttpParser::parseHeader(const std::string& line)
 	if (_status == ERROR_400)
 		return ;
 	
-	_request._headers[key] = val;
+	if (!val.empty())
+		_request._headers[key] = val;
 }
 
 
@@ -222,6 +228,9 @@ ParseStatus HttpParser::parseBuffer()
 {
 	std::string line;
 
+	if (_status == ERROR_400 || _status == ERROR_413)
+		return (this->getStatus());
+
 	if (_state == REQUEST_LINE)
 	{
 		if (!extractLine(_raw_buffer, line))
@@ -242,7 +251,7 @@ ParseStatus HttpParser::parseBuffer()
 				_status = HEADER_COMPLETE;
 
 				// choose what happens next
-				if (_request._headers.count("transfer-encoding") && _request._headers["transfer-encoding"] == "chunked")
+				if (_request._headers.count("transfer-encoding") && lowercase(_request._headers["transfer-encoding"]) == "chunked")
 				{
 					_state = BODY_CHUNKED;
 					return (this->getStatus());
@@ -269,12 +278,21 @@ ParseStatus HttpParser::parseBuffer()
 	}
 	if (_state == BODY_CHUNKED)
 	{
+		if (_client_server_config == nullptr)
+		{
+			_status = ERROR_400;
+			return (this->getStatus());
+		}
 		_status = parseChunkedBody();
 	}
-
 	
-	if (_state == BODY_CONTENT_LEN) // _selected_server benoetigt, darauf pruefen innerhalb des blocks!
+	if (_state == BODY_CONTENT_LEN)
 	{
+		if (_client_server_config == nullptr)
+		{
+			_status = ERROR_400;
+			return (this->getStatus());
+		}
 		if (_content_len_expected > _client_server_config->_client_max_body_size)
 		{
 			_status = ERROR_413;
@@ -297,13 +315,13 @@ void HttpParser::feedBuffer(const char *data, size_t n)
 {
 	_raw_buffer.append(data, n);
 	
-	// printRawBuffer();
-
-	// this->parseBuffer();
-
-	// printRequest();
-
-	// return (this->getStatus());
+	// count and check total header size
+	if (_state == REQUEST_LINE || _state == HEADERS)
+	{
+		_total_header_size += n;
+		if (_total_header_size > MAX_HEADER_SIZE)
+			_status = ERROR_400;
+	}
 }
 
 void HttpParser::printRawBuffer() const

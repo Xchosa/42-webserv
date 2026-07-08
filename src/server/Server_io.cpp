@@ -27,36 +27,6 @@ void Server::acceptClient(int server_fd)
 
 }
 
-HttpResponse DUMMY_response_OK()
-{
-	HttpResponse re;
-
-	re._status_code = 200;
-	re._status_text = "OK";
-	re._version = "HTTP/1.1";
-	re._body = "Okay!\n";
-	re._headers["Content-Length"] = std::to_string(re._body.length());
-	re._headers["Content-Type"] = "text/plain";
-	re._headers["Connection"] = "keep-alive";
-
-	return (re);
-}
-
-HttpResponse DUMMY_response_ERR400()
-{
-	HttpResponse re;
-
-	re._status_code = 400;
-	re._status_text = "Bad Request";
-	re._version = "HTTP/1.1";
-	re._body = "Fehler du versager!\n";
-	re._headers["Content-Length"] = std::to_string(re._body.length());
-	re._headers["Content-Type"] = "text/plain";
-	re._headers["Connection"] = "close";
-
-	return (re);
-}
-
 int	Server::checklastActivity(int client_fd)
 {
 	int time_delta = time(NULL)- _clients[client_fd]._last_activity;
@@ -82,19 +52,12 @@ void Server::recvClientData(int client_fd)
 				_clients[client_fd].selectVirtualHost();
 				parse_status = _clients[client_fd]._parser.parseBuffer();
 			}
-
 			if (parse_status == COMPLETE && _clients[client_fd]._selected_server == nullptr) // request complete parsed, no body, search now for correct sever
 				_clients[client_fd].selectVirtualHost();
 
 			if (parse_status == COMPLETE)
 			{
-				// _clients[client_fd]._parser.printRequest();
 				std::cout << "[INFO]  Client " << client_fd << ": request complete" << std::endl;
-				
-				
-				// 2. dispatcher aufrufen um passende location rauszusuchen und handler aufzurufen
-				
-					// HIER WETIERMACHEN MIT REGISTRIEREN EPOLL ETC WENN CGI PENING
 
 				HttpResponse	response;
 				CgiSession		cgi;
@@ -110,25 +73,17 @@ void Server::recvClientData(int client_fd)
 					addFdEpoll(cgi._stdout_fd, EPOLLIN);
 					_cgi_fd_client_owner[cgi._stdout_fd] = client_fd;
 
-					if (!cgi._body.empty()) // wenn kein body dann nicht registrieren
+					if (!cgi._body.empty()) // no body, no need to register stdin pipe
 					{
 						addFdEpoll(cgi._stdin_fd, EPOLLOUT);
 						_cgi_fd_client_owner[cgi._stdin_fd] = client_fd;
 					}
 				}
-				// _clients[client_fd]._response = DUMMY_response_OK();
-
-
-				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
 				break;
 			}
 			else if (parse_status == ERROR_400)
 			{
-				// error reponse muss noch raus an den client, nicht direkt schliessen
-				// _clients[client_fd]._response = DUMMY_response_ERR400();
 				_clients[client_fd]._response = _dispatcher.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
-				//modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
-				// closeClient(client_fd);
 				break;
 			}
 			else if (parse_status == ERROR_413)
@@ -150,7 +105,7 @@ void Server::recvClientData(int client_fd)
   		}
 		else
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)// no data available right now
+			if (errno == EAGAIN || errno == EWOULDBLOCK) // no data available right now
   				break;
 			closeClient(client_fd);
   			break;
@@ -175,12 +130,8 @@ void Server::sendToClient(int client_fd)
 			return;
 		}
 		response.erase(0, bytes);
-
 	}
-	// std::cout << "Completed data sending to Browser from client_fd: " << client_fd << std::endl;
 
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
-	{
 		closeClient(client_fd);
-	}
 }

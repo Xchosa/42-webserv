@@ -11,6 +11,7 @@
 
 inline const std::regex REGEX_REQUEST_LINE{R"(^(GET|POST|DELETE) \/[\x21-\x7E]{0,2047} HTTP\/1\.1$)"};
 inline constexpr std::string_view FORBIDDEN_HOST_CHARS = "*?{}();\n\t#\"' \\/";
+inline constexpr size_t MAX_HEADER_SIZE = 8192; // 8 kb
 
 enum ParseStatus
 {
@@ -39,6 +40,7 @@ class HttpParser
 		ParseState		_state = REQUEST_LINE;
 		size_t			_content_len_expected = 0;
 		ServerConfig*	_client_server_config = nullptr;
+		size_t			_total_header_size = 0;
 
 		bool			extractLine(std::string& buffer, std::string &line);
 		void			parseRequestLine(const std::string& line);
