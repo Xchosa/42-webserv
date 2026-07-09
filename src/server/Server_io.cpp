@@ -83,11 +83,13 @@ void Server::recvClientData(int client_fd)
 			}
 			else if (parse_status == ERROR_400)
 			{
+				std::cout << "[INFO]  Client " << client_fd << ": error on parsing http request throw 400" << std::endl;
 				_clients[client_fd]._response = _dispatcher.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				break;
 			}
 			else if (parse_status == ERROR_413)
 			{
+				std::cout << "[INFO]  Client " << client_fd << ": error on parsing http request throw 413" << std::endl;
 				_clients[client_fd]._response = _dispatcher.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
 				break;
 			}
@@ -134,7 +136,7 @@ void Server::sendToClient(int client_fd)
 
 		client._response_buffer.erase(0, bytes);
 	}
-	std::cout << "[INFO]  Successfully send response to Client " << client_fd << std::endl;
+	std::cout << "[INFO]  Client " << client_fd << ": successfully send response" << std::endl;
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
 	{
 		closeClient(client_fd);

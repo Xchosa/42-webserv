@@ -41,7 +41,7 @@ bool Server::isCgiPipeFd(int fd) const
 
 void Server::closeClient(int client_fd)
 {
-	std::cout << "[INFO]  Client " << client_fd << " closed" << std::endl;
+	std::cout << "[INFO]  Client " << client_fd << ": closed" << std::endl;
 	if (_clients[client_fd]._cgi.has_value())
 	{
 		killCgi(client_fd, 0);
