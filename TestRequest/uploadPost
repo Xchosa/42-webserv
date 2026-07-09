@@ -1,0 +1,14 @@
+printf 'POST /maus/test.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World' | nc localhost 8081
+
+curl -i -X POST \
+    -H "Content-Type: application/pdf" \
+    --data-binary @/home/poverbec/Documents/big.pdf \
+    http://127.0.0.1:8081/upload/big.pdf
+
+#dd if=/dev/urandom of=big.pdf bs=1M count=20
+
+curl -i -X POST \
+    -H "Transfer-Encoding: chunked" \
+    -H "Content-Type: application/pdf" \
+    --data-binary @/home/poverbec/Documents/big.pdf\
+    http://127.0.0.1:8081/upload/big-chunked.pdf
