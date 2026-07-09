@@ -18,7 +18,6 @@
 #include "Config.hpp"
 #include "Dispatcher.hpp"
 
-
 inline constexpr size_t MAXEVENTS = 64;
 
 inline constexpr int IDLE_TIME = 5;				// how long epoll_wait blocks until it go further
@@ -26,16 +25,15 @@ inline constexpr int KEEP_ALIVE_TIMEOUT = 45;
 inline constexpr int CGI_TIMEOUT = 30;
 inline constexpr int CHECK_FOR_TIMEOUTS = 5;
 
-
 class Server
 {
 	private:
-		Config							_config;				// alle server configs
-		int 							_epoll_fd;				// fd von epoll
+		Config							_config;				// all server configs
+		int 							_epoll_fd;
 		std::map<int, ListenContext>	_socket_fds;			// key = server_fd, value ListenContext*
-		std::map<int, ClientInfos>		_clients;				// einzelner client lebt von accept() bis close() bevor er wieder aus der map entfernt wird
+		std::map<int, ClientInfos>		_clients;				// client lifes from accept() until close(), bevor he gets removed from the map
 		Dispatcher						_dispatcher;
-		std::map<int, int>				_cgi_fd_client_owner;	// haelt fest welcher pipe fd zu welchem client gehoert, gefuellt in recvClientData()
+		std::map<int, int>				_cgi_fd_client_owner;	// capture which pipe_fd belongs to which client, captured in recvClientData()
 		time_t							_last_timeout_check;
 	
 		void			setNonBlocking(int server_fd);
@@ -69,14 +67,13 @@ class Server
 	public:
 		// OCF
 		Server() = delete;
-		Server(const Config& config);					// constructor initialisiert _config und _epoll_fd via epoll_create1()
+		Server(const Config& config);						// constructor initialize _config and _epoll_fd via epoll_create1()
 		Server(const Server& other) = delete;
 		Server& operator=(const Server& other) = delete;
-		~Server();										// destructor muss epoll und alle client_fds closen
+		~Server();											// destructor closes epoll and all client_fds
 
 		void run();
-
 };
 
-	void signalHandler(int sig);
-	void initSignal(void);
+void signalHandler(int sig);
+void initSignal(void);

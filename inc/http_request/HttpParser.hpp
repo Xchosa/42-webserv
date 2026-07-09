@@ -63,11 +63,11 @@ class HttpParser
 		// member functions
 		ParseStatus			getStatus() const;
 		ParseStatus 		parseChunkedBody();
-		void		 		feedBuffer(const char* data, size_t n);	// feed nach jedem recv() callen und dann status returnen (INCOMPLETE, COMPLETE, ...)
+		void		 		feedBuffer(const char* data, size_t n);		// call after each recv()
 		ParseStatus			parseBuffer();
 		void				setServerConfig(ServerConfig* conf);
-		const HttpRequest&	getRequest() const;					// damit client auf request struct zugreifen kann, vorher auch pruefen ob status = COMPLETE!
-		void				reset();							// _raw_buffer, _request, _status leeren, damit parser bereit fuer naechsten request auf derselben verbindung
+		const HttpRequest&	getRequest() const;
+		void				reset();									// clean attributs so parser is ready for new request on the same connection
 	
 		// for debugging
 		void	printRawBuffer() const;

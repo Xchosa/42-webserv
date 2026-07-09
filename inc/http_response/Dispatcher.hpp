@@ -11,7 +11,6 @@
 #include <sys/wait.h>
 #include <filesystem>
 #include <vector>
-//#include <cassert>
 
 #include "ServerConfig.hpp"
 #include "LocationConfig.hpp"
@@ -37,7 +36,7 @@ enum DispatchResult
 class Dispatcher
 {
 	private:
-		// handler (baut response)
+		// handler (builds response)
 		HttpResponse handleRedirect(LocationConfig* lc, const HttpRequest& request);
 		HttpResponse handleStatic(const HttpRequest& request, LocationConfig* lc);
 		HttpResponse handleUpload(const HttpRequest& request, LocationConfig* lc);
@@ -58,7 +57,6 @@ class Dispatcher
 		bool			createDirAndFile(const HttpRequest& request, std::string uploadpath);
 		bool			fileExists(const std::string& target) const;
 		void			validateUploadTarget(const std::string& target) const;
-		
 
 		// handle cgi
 		std::string		upperString(std::string str) const;
@@ -82,6 +80,5 @@ class Dispatcher
 		std::string		getConnectionMode(const std::map<std::string, std::string>& headers) const;
 		HttpResponse	parseCgiOutput(std::string& output);
 };
-
 
 std::string resolvePath(std::string new_path);
