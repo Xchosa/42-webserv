@@ -198,6 +198,9 @@ void Parser::validateConfig(Config& c)
 
 		if (sc._listen_port == 0)
 			throw std::runtime_error("ServerConfig: Detected Server without listen port!");
+
+		if (sc._server_names.size() == 0)
+			throw std::runtime_error("ServerConfig: Detected Server without server name");
 		
 		if (sc._is_default_server == true)
 			count_default_server++;
