@@ -1,1 +1,1 @@
-Hallo Welt! Dies ist eine statische Textdatei.
+Hello! This is a static text file.
