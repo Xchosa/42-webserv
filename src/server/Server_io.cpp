@@ -119,7 +119,6 @@ void Server::sendToClient(int client_fd)
 
 	if (client._response_buffer.empty())
 			client._response_buffer = _clients[client_fd]._response.serialize();
-	//std::string response = _clients[client_fd]._response.serialize();
 	while (!client._response_buffer.empty())
 	{
 		ssize_t bytes = send(client_fd, client._response_buffer.c_str(), client._response_buffer.length(), 0 );
@@ -135,7 +134,7 @@ void Server::sendToClient(int client_fd)
 
 		client._response_buffer.erase(0, bytes);
 	}
-
+	std::cout << "[INFO]  Successfully send response to Client " << client_fd << std::endl;
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
 	{
 		closeClient(client_fd);
