@@ -12,6 +12,7 @@
 #include <map>
 #include <csignal>
 #include <signal.h>
+#include <arpa/inet.h>
 
 #include "ClientInfos.hpp"
 #include "Config.hpp"

@@ -53,7 +53,7 @@ void Server::closeClient(int client_fd)
 
 void Server::killCgi(int client_fd, int error_code)
 {
-	ClientInfos*	client = &_clients[client_fd];				// current client
+	ClientInfos*	client = &_clients[client_fd]; // current client
 
 	std::cout << "[INFO]  CGI KILL client " << client_fd << std::endl;
 
