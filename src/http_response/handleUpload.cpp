@@ -68,7 +68,7 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_p
 	std::ofstream NewFile(user_path, std::ios::binary);
 	if (!NewFile.is_open())
 	{
-		std::cout << "[INFO] Permission Error " << checkedTargetDir << std::endl ;
+		std::cout << "[INFO]  Permission Error " << checkedTargetDir << std::endl ;
 		throw HttpException(500);
 	}
 	NewFile.write(request._body.data(), request._body.size());
@@ -91,7 +91,7 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 	isWithin(uploadpath + lc->_name, user_path);
 	fileExisted = createDirAndFile(request, user_path);
 	
-	std::cout << "[INFO] Location of uploadfile: " << user_path << std::endl;
+	std::cout << "[INFO]  Location of uploadfile: " << user_path << std::endl;
 
 	HttpResponse respond;
 	respond._version = "HTTP/1.1";
