@@ -164,7 +164,14 @@ void HttpParser::parseHeader(const std::string& line)
 	if (key == "host")
 		validateHeaderHost(val);
 	else if (key == "content-length")
+	{
+		if (_request._headers.count("content-length") != 0) // throw error on doubled content-length header
+		{
+			_status = ERROR_400;
+			return ;
+		}
 		validateHeaderContentLen(val);
+	}
 	
 	if (_status == ERROR_400)
 		return ;
