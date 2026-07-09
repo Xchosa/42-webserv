@@ -57,7 +57,7 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 		throw std::runtime_error("bind failed");
 	}
 
-	if (listen(server_fd, SOMAXCONN) == -1) // 
+	if (listen(server_fd, SOMAXCONN) == -1)
 	{
 		close(server_fd);
 		throw std::runtime_error("listen failed");
@@ -84,8 +84,8 @@ void Server::checkHostWithSamePort(std::map<std::string, ListenContext>& context
   		return;
 
 	}
-	// if new host is wildcard , loop whether any specific host listens on that port. same hosts still work-> get grouped together
 
+	// if new host is wildcard , loop whether any specific host listens on that port. same hosts still work-> get grouped together
 	for (const auto&[key,ListenContext] : contexts_by_listen)
   	{
   		if (ListenContext._port == port && ListenContext._host != "0.0.0.0")
@@ -122,7 +122,7 @@ ListenContext& Server::getOrCreateListenContext(
 
 void Server::setupListeningSockets()
 {
-		// 0.0.0.0:9091 => key
+	// 0.0.0.0:9091 => key
 	std::map<std::string, ListenContext> contexts_by_listen;
 
 	for (size_t i = 0; i < _config._servers.size(); ++i)
@@ -131,12 +131,12 @@ void Server::setupListeningSockets()
 		ListenContext& listenContext =getOrCreateListenContext(contexts_by_listen, server_config);
 
 		listenContext._candidates.push_back(std::move(server_config));
-		std::cout << "listen "
-  		  << listenContext._host << ":"
-  		  << listenContext._port
-  		  << " candidates now: "
-  		  << listenContext._candidates.size()
-  		  << std::endl;
+		// std::cout << "listen "
+  		//   << listenContext._host << ":"
+  		//   << listenContext._port
+  		//   << " candidates now: "
+  		//   << listenContext._candidates.size()
+  		//   << std::endl;
 
 		if (server_config->_is_default_server)
 			listenContext._default_server = server_config;
@@ -147,7 +147,6 @@ void Server::setupListeningSockets()
 		serverName._fd = server_fd;
 		_socket_fds[server_fd] = serverName;
 		addFdEpoll(server_fd, EPOLLIN);
-		std::cout << "Server Fd: " << serverName._default_server << " | Host: " << serverName._host << " | Port: " << serverName._port << std::endl;
 	}
 }
 
