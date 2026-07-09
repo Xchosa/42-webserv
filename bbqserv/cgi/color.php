@@ -14,7 +14,6 @@ $body = <<<'HTML'
       font-family: Arial, sans-serif;
       background: white;
       color: #202124;
-      transition: background 180ms ease;
     }
 
     main {
