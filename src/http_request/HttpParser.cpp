@@ -172,6 +172,14 @@ void HttpParser::parseHeader(const std::string& line)
 		}
 		validateHeaderContentLen(val);
 	}
+	else if (key == "transfer-encoding") // only transfer-encoding chunked erlaubt
+	{
+		if (lowercase(val) != "chunked")
+		{
+			_status = ERROR_400;
+			return ;
+		}
+	}
 	
 	if (_status == ERROR_400)
 		return ;
