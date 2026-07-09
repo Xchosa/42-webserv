@@ -2,7 +2,6 @@
 import os
 import sys
 from urllib.parse import parse_qs
-import time
 
 method = os.environ.get("REQUEST_METHOD", "GET")
 
@@ -18,10 +17,7 @@ else:
 
 body_html = f"<html><body><h1>Hallo {name}!</h1></body></html>"
 
-# time.sleep(5)
-
 print("Content-Type: text/html")
-print("Status: a204 No content")
 print(f"Content-Length: {len(body_html)}")
 print()
 print(body_html, end="")
