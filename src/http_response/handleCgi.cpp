@@ -33,6 +33,8 @@ void Dispatcher::buildEnv(std::vector<std::string>& env, const HttpRequest& requ
 	// add request header
 	for (auto &h : request._headers)
 	{
+		if (h.first == "content-type" || h.first == "content-length")
+			continue;
 		env.push_back("HTTP_" + upperString(h.first) + "=" + h.second);
 	}
 }
