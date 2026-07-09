@@ -34,8 +34,33 @@ Server::~Server()
 void Server::run()
 {
 	setupListeningSockets();
+
+	// LOGGING
 	for (const auto& [fd, context] : _socket_fds)
-		std::cout << "Server FD: " << fd << " | Port: " << context._port << std::endl;
+	{
+		bool		first = true;
+		std::string	server_names;
+		for (ServerConfig* sc : context._candidates)
+		{
+			for (std::string& name : sc->_server_names)
+			{
+				if (name.empty())
+					continue;
+				if (!first)
+					server_names += ", ";
+				server_names += name;
+				first = false;
+			}
+		}
+		std::cout 	<< "listening on " 
+					<< context._host << ":" << context._port 
+					<< " (fd=" << fd << ", " << context._candidates.size() 
+					<< (context._candidates.size() == 1 ? " virtual host" : " virtual hosts")
+					<< " [" << server_names << "]"
+					<< ")" << std::endl;
+	}
+	// LOGGING END
+
 	epoll_event triggeredEvents[MAXEVENTS];
 	initSignal();
 	
