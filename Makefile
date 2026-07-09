@@ -74,7 +74,7 @@ debug: CXXFLAGS += $(FLAG_DEBUG)
 debug: $(NAME)
 
 run: $(NAME)
-	./$(NAME) conf/gha.conf
+	./$(NAME) conf/main.conf
 
 run2: $(NAME)
 	./$(NAME) conf/pov.conf
