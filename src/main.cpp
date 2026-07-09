@@ -2,7 +2,6 @@
 #include "Parser.hpp"
 #include "Server.hpp"
 
-
 Config startParseConfig(const std::string& conf_file_path)
 {
 	Config config;

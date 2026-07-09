@@ -35,7 +35,6 @@ void Dispatcher::validateUploadTarget(const std::string& target) const
 	throw HttpException(400);
 }
 
-
 bool Dispatcher::fileExists(const std::string& target) const
 {
 	struct stat statbuf;
@@ -53,8 +52,6 @@ std::string resolvePath(std::string new_path)
 	std::string path = std::filesystem::path(new_path).lexically_normal();
 	return path;
 }
-
-
 
 bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_path)
 {
@@ -82,7 +79,6 @@ bool Dispatcher::createDirAndFile(const HttpRequest& request, std::string user_p
 	return fileExisted ;
 }
 
-
 HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig* lc)
 {
 	std::cout << "[INFO]  entered upload handler" << std::endl;
@@ -92,7 +88,7 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 	std::string uploadpath = getFullRootPath(lc);
 	std::string user_path = uploadpath + request._path;
 	validateUploadTarget(user_path);
-	isWithin(uploadpath + lc->_name, user_path);// normal .danceserv/maus/x/x 
+	isWithin(uploadpath + lc->_name, user_path);
 	fileExisted = createDirAndFile(request, user_path);
 	
 	std::cout << "[INFO] Location of uploadfile: " << user_path << std::endl;
@@ -102,7 +98,7 @@ HttpResponse Dispatcher::handleUpload(const HttpRequest& request, LocationConfig
 	if (fileExisted)
 	{
 		respond._status_code = 200;
-		respond._status_text = getStatusText(respond._status_code); // overwrites file 204 No Content auch moeglich
+		respond._status_text = getStatusText(respond._status_code);
 	}
 	else
 	{

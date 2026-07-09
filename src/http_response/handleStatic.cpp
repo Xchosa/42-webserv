@@ -4,17 +4,14 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 {
 	std::cout << "[INFO]  entered static handler" << std::endl;
 
-	HttpResponse r;
-
 	if (lc == nullptr)
 		throw HttpException(500);
+	HttpResponse r;
 
 	std::string full_path = getFullRootPath(lc) + request._path;
 	isWithin(getFullRootPath(lc) + lc->_name, full_path);
 
-
-
-	// pfad vorhanden?
+	// path exist?
 	struct stat statbuf;
 	if (stat(full_path.c_str(), &statbuf) == -1)
 		throw HttpException(404);
@@ -80,7 +77,6 @@ HttpResponse Dispatcher::handleStatic(const HttpRequest &request, LocationConfig
 	return (r);
 }
 
-
 std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::string& request_path)
 {
 	// only enters, if path is a directory, and within the location , and got permissions
@@ -131,10 +127,7 @@ std::string Dispatcher::autoIndexBody(const std::string& dir_path, const std::st
 		std::cerr << e.what() << '\n';
 		throw HttpException(500);
 	}
-	
 
-	
-	
 	body += "</ul>\n";
 	body += "</body>\n";
 	body += "</html>\n";
