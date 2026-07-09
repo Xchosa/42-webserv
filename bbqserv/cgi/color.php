@@ -1,5 +1,13 @@
 <?php
-$body = <<<'HTML'
+$allowed = ["red", "blue", "green", "white"];
+$color = $_GET["name"] ?? "white";
+
+if (!in_array($color, $allowed, true))
+{
+  $color = "white";
+}
+header("Content-Type: text/html; charset=utf-8");
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,8 +20,7 @@ $body = <<<'HTML'
       display: grid;
       place-items: center;
       font-family: Arial, sans-serif;
-      background: white;
-      color: #202124;
+      background: <?= htmlspecialchars($color, ENT_QUOTES, "UTF-8") ?>;
     }
 
     main {
@@ -65,8 +72,3 @@ $body = <<<'HTML'
   </script>
 </body>
 </html>
-HTML;
-
-header("Content-Type: text/html; charset=utf-8");
-echo $body;
-?>

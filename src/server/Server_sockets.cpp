@@ -1,6 +1,4 @@
 #include "Server.hpp"
-#include <arpa/inet.h>
-
 
 std::string Server::normalizeListenHost(const std::string& host)
 {
@@ -23,7 +21,6 @@ void Server::setNonBlocking(int server_fd)
 	}
 	if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1)
   		throw std::runtime_error("failed to set fd non_blocking");
-
 }
 
 int Server::createListeningSocket(const ServerConfig& server_config)
@@ -64,10 +61,8 @@ int Server::createListeningSocket(const ServerConfig& server_config)
 	}
 
 	setNonBlocking(server_fd);
-
 	return server_fd;
 }
-
 
 void Server::checkHostWithSamePort(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config)
 {
@@ -94,15 +89,10 @@ void Server::checkHostWithSamePort(std::map<std::string, ListenContext>& context
 
 }
 
-
-ListenContext& Server::getOrCreateListenContext(
-  	std::map<std::string, ListenContext>& contexts_by_listen,
-  	ServerConfig* server_config
-  )
+ListenContext& Server::getOrCreateListenContext(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config)
 {
 	//_listen_host +:+_listen_port = 0.0.0.0:8081
 	std::string listen_key = makeListenKey(*server_config);
-
 
   	if (contexts_by_listen.find(listen_key) == contexts_by_listen.end())
   	{
@@ -119,7 +109,6 @@ ListenContext& Server::getOrCreateListenContext(
   	return contexts_by_listen[listen_key];
 }
 
-
 void Server::setupListeningSockets()
 {
 	// 0.0.0.0:9091 => key
@@ -131,12 +120,6 @@ void Server::setupListeningSockets()
 		ListenContext& listenContext =getOrCreateListenContext(contexts_by_listen, server_config);
 
 		listenContext._candidates.push_back(std::move(server_config));
-		// std::cout << "listen "
-  		//   << listenContext._host << ":"
-  		//   << listenContext._port
-  		//   << " candidates now: "
-  		//   << listenContext._candidates.size()
-  		//   << std::endl;
 
 		if (server_config->_is_default_server)
 			listenContext._default_server = server_config;
@@ -149,4 +132,3 @@ void Server::setupListeningSockets()
 		addFdEpoll(server_fd, EPOLLIN);
 	}
 }
-

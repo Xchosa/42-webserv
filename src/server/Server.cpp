@@ -2,12 +2,13 @@
 
 extern volatile std::sig_atomic_t gSignalStatus;
 
-// constructor initialisiert _config und _epoll_fd via epoll_create1()
+// constructor initialise _config and _epoll_fd via epoll_create1()
 Server::Server(const Config &config) : _config(config) , _epoll_fd(epoll_create1(0))
 {
 	if (_epoll_fd == -1)
 		throw std::runtime_error("Failed to create epoll file descriptor");
 }
+
 Server::~Server()
 {
 	// destroy _epoll instance
@@ -129,7 +130,7 @@ void Server::run()
 			{
 				recvClientData(fd);
 				ParseStatus status = _clients[fd]._parser.getStatus();
-				if ((status == COMPLETE || status == ERROR_400 || status == ERROR_413) && !_clients[fd]._cgi.has_value()) // nur senden wenn response ready und kein cgi
+				if ((status == COMPLETE || status == ERROR_400 || status == ERROR_413) && !_clients[fd]._cgi.has_value()) // only send when response ready and no cgi
 				{
 					modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
 					_clients[fd]._parser.reset();
