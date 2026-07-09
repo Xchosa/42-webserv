@@ -76,9 +76,6 @@ debug: $(NAME)
 run: $(NAME)
 	./$(NAME) conf/main.conf
 
-run2: $(NAME)
-	./$(NAME) conf/pov.conf
-
 valgrind: fclean debug
 	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./$(NAME) conf/gha.conf
 
