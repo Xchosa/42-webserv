@@ -2,6 +2,7 @@
 
 extern volatile std::sig_atomic_t gSignalStatus;
 
+
 // constructor initialise _config and _epoll_fd via epoll_create1()
 Server::Server(const Config &config) : _config(config) , _epoll_fd(epoll_create1(0))
 {
@@ -138,9 +139,12 @@ void Server::run()
 			}
 			else if (event_flag & EPOLLOUT)
 			{
-				sendToClient(fd);
-				if(_clients.count(fd))
-					modifyFdEpoll(fd, EPOLLIN | EPOLLRDHUP);
+				SendResult result = sendToClient(fd); // emnum SEND_CLOSEd noch etablieren 
+     			if (result == SendResult::PENDING)
+          			modifyFdEpoll(fd, EPOLLOUT | EPOLLRDHUP);
+      			else if (result == SendResult::COMPLETE)
+          			modifyFdEpoll(fd, EPOLLIN | EPOLLRDHUP);
+
 			}
 		}
 	}

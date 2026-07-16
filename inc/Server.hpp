@@ -25,6 +25,14 @@ inline constexpr int KEEP_ALIVE_TIMEOUT = 45;
 inline constexpr int CGI_TIMEOUT = 30;
 inline constexpr int CHECK_FOR_TIMEOUTS = 5;
 
+
+enum class SendResult
+{
+	PENDING,
+	COMPLETE,
+	CLOSED
+};
+
 class Server
 {
 	private:
@@ -44,7 +52,7 @@ class Server
 		void			setupListeningSockets();
 		void			acceptClient(int server_fd);
 		void 			recvClientData(int client_fd);
-		void 			sendToClient(int client_fd);
+		SendResult 		sendToClient(int client_fd);
 		std::string		normalizeListenHost(const std::string& host);
 		std::string		makeListenKey(const ServerConfig& server_config);
 		ListenContext& 	getOrCreateListenContext(std::map<std::string, ListenContext>& contexts_by_listen, ServerConfig* server_config);

@@ -37,112 +37,95 @@ void Server::recvClientData(int client_fd)
 {
 	char buffer[4096];
 
-	while (true)
+	ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer), 0);
+	if (bytes > 0)
 	{
-		ssize_t bytes = recv(client_fd, &buffer[0], sizeof(buffer), 0);
-		if (bytes > 0)
+		_clients[client_fd]._last_activity = time(NULL);
+
+		_clients[client_fd]._parser.feedBuffer(buffer, bytes);
+		ParseStatus parse_status = _clients[client_fd]._parser.parseBuffer();
+
+		if (parse_status == HEADER_COMPLETE) // header complete, but body missing
 		{
-			_clients[client_fd]._last_activity = time(NULL);
-
-			_clients[client_fd]._parser.feedBuffer(buffer, bytes);
-			ParseStatus parse_status = _clients[client_fd]._parser.parseBuffer();
-
-			if (parse_status == HEADER_COMPLETE) // header complete, but body missing
+			_clients[client_fd].selectVirtualHost();
+			parse_status = _clients[client_fd]._parser.parseBuffer();
+		}
+		if (parse_status == COMPLETE && _clients[client_fd]._selected_server == nullptr) // request complete parsed, no body, search now for correct sever
+			_clients[client_fd].selectVirtualHost();
+		if (parse_status == COMPLETE)
+		{
+			std::cout << "[INFO]  Client " << client_fd << ": request complete" << std::endl;
+			HttpResponse	response;
+			CgiSession		cgi;
+			DispatchResult	dp_result = _dispatcher.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, response, cgi);
+			if (dp_result == DP_DONE)
 			{
-				_clients[client_fd].selectVirtualHost();
-				parse_status = _clients[client_fd]._parser.parseBuffer();
+				_clients[client_fd]._response = response;
 			}
-			if (parse_status == COMPLETE && _clients[client_fd]._selected_server == nullptr) // request complete parsed, no body, search now for correct sever
-				_clients[client_fd].selectVirtualHost();
-
-			if (parse_status == COMPLETE)
+			if (dp_result == DP_CGI_PENIDNG)
 			{
-				std::cout << "[INFO]  Client " << client_fd << ": request complete" << std::endl;
+				_clients[client_fd]._cgi = cgi;
 
-				HttpResponse	response;
-				CgiSession		cgi;
-				DispatchResult	dp_result = _dispatcher.dispatch(_clients[client_fd]._parser.getRequest(), _clients[client_fd]._selected_server, response, cgi);
-				if (dp_result == DP_DONE)
+				addFdEpoll(cgi._stdout_fd, EPOLLIN);
+				_cgi_fd_client_owner[cgi._stdout_fd] = client_fd;
+
+				if (!cgi._body.empty()) // no body, no need to register stdin pipe
 				{
-					_clients[client_fd]._response = response;
+					addFdEpoll(cgi._stdin_fd, EPOLLOUT);
+					_cgi_fd_client_owner[cgi._stdin_fd] = client_fd;
 				}
-				if (dp_result == DP_CGI_PENIDNG)
-				{
-					_clients[client_fd]._cgi = cgi;
-
-					addFdEpoll(cgi._stdout_fd, EPOLLIN);
-					_cgi_fd_client_owner[cgi._stdout_fd] = client_fd;
-
-					if (!cgi._body.empty()) // no body, no need to register stdin pipe
-					{
-						addFdEpoll(cgi._stdin_fd, EPOLLOUT);
-						_cgi_fd_client_owner[cgi._stdin_fd] = client_fd;
-					}
-				}
-				break;
+			}
 			}
 			else if (parse_status == ERROR_400)
 			{
 				std::cout << "[INFO]  Client " << client_fd << ": error on parsing http request throw 400" << std::endl;
 				_clients[client_fd]._response = _dispatcher.buildErrorResponse(400, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
-				break;
 			}
 			else if (parse_status == ERROR_413)
 			{
 				std::cout << "[INFO]  Client " << client_fd << ": error on parsing http request throw 413" << std::endl;
 				_clients[client_fd]._response = _dispatcher.buildErrorResponse(413, _clients[client_fd]._selected_server, CON_CLOSE, _clients[client_fd]._parser.getRequest());
-				break;
 			}
-
 			if (checklastActivity(client_fd) >= KEEP_ALIVE_TIMEOUT)
 			{
 				closeClient(client_fd);
-				break;
 			}
-		}
-		else if (bytes == 0)
-  		{
-  			closeClient(client_fd);
-  			break;
-  		}
-		else
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK) // no data available right now
-  				break;
-			closeClient(client_fd);
-  			break;
-		}
+		return;
 	}
+	else if (bytes == 0)
+  	{
+  		closeClient(client_fd);
+		return;
+  	}
+	closeClient(client_fd);
 }
 
-void Server::sendToClient(int client_fd)
+SendResult Server::sendToClient(int client_fd)
 {
 	ClientInfos& client = _clients[client_fd];
 
 	if (client._response_buffer.empty())
 			client._response_buffer = _clients[client_fd]._response.serialize();
-	while (!client._response_buffer.empty())
+	if(client._response_buffer.empty())
+		return SendResult::COMPLETE;
+	ssize_t bytes = send(client_fd, client._response_buffer.c_str(), client._response_buffer.length(), 0 );
+	if (bytes < 0)
 	{
-		ssize_t bytes = send(client_fd, client._response_buffer.c_str(), client._response_buffer.length(), 0 );
-		if (bytes < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				  return;
-			closeClient(client_fd);
-			return;
-		}
-		if(bytes == 0)
-			return;
-
-		client._response_buffer.erase(0, bytes);
+		closeClient(client_fd);
+		return SendResult::CLOSED;
 	}
+	if(bytes == 0)
+		return SendResult::PENDING;
+	client._response_buffer.erase(0, bytes);
+	if(!client._response_buffer.empty())
+		return SendResult::PENDING;
 	std::cout << "[INFO]  Client " << client_fd << ": successfully send response" << std::endl;
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
 	{
 		closeClient(client_fd);
-		return;
+		return SendResult::COMPLETE;
 	}
 
 	client._response = HttpResponse();
-	client._response_buffer.clear();
+	return SendResult::PENDING;
 }
