@@ -123,7 +123,7 @@ SendResult Server::sendToClient(int client_fd)
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
 	{
 		closeClient(client_fd);
-		return SendResult::COMPLETE;
+		return SendResult::CLOSED;
 	}
 
 	client._response = HttpResponse();
