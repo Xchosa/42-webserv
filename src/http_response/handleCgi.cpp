@@ -89,7 +89,7 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 			if (val.empty())
 				continue;
 
-			if (key == "Status")
+			if (lowercase(key) == "status")
 			{
 				int code;
 				try
@@ -103,6 +103,14 @@ HttpResponse Dispatcher::parseCgiOutput(std::string& output)
 				if (code < 100 || code > 999)
 					code = 200;
 				r._status_code = code;
+			}
+			else if (lowercase(key) == "set-cookie")
+			{
+				size_t cookie_equal_sign = val.find("=");
+				if (cookie_equal_sign == std::string::npos)
+					continue;
+				std::string cookie_key = val.substr(0, cookie_equal_sign);
+				r._cookies[cookie_key] = val;
 			}
 			else
 				r._headers[key] = val;

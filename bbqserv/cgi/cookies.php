@@ -23,6 +23,13 @@ elseif (isset($_GET["delete"]))
         $message = "Cookie deleted: " . htmlspecialchars($key, ENT_QUOTES, "UTF-8");
     }
 }
+elseif (isset($_GET["set_multi"]))
+{
+    // demo: two Set-Cookie headers in a single response
+    setcookie("multi_a", "first", time() + 3600, "/");
+    setcookie("multi_b", "second", time() + 3600, "/");
+    $message = "Set TWO cookies in one response: multi_a=first and multi_b=second";
+}
 
 header("Content-Type: text/html; charset=utf-8");
 
@@ -58,6 +65,7 @@ if ($rows === "")
   <ul>
     <li><a href="?set=testcookie=hello123">Set cookie "testcookie=hello123"</a></li>
     <li><a href="?delete=testcookie">Delete cookie "testcookie"</a></li>
+    <li><a href="?set_multi=1">Set TWO cookies at once (multi_a + multi_b, one response)</a></li>
   </ul>
 
   <h2>Set a custom cookie</h2>

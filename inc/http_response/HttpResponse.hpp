@@ -23,6 +23,7 @@ struct HttpResponse {
 	std::string												_status_text;
 	std::string												_version;
 	std::map<std::string, std::string, CaseInsenitiveLess>	_headers;
+	std::map<std::string, std::string>						_cookies;
 	std::string												_body;
 
 	std::string serialize() const;	// converts HttpResponse in string for _response_buffer in ClientInfos

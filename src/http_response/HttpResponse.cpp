@@ -33,6 +33,14 @@ std::string HttpResponse::serialize() const
 		buffer.append("\r\n");
 	}
 
+	// cookies
+	for (auto& it : _cookies)
+	{
+		buffer.append("Set-Cookie: ");
+		buffer.append(it.second);
+		buffer.append("\r\n");
+	}
+
 	// date header
 	buffer.append("Date: ");
 	buffer.append(get_http_date());
