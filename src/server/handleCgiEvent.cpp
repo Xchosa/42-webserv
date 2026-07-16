@@ -80,6 +80,8 @@ CgiReadResult Server::cgiReadOutput(CgiSession& cgi)
 		return CgiReadResult::ENDOFFILE;
 	}
 	cgi._output.append(buffer, n);
+	if (cgi._output.size() > CGI_MAX_OUTPUT)
+		return CgiReadResult::FAILED;
 	return CgiReadResult::PENDING;
 }
 

@@ -25,6 +25,7 @@ inline constexpr int KEEP_ALIVE_TIMEOUT = 45;
 inline constexpr int CGI_TIMEOUT = 30;
 inline constexpr int CHECK_FOR_TIMEOUTS = 5;
 inline constexpr int CGI_REAP_POLL_MS = 20;
+inline constexpr size_t CGI_MAX_OUTPUT = 50 * 1024 * 1024;   // 50mb
 
 
 enum class SendResult
