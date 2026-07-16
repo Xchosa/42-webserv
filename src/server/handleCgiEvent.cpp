@@ -22,7 +22,7 @@ CgiWriteResult Server::cgiWriteBody( CgiSession& cgi)
 void Server::closeCgiStdout(CgiSession& cgi)
 {
 	if (cgi._stdout_fd == -1)
-          return; // makes cleanup idempotent
+          return;
 	removeFdEpoll(cgi._stdout_fd);
 	close(cgi._stdout_fd);
 	_cgi_fd_client_owner.erase(cgi._stdout_fd);
@@ -36,6 +36,7 @@ void Server::tryFinishCgi(ClientInfos& client, CgiSession& cgi)
 	if (result == 0)
 	{
 		std::cout << "[INFO]  CGI pid " << cgi._pid << " still running" << std::endl;
+		return;
 	}
 	if(result < 0)
 	{
@@ -100,19 +101,45 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 	if (event_flag & EPOLLERR)
 	{
 		killCgi(client_fd, 502);
-	}
-	CgiWriteResult result = cgiWriteBody(*cgi);
-	if(result == CgiWriteResult::COMPLETE)
-	{
-		removeFdEpoll(pipe_fd);
-		_cgi_fd_client_owner.erase(pipe_fd);
-		close(pipe_fd);
-		cgi->_stdin_fd = -1;
-	}
-	else if (result == CgiWriteResult::FAILED)
-	{
-		killCgi(client_fd, 502);
 		return;
+	}
+	if (pipe_fd == cgi->_stdin_fd)
+	{
+		CgiWriteResult result = cgiWriteBody(*cgi);
+		if(result == CgiWriteResult::COMPLETE)
+		{
+			removeFdEpoll(pipe_fd);
+			_cgi_fd_client_owner.erase(pipe_fd);
+			close(pipe_fd);
+			cgi->_stdin_fd = -1;
+		}
+		else if (result == CgiWriteResult::FAILED)
+		{
+			killCgi(client_fd, 502);
+			return;
+		}
+	}
+	else if (pipe_fd == cgi->_stdout_fd)
+	{
+		CgiReadResult result = cgiReadOutput(*cgi);
+		if (result == CgiReadResult::PENDING)
+			return;
+		else if (result == CgiReadResult::FAILED)
+		{
+			killCgi(client_fd, 502);
+			return;
+		}
+		else if (result == CgiReadResult::ENDOFFILE)
+		{
+			closeCgiStdout(*cgi);
+			tryFinishCgi(*client, *cgi);
+			if (cgi->_waited == true)
+			{
+				modifyFdEpoll(client_fd, EPOLLOUT | EPOLLRDHUP);
+				client->_parser.reset();
+				client->_cgi.reset();
+			}
+		}
 	}
 }
 
