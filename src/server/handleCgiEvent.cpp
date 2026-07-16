@@ -61,7 +61,7 @@ void Server::tryFinishCgi(ClientInfos& client, CgiSession& cgi)
 		catch(const HttpException& e)
 		{
 			std::cout << "[INFO]  CGI pid " << result << " ended good but invalid cgi response" << std::endl;
-			client._response = _dispatcher.buildErrorResponse(e.code(), client._selected_server, CON_KEEP_ALIVE, client->_parser.getRequest());
+			client._response = _dispatcher.buildErrorResponse(e.code(), client._selected_server, CON_KEEP_ALIVE, client._parser.getRequest());
 		}
 	}
 }
@@ -101,7 +101,7 @@ void Server::handleCgiEvent(int pipe_fd, uint32_t event_flag)
 	{
 		killCgi(client_fd, 502);
 	}
-	CgiWriteResult result = cgiWriteBody(&cgi);
+	CgiWriteResult result = cgiWriteBody(*cgi);
 	if(result == CgiWriteResult::COMPLETE)
 	{
 		removeFdEpoll(pipe_fd);
