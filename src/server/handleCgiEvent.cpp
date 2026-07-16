@@ -32,7 +32,7 @@ void Server::closeCgiStdout(CgiSession& cgi)
 void Server::tryFinishCgi(ClientInfos& client, CgiSession& cgi)
 {
 	int status = 0;
-	pid_t result = waitpid(cgi._pid, &status, WNOHANG);
+	pid_t result = waitpid(cgi._pid, &status, 0);
 	if (result == 0)
 	{
 		std::cout << "[INFO]  CGI pid " << cgi._pid << " still running" << std::endl;
