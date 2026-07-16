@@ -14,4 +14,5 @@ void initSignal(void)
 {
 	std::signal(SIGINT, signalHandler);
 	std::signal(SIGTERM, signalHandler);
+	std::signal(SIGPIPE, SIG_IGN);
 }
