@@ -33,6 +33,16 @@ Server::~Server()
 
 }
 
+bool Server::cgiWaitingForReap() const
+{
+	for (const auto& [client_fd, client] : _clients)
+	{
+		if (client._cgi.has_value() && !client._cgi.value()._waited && client._cgi.value()._stdout_fd == -1)
+			return (true);
+	}
+	return (false);
+}
+
 void Server::run()
 {
 	setupListeningSockets();
@@ -69,7 +79,8 @@ void Server::run()
 	_last_timeout_check = time(nullptr);
 	while(gSignalStatus)
 	{
-		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, IDLE_TIME * 1000);
+		int wait_ms = cgiWaitingForReap() ? CGI_REAP_POLL_MS : IDLE_TIME * 1000;
+		int readyEvents = epoll_wait(this->_epoll_fd, triggeredEvents, MAXEVENTS, wait_ms);
 		if (readyEvents == -1)
 		{
 			if (errno == EINTR)
@@ -84,6 +95,8 @@ void Server::run()
 			checkCgiTimeouts();
 			_last_timeout_check = now;
 		}
+		else if (cgiWaitingForReap())
+			checkCgiTimeouts();
 
 		for(int i = 0; i < readyEvents; ++i)
 		{

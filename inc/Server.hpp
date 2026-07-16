@@ -24,6 +24,7 @@ inline constexpr int IDLE_TIME = 5;				// how long epoll_wait blocks until it go
 inline constexpr int KEEP_ALIVE_TIMEOUT = 45;
 inline constexpr int CGI_TIMEOUT = 30;
 inline constexpr int CHECK_FOR_TIMEOUTS = 5;
+inline constexpr int CGI_REAP_POLL_MS = 20;
 
 
 enum class SendResult
@@ -87,6 +88,7 @@ class Server
 		CgiReadResult	cgiReadOutput(CgiSession& cgi);
 		void			closeCgiStdout(CgiSession& cgi);
 		void			tryFinishCgi(ClientInfos& client, CgiSession& cgi);
+		bool			cgiWaitingForReap() const;
 
 	public:
 		// OCF
