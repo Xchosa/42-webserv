@@ -33,6 +33,20 @@ enum class SendResult
 	CLOSED
 };
 
+enum class CgiWriteResult
+{
+	PENDING,
+	COMPLETE,
+	FAILED
+};
+
+enum class CgiReadResult
+{
+	PENDING,
+	ENDOFFILE,
+	FAILED
+};
+
 class Server
 {
 	private:
@@ -69,8 +83,10 @@ class Server
 
 		// cgi handling
 		void			handleCgiEvent(int pipe_fd, uint32_t event_flag);
-		void			cgiWriteBody(int pipe_fd, int client_fd, CgiSession* cgi);
-		void			cgiReadOutput(int pipe_fd, int client_fd, ClientInfos* client, CgiSession* cgi);
+		CgiWriteResult	cgiWriteBody(CgiSession& cgi);
+		CgiReadResult	cgiReadOutput(CgiSession& cgi);
+		void			closeCgiStdout(CgiSession& cgi);
+		void			tryFinishCgi(ClientInfos& client, CgiSession& cgi);
 
 	public:
 		// OCF
