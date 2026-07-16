@@ -20,6 +20,7 @@ VPATH =	src \
 		
 
 SRCS =	main.cpp \
+		utils.cpp \
 		Lexer.cpp \
 		Parser.cpp \
 		ps.cpp \

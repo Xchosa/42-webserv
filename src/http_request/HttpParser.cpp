@@ -135,13 +135,6 @@ void HttpParser::parseRequestLine(const std::string& line)
 		_status = ERROR_400;
 }
 
-static std::string lowercase(std::string str)
-{
-	for (auto& c : str)
-		c = std::tolower(static_cast<unsigned char>(c));
-	return (str);
-}
-
 void HttpParser::parseHeader(const std::string& line)
 {
 	size_t pos = line.find(":");

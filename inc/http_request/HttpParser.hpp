@@ -7,6 +7,7 @@
 #include <cctype>
 #include <charconv>
 
+#include "utils.hpp"
 #include "HttpRequest.hpp"
 #include "ServerConfig.hpp"
 
