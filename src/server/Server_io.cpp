@@ -119,7 +119,7 @@ SendResult Server::sendToClient(int client_fd)
 	client._response_buffer.erase(0, bytes);
 	if(!client._response_buffer.empty())
 		return SendResult::PENDING;
-	// std::cout << "[INFO]  Client " << client_fd << ": successfully send response" << std::endl;
+	std::cout << "[INFO]  Client " << client_fd << ": successfully send response" << std::endl;
 	if (_clients[client_fd]._response._headers.count("Connection") && _clients[client_fd]._response._headers["Connection"] == "close")
 	{
 		closeClient(client_fd);
@@ -127,5 +127,5 @@ SendResult Server::sendToClient(int client_fd)
 	}
 
 	client._response = HttpResponse();
-	return SendResult::PENDING;
+	return SendResult::COMPLETE;
 }
