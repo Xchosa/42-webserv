@@ -1,0 +1,20 @@
+printf 'POST /maus/test.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World' | nc localhost 8081
+
+
+
+#dd if=/dev/urandom of=big.pdf bs=1M count=20
+
+
+curl -i -X POST \
+    -H "Host: cherry" \
+    -H "Content-Type: application/pdf" \
+    --data-binary @/home/poverbec/projects/42-webserv/big.pdf \
+    http://127.0.0.1:8080/upload/big.pdf
+
+
+
+curl \
+    -H "Host: cherry" \
+    -D - \
+    -o downloaded-big.pdf \
+    http://127.0.0.1:8080/upload/big.pdf

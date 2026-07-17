@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cat > urls.txt <<'EOF'
+http://127.0.0.1:8080/
+http://127.0.0.1:8081/
+EOF
+
+
+
+siege -b -c50 -t30S -f urls.txt 2>&1 | tee siege-results.txt
