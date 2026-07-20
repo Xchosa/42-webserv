@@ -1,0 +1,1 @@
+printf 'POST /maus/%2e%2e/test2.txt HTTP/1.1\r\nHost: maus\r\nContent-Type: text/plain\r\nContent-Length:11\r\nConnection: close\r\n\r\nhello World' | nc localhost 8081
